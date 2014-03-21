@@ -152,6 +152,13 @@ AC_ARG_ENABLE(battery_status,
     [enable_battery_status="no"])
 AC_MSG_RESULT([$enable_battery_status])
 
+AC_MSG_CHECKING([whether to enable Discovery API support])
+AC_ARG_ENABLE(discovery,
+    AC_HELP_STRING([--enable-discovery], [enable support for Discovery API [default=no]]),
+    [],
+    [enable_discovery="no"])
+AC_MSG_RESULT([$enable_discovery])
+
 AC_MSG_CHECKING([whether to enable code coverage support])
 AC_ARG_ENABLE(coverage,
     AC_HELP_STRING([--enable-coverage], [enable code coverage support [default=no]]),

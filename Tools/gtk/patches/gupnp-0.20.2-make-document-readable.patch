@@ -1,0 +1,47 @@
+Subject: [PATCH] Make "document" property readable
+
+https://bugzilla.gnome.org/show_bug.cgi?id=706123
+---
+diff --git a/libgupnp/gupnp-device-info.c b/libgupnp/gupnp-device-info.c
+index 4f6fe2b..15a8c8c 100644
+--- a/libgupnp/gupnp-device-info.c
++++ b/libgupnp/gupnp-device-info.c
+@@ -149,6 +149,9 @@ gupnp_device_info_get_property (GObject    *object,
+         case PROP_URL_BASE:
+                 g_value_set_boxed (value, info->priv->url_base);
+                 break;
++        case PROP_DOCUMENT:
++                g_value_set_object (value, info->priv->doc);
++                break;
+         default:
+                 G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+                 break;
+@@ -334,7 +337,7 @@ gupnp_device_info_class_init (GUPnPDeviceInfoClass *klass)
+                                       "The XML document related to this "
+                                       "device",
+                                       GUPNP_TYPE_XML_DOC,
+-                                      G_PARAM_WRITABLE |
++                                      G_PARAM_READWRITE |
+                                       G_PARAM_CONSTRUCT_ONLY |
+                                       G_PARAM_STATIC_NAME |
+                                       G_PARAM_STATIC_NICK |
+diff --git a/libgupnp/gupnp-xml-doc.h b/libgupnp/gupnp-xml-doc.h
+index bad0902..23f0ac0 100644
+--- a/libgupnp/gupnp-xml-doc.h
++++ b/libgupnp/gupnp-xml-doc.h
+@@ -28,6 +28,8 @@
+ #include <libxml/tree.h>
+ #include <glib-object.h>
+ 
++G_BEGIN_DECLS
++
+ GType
+ gupnp_xml_doc_get_type (void) G_GNUC_CONST;
+ 
+@@ -72,4 +74,6 @@ GUPnPXMLDoc *
+ gupnp_xml_doc_new_from_path             (const char     *path,
+                                          GError        **error);
+ 
++G_END_DECLS
++
+ #endif /* __GUPNP_XML_DOC_H__ */

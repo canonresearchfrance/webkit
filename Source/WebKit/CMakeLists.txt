@@ -91,6 +91,10 @@ if (WTF_USE_CURL)
   list(APPEND WebKit_INCLUDE_DIRECTORIES "${WEBCORE_DIR}/platform/network/curl")
 endif ()
 
+if (ENABLE_DISCOVERY)
+  list(APPEND WebKit_INCLUDE_DIRECTORIES ${GSSDP_INCLUDE_DIRS} ${GUPNP_INCLUDE_DIRS})
+endif ()
+
 set(WebKit_LIBRARIES
     JavaScriptCore
     WTF

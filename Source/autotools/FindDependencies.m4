@@ -477,6 +477,19 @@ if test "$enable_battery_status" = "yes"; then
     AC_SUBST(UPOWER_GLIB_LIBS)
 fi
 
+if test "$enable_discovery" = "yes"; then
+    PKG_CHECK_MODULES([AVAHI], [avahi-client avahi-glib avahi-gobject])
+    PKG_CHECK_MODULES([GSSDP], [gssdp-1.0])
+    PKG_CHECK_MODULES([GUPNP], [gupnp-1.0])
+
+    AC_SUBST(AVAHI_CFLAGS)
+    AC_SUBST(AVAHI_LIBS)
+    AC_SUBST(GSSDP_CFLAGS)
+    AC_SUBST(GSSDP_LIBS)
+    AC_SUBST(GUPNP_CFLAGS)
+    AC_SUBST(GUPNP_LIBS)
+fi
+
 # Check whether to enable code coverage support.
 if test "$enable_coverage" = "yes"; then
     COVERAGE_CFLAGS="-MD"

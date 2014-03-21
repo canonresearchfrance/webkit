@@ -10,6 +10,7 @@ webcore_cppflags += \
 	-I$(srcdir)/Source/ThirdParty/ANGLE/include/KHR \
 	-I$(srcdir)/Source/WebCore \
 	-I$(srcdir)/Source/WebCore/Modules/battery \
+	-I$(srcdir)/Source/WebCore/Modules/discovery \
 	-I$(srcdir)/Source/WebCore/Modules/gamepad \
 	-I$(srcdir)/Source/WebCore/Modules/geolocation \
 	-I$(srcdir)/Source/WebCore/Modules/indexeddb \
@@ -62,6 +63,11 @@ webcore_cppflags += \
 	-I$(srcdir)/Source/WebCore/platform \
 	-I$(srcdir)/Source/WebCore/platform/animation \
 	-I$(srcdir)/Source/WebCore/platform/audio \
+	-I$(srcdir)/Source/WebCore/platform/discovery \
+	-I$(srcdir)/Source/WebCore/platform/discovery/avahi \
+	-I$(srcdir)/Source/WebCore/platform/discovery/gssdp \
+	-I$(srcdir)/Source/WebCore/platform/discovery/gssdp/soup \
+	-I$(srcdir)/Source/WebCore/platform/discovery/gupnp \
 	-I$(srcdir)/Source/WebCore/platform/graphics \
 	-I$(srcdir)/Source/WebCore/platform/graphics/cpu/arm \
 	-I$(srcdir)/Source/WebCore/platform/graphics/cpu/arm/filters/ \
@@ -400,6 +406,7 @@ DerivedSources/ANGLE/glslang_tab.h: DerivedSources/ANGLE/glslang_tab.cpp
 
 IDL_PATH := \
     $(WebCore)/Modules/battery \
+    $(WebCore)/Modules/discovery \
     $(WebCore)/Modules/gamepad \
     $(WebCore)/Modules/geolocation \
     $(WebCore)/Modules/indexeddb \
@@ -565,6 +572,7 @@ libWebCorePlatform_la_CPPFLAGS = \
 	$(webcoregtk_cppflags) \
 	$(javascriptcore_cppflags) \
 	-fno-strict-aliasing \
+	$(AVAHI_CFLAGS) \
 	$(CAIRO_CFLAGS) \
 	$(COVERAGE_CFLAGS) \
 	$(ENCHANT_CFLAGS) \
@@ -572,7 +580,9 @@ libWebCorePlatform_la_CPPFLAGS = \
 	$(GAMEPAD_CFLAGS) \
 	$(GEOCLUE_CFLAGS) \
 	$(GLIB_CFLAGS) \
+	$(GSSDP_CFLAGS) \
 	$(GSTREAMER_CFLAGS) \
+	$(GUPNP_CFLAGS) \
 	$(LIBSECRET_CFLAGS) \
 	$(LIBSOUP_CFLAGS) \
 	$(LIBXML_CFLAGS) \
@@ -632,6 +642,7 @@ libWebCoreGtk_la_CPPFLAGS = \
 
 EXTRA_DIST += \
 	$(wildcard $(srcdir)/Source/WebCore/Modules/battery/*.idl) \
+	$(wildcard $(srcdir)/Source/WebCore/Modules/discovery/*.idl) \
 	$(wildcard $(srcdir)/Source/WebCore/Modules/gamepad/*.idl) \
 	$(wildcard $(srcdir)/Source/WebCore/Modules/geolocation/*.idl) \
 	$(wildcard $(srcdir)/Source/WebCore/Modules/indexeddb/*.idl) \

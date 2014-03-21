@@ -276,6 +276,12 @@ if (ENABLE_MEDIA_STREAM)
     )
 endif ()
 
+if (ENABLE_DISCOVERY)
+    list(APPEND WebCore_SOURCES
+        bindings/js/URIBindingUtilities.cpp
+    )
+endif ()
+
 list(APPEND SCRIPTS_BINDINGS
     ${WEBCORE_DIR}/bindings/scripts/CodeGenerator.pm
     ${WEBCORE_DIR}/bindings/scripts/CodeGeneratorJS.pm

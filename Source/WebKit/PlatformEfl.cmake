@@ -1,6 +1,12 @@
 list(APPEND WebKit_INCLUDE_DIRECTORIES
     "${WEBKIT_DIR}/efl/ewk"
     "${WEBKIT_DIR}/efl/WebCoreSupport"
+    "${WEBCORE_DIR}/platform/discovery"
+    "${WEBCORE_DIR}/platform/discovery/avahi"
+    "${WEBCORE_DIR}/platform/discovery/gssdp"
+    "${WEBCORE_DIR}/platform/discovery/gssdp/soup"
+    "${WEBCORE_DIR}/platform/discovery/gupnp"
+    "${WEBCORE_DIR}/platform/discovery/gupnp/soup"
     "${WEBCORE_DIR}/platform/efl"
     "${WEBCORE_DIR}/platform/graphics/cairo"
     "${WEBCORE_DIR}/platform/graphics/efl"
@@ -65,6 +71,12 @@ if (ENABLE_NAVIGATOR_CONTENT_UTILS)
     )
 endif ()
 
+if (ENABLE_DISCOVERY)
+  list(APPEND WebKit_INCLUDE_DIRECTORIES
+    "${WEBCORE_DIR}/Modules/discovery"
+  )
+endif ()
+
 if (WTF_USE_3D_GRAPHICS)
     list(APPEND WebKit_INCLUDE_DIRECTORIES
         "${WEBCORE_DIR}/platform/graphics/surfaces"
@@ -108,6 +120,7 @@ list(APPEND WebKit_SOURCES
     efl/WebCoreSupport/InspectorClientEfl.cpp
     efl/WebCoreSupport/NavigatorContentUtilsClientEfl.cpp
     efl/WebCoreSupport/NetworkInfoClientEfl.cpp
+    efl/WebCoreSupport/NetworkServicesClientEfl.cpp
     efl/WebCoreSupport/NotificationPresenterClientEfl.cpp
     efl/WebCoreSupport/PlatformStrategiesEfl.cpp
     efl/WebCoreSupport/ProgressTrackerClientEfl.cpp
@@ -127,6 +140,8 @@ list(APPEND WebKit_SOURCES
     efl/ewk/ewk_js.cpp
     efl/ewk/ewk_main.cpp
     efl/ewk/ewk_network.cpp
+    efl/ewk/ewk_network_service.cpp
+    efl/ewk/ewk_network_services.cpp
     efl/ewk/ewk_paint_context.cpp
     efl/ewk/ewk_security_origin.cpp
     efl/ewk/ewk_security_policy.cpp
@@ -194,6 +209,8 @@ set(EWebKit_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/efl/ewk/ewk_js.h
     ${CMAKE_CURRENT_SOURCE_DIR}/efl/ewk/ewk_main.h
     ${CMAKE_CURRENT_SOURCE_DIR}/efl/ewk/ewk_network.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/efl/ewk/ewk_network_service.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/efl/ewk/ewk_network_services.h
     ${CMAKE_CURRENT_SOURCE_DIR}/efl/ewk/ewk_security_origin.h
     ${CMAKE_CURRENT_SOURCE_DIR}/efl/ewk/ewk_security_policy.h
     ${CMAKE_CURRENT_SOURCE_DIR}/efl/ewk/ewk_settings.h

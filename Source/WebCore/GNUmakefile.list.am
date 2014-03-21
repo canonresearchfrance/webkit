@@ -519,12 +519,24 @@ webcore_built_sources += \
 	DerivedSources/WebCore/JSNamedNodeMap.h \
 	DerivedSources/WebCore/JSNavigator.cpp \
 	DerivedSources/WebCore/JSNavigator.h \
+	DerivedSources/WebCore/JSNavigatorNetworkService.cpp \
+	DerivedSources/WebCore/JSNavigatorNetworkServiceErrorCallback.cpp \
+	DerivedSources/WebCore/JSNavigatorNetworkServiceErrorCallback.h \
+	DerivedSources/WebCore/JSNavigatorNetworkServiceError.cpp \
+	DerivedSources/WebCore/JSNavigatorNetworkServiceError.h \
+	DerivedSources/WebCore/JSNavigatorNetworkService.h \
+	DerivedSources/WebCore/JSNavigatorNetworkServiceSuccessCallback.cpp \
+	DerivedSources/WebCore/JSNavigatorNetworkServiceSuccessCallback.h \
 	DerivedSources/WebCore/JSNavigatorUserMediaError.cpp \
 	DerivedSources/WebCore/JSNavigatorUserMediaError.h \
 	DerivedSources/WebCore/JSNavigatorUserMediaErrorCallback.cpp \
 	DerivedSources/WebCore/JSNavigatorUserMediaErrorCallback.h \
 	DerivedSources/WebCore/JSNavigatorUserMediaSuccessCallback.cpp \
 	DerivedSources/WebCore/JSNavigatorUserMediaSuccessCallback.h \
+	DerivedSources/WebCore/JSNetworkService.cpp \
+	DerivedSources/WebCore/JSNetworkService.h \
+	DerivedSources/WebCore/JSNetworkServices.cpp \
+	DerivedSources/WebCore/JSNetworkServices.h \
 	DerivedSources/WebCore/JSNode.cpp \
 	DerivedSources/WebCore/JSNodeFilter.cpp \
 	DerivedSources/WebCore/JSNodeFilter.h \
@@ -541,6 +553,8 @@ webcore_built_sources += \
 	DerivedSources/WebCore/JSNotification.h \
 	DerivedSources/WebCore/JSNotificationPermissionCallback.cpp \
 	DerivedSources/WebCore/JSNotificationPermissionCallback.h \
+	DerivedSources/WebCore/JSNotifyEvent.cpp \
+	DerivedSources/WebCore/JSNotifyEvent.h \
 	DerivedSources/WebCore/JSOESStandardDerivatives.cpp \
 	DerivedSources/WebCore/JSOESStandardDerivatives.h \
 	DerivedSources/WebCore/JSOESTextureFloat.cpp \
@@ -1178,6 +1192,12 @@ webcore_svg_built_sources += \
 dom_binding_idls += \
 	$(WebCore)/Modules/battery/BatteryManager.idl \
 	$(WebCore)/Modules/battery/NavigatorBattery.idl \
+	$(WebCore)/Modules/discovery/NavigatorNetworkServiceErrorCallback.idl \
+	$(WebCore)/Modules/discovery/NavigatorNetworkServiceError.idl \
+	$(WebCore)/Modules/discovery/NavigatorNetworkService.idl \
+	$(WebCore)/Modules/discovery/NavigatorNetworkServiceSuccessCallback.idl \
+	$(WebCore)/Modules/discovery/NetworkService.idl \
+	$(WebCore)/Modules/discovery/NetworkServices.idl \
 	$(WebCore)/Modules/gamepad/Gamepad.idl \
 	$(WebCore)/Modules/gamepad/GamepadList.idl \
 	$(WebCore)/Modules/gamepad/NavigatorGamepad.idl \
@@ -1386,6 +1406,7 @@ dom_binding_idls += \
 	$(WebCore)/dom/NodeIterator.idl \
 	$(WebCore)/dom/NodeList.idl \
 	$(WebCore)/dom/Notation.idl \
+	$(WebCore)/dom/NotifyEvent.idl \
 	$(WebCore)/dom/OverflowEvent.idl \
 	$(WebCore)/dom/PageTransitionEvent.idl \
 	$(WebCore)/dom/PopStateEvent.idl \
@@ -1772,6 +1793,24 @@ webcore_modules_sources += \
 	Source/WebCore/Modules/battery/BatteryStatus.h \
 	Source/WebCore/Modules/battery/NavigatorBattery.cpp \
 	Source/WebCore/Modules/battery/NavigatorBattery.h \
+	Source/WebCore/Modules/discovery/NavigatorNetworkService.cpp \
+	Source/WebCore/Modules/discovery/NavigatorNetworkServiceErrorCallback.h \
+	Source/WebCore/Modules/discovery/NavigatorNetworkServiceError.h \
+	Source/WebCore/Modules/discovery/NavigatorNetworkService.h \
+	Source/WebCore/Modules/discovery/NavigatorNetworkServiceSuccessCallback.h \
+	Source/WebCore/Modules/discovery/NetworkService.cpp \
+	Source/WebCore/Modules/discovery/NetworkServiceDescription.cpp \
+	Source/WebCore/Modules/discovery/NetworkServiceDescription.h \
+	Source/WebCore/Modules/discovery/NetworkService.h \
+	Source/WebCore/Modules/discovery/NetworkServicesClient.h \
+	Source/WebCore/Modules/discovery/NetworkServicesController.cpp \
+	Source/WebCore/Modules/discovery/NetworkServicesController.h \
+	Source/WebCore/Modules/discovery/NetworkServices.cpp \
+	Source/WebCore/Modules/discovery/NetworkServices.h \
+	Source/WebCore/Modules/discovery/NetworkServicesManager.cpp \
+	Source/WebCore/Modules/discovery/NetworkServicesManager.h \
+	Source/WebCore/Modules/discovery/NetworkServicesRequest.cpp \
+	Source/WebCore/Modules/discovery/NetworkServicesRequest.h \
 	Source/WebCore/Modules/gamepad/Gamepad.cpp \
 	Source/WebCore/Modules/gamepad/Gamepad.h \
 	Source/WebCore/Modules/gamepad/GamepadList.cpp \
@@ -2463,6 +2502,8 @@ webcore_sources += \
 	Source/WebCore/bindings/js/ScriptWrappableInlines.h \
 	Source/WebCore/bindings/js/SerializedScriptValue.cpp \
 	Source/WebCore/bindings/js/SerializedScriptValue.h \
+	Source/WebCore/bindings/js/URIBindingUtilities.cpp \
+	Source/WebCore/bindings/js/URIBindingUtilities.h \
 	Source/WebCore/bindings/js/WebCoreJSClientData.h \
 	Source/WebCore/bindings/js/WebCoreTypedArrayController.cpp \
 	Source/WebCore/bindings/js/WebCoreTypedArrayController.h \
@@ -2937,6 +2978,8 @@ webcore_sources += \
 	Source/WebCore/dom/NodeWithIndex.h \
 	Source/WebCore/dom/Notation.cpp \
 	Source/WebCore/dom/Notation.h \
+	Source/WebCore/dom/NotifyEvent.cpp \
+	Source/WebCore/dom/NotifyEvent.h \
 	Source/WebCore/dom/OverflowEvent.cpp \
 	Source/WebCore/dom/OverflowEvent.h \
 	Source/WebCore/dom/PageTransitionEvent.cpp \
@@ -5308,12 +5351,33 @@ webcore_platform_sources += \
 	Source/WebCore/platform/CrossThreadCopier.h \
 	Source/WebCore/platform/DatabaseStrategy.cpp \
 	Source/WebCore/platform/DatabaseStrategy.h \
+	Source/WebCore/platform/discovery/avahi/NetworkServicesProviderAvahi.cpp \
+	Source/WebCore/platform/discovery/avahi/NetworkServicesProviderAvahi.h \
+	Source/WebCore/platform/discovery/gssdp/NetworkServicesProviderGssdp.cpp \
+	Source/WebCore/platform/discovery/gssdp/NetworkServicesProviderGssdp.h \
+	Source/WebCore/platform/discovery/gssdp/soup/SSDPResolver.h \
+	Source/WebCore/platform/discovery/gssdp/soup/SSDPResolverSoup.cpp \
+	Source/WebCore/platform/discovery/gssdp/SSDPParser.cpp \
+	Source/WebCore/platform/discovery/gssdp/SSDPParser.h \
+	Source/WebCore/platform/discovery/gssdp/SSDPResolverBase.cpp \
+	Source/WebCore/platform/discovery/gssdp/SSDPResolverBase.h \
+	Source/WebCore/platform/discovery/gupnp/NetworkServiceDescriptionGupnp.cpp \
+	Source/WebCore/platform/discovery/gupnp/NetworkServiceDescriptionGupnp.h \
+	Source/WebCore/platform/discovery/gupnp/NetworkServicesProviderGupnp.cpp \
+	Source/WebCore/platform/discovery/gupnp/NetworkServicesProviderGupnp.h \
+	Source/WebCore/platform/discovery/gupnp/UPnPDevice.cpp \
+	Source/WebCore/platform/discovery/gupnp/UPnPDevice.h \
+	Source/WebCore/platform/discovery/NetworkServicesProviderBase.cpp \
+	Source/WebCore/platform/discovery/NetworkServicesProviderBase.h \
+	Source/WebCore/platform/discovery/NetworkServicesProviderClient.h \
 	Source/WebCore/platform/DragData.cpp \
 	Source/WebCore/platform/DragData.h \
 	Source/WebCore/platform/DragImage.cpp \
 	Source/WebCore/platform/DragImage.h \
 	Source/WebCore/platform/EventLoop.h \
 	Source/WebCore/platform/Gamepads.h \
+	Source/WebCore/platform/glib/NetworkServicesProviderGlib.cpp \
+	Source/WebCore/platform/glib/NetworkServicesProviderGlib.h \
 	Source/WebCore/platform/graphics/filters/FETile.cpp \
 	Source/WebCore/platform/graphics/filters/FETile.h \
 	Source/WebCore/platform/graphics/filters/FilterOperation.h \
@@ -5400,6 +5464,12 @@ webcore_platform_sources += \
 	Source/WebCore/platform/mock/MediaConstraintsMock.h \
 	Source/WebCore/platform/mock/MockMediaStreamCenter.cpp \
 	Source/WebCore/platform/mock/MockMediaStreamCenter.h \
+	Source/WebCore/platform/mock/NetworkServicePublisherAvahiMock.cpp \
+	Source/WebCore/platform/mock/NetworkServicePublisherAvahiMock.h \
+	Source/WebCore/platform/mock/NetworkServicePublisherGssdpMock.cpp \
+	Source/WebCore/platform/mock/NetworkServicePublisherGssdpMock.h \
+	Source/WebCore/platform/mock/NetworkServicePublisherGupnpMock.cpp \
+	Source/WebCore/platform/mock/NetworkServicePublisherGupnpMock.h \
 	Source/WebCore/platform/mock/RTCDataChannelHandlerMock.cpp \
 	Source/WebCore/platform/mock/RTCDataChannelHandlerMock.h \
 	Source/WebCore/platform/mock/RTCNotifiersMock.cpp \

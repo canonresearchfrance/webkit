@@ -77,6 +77,12 @@ else
     CONFIGURABLE_FEATURE_DEFINES="$CONFIGURABLE_FEATURE_DEFINES ENABLE_BATTERY_STATUS=0"
 fi
 
+if test "$enable_discovery" = "yes"; then
+    CONFIGURABLE_FEATURE_DEFINES="$CONFIGURABLE_FEATURE_DEFINES ENABLE_DISCOVERY=1"
+else
+    CONFIGURABLE_FEATURE_DEFINES="$CONFIGURABLE_FEATURE_DEFINES ENABLE_DISCOVERY=0"
+fi
+
 # This list of features represents those selected for release builds.  If you are
 # adding a new or unstable feature, you should mark it disabled here. We need to run
 # this command now rather than use AC_CONFIG_COMMANDS because automake rules depend

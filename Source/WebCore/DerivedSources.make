@@ -30,6 +30,7 @@ VPATH = \
     $(WebCore) \
     $(WebCore)/Modules/airplay \
     $(WebCore)/Modules/encryptedmedia \
+    $(WebCore)/Modules/discovery \
     $(WebCore)/Modules/geolocation \
     $(WebCore)/Modules/indexeddb \
     $(WebCore)/Modules/indieui \
@@ -69,6 +70,12 @@ VPATH = \
 
 BINDING_IDLS = \
     $(WebCore)/Modules/airplay/WebKitPlaybackTargetAvailabilityEvent.idl \
+    $(WebCore)/Modules/discovery/NavigatorNetworkServiceErrorCallback.idl \
+    $(WebCore)/Modules/discovery/NavigatorNetworkServiceError.idl \
+    $(WebCore)/Modules/discovery/NavigatorNetworkService.idl \
+    $(WebCore)/Modules/discovery/NavigatorNetworkServiceSuccessCallback.idl \
+    $(WebCore)/Modules/discovery/NetworkService.idl \
+    $(WebCore)/Modules/discovery/NetworkServices.idl \
     $(WebCore)/Modules/encryptedmedia/MediaKeyMessageEvent.idl \
     $(WebCore)/Modules/encryptedmedia/MediaKeyNeededEvent.idl \
     $(WebCore)/Modules/encryptedmedia/MediaKeySession.idl \
@@ -1038,6 +1045,8 @@ preprocess_idls_script = perl $(addprefix -I $(WebCore)/, $(sort $(dir $(1)))) $
 # JS bindings generator
 
 IDL_INCLUDES = \
+    $(WebCore)/Modules/webdatabase \
+    $(WebCore)/Modules/websockets \
     $(WebCore)/Modules \
     $(WebCore)/css \
     $(WebCore)/dom \

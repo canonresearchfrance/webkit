@@ -25,6 +25,7 @@ Features:
  Accelerated Compositing                                  : $enable_accelerated_compositing
  Accelerated 2D canvas                                    : $enable_accelerated_canvas
  Battery API support                                      : $enable_battery_status
+ Discovery API support                                    : $enable_discovery
  Gamepad support                                          : $enable_gamepad
  Geolocation support                                      : $enable_geolocation
  HTML5 video element support                              : $enable_video
