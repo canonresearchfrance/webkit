@@ -32,6 +32,7 @@
 
 #include <Eina.h>
 #include <Evas.h>
+#include <EWebKit.h>
 #include <wtf/HashMap.h>
 #include <wtf/OwnPtr.h>
 #include <wtf/PassOwnPtr.h>
@@ -58,6 +59,8 @@ public:
     const Vector<Evas_Object*>& extraViews() const;
     void clearExtraViews();
 
+    static void clearNetworkServices(bool forceRemoveMockServices = true);
+
     Evas_Object* mainFrame() const;
     Evas_Object* mainView() const;
 
@@ -79,6 +82,10 @@ private:
     Vector<Evas_Object*> m_extraViews;
     static HashMap<unsigned long, CString> m_dumpAssignedUrls;
     static Evas_Object* m_provisionalLoadFailedFrame;
+    static Eina_Bool m_forceNoBlockRequest;
+    static Eina_Bool m_waitNetworkServiceUpdate;
+    static Eina_Bool m_waitNetworkServiceCancel;
+    static Vector<Ewk_NetworkServices*> m_networkServices;
 
     // Smart callbacks
     static void onWindowObjectCleared(void*, Evas_Object*, void*);
@@ -117,6 +124,12 @@ private:
     static void onInspectorViewClose(void*, Evas_Object*, void*);
 
     static void onInspectorFrameLoadFinished(void*, Evas_Object*, void*);
+
+    static void onWebViewNetworkServicesRequestStarted(void*, Evas_Object*, void* eventInfo);
+    static void onWebViewNetworkServicesRequestUpdated(void*, Evas_Object*, void* eventInfo);
+    static void onWebViewNetworkServicesRequestFinished(void*, Evas_Object*, void* eventInfo);
+    static void onWebViewNetworkServicesRequestCanceled(void*, Evas_Object*, void* eventInfo);
+    static void processNetworkServices();
 
     static void onFrameIconChanged(void*, Evas_Object*, void*);
 

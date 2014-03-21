@@ -719,6 +719,31 @@ void TestRunner::setMockGeolocationPositionUnavailableError(JSStringRef message)
     InjectedBundle::shared().setMockGeolocationPositionUnavailableError(messageWK.get());
 }
 
+void TestRunner::addMockNetworkService(JSStringRef name, JSStringRef type, JSStringRef config, JSStringRef host)
+{    
+    WKRetainPtr<WKStringRef> nameWK = toWK(name);
+    WKRetainPtr<WKStringRef> typeWK = toWK(type);
+    WKRetainPtr<WKStringRef> configWK = toWK(config);
+    WKRetainPtr<WKStringRef> hostWK = toWK(host);
+    WKBundleAddMockNetworkService(InjectedBundle::shared().bundle(), nameWK.get(), typeWK.get(), configWK.get(), hostWK.get());
+}
+
+void TestRunner::removeMockNetworkService(JSStringRef id)
+{
+    WKRetainPtr<WKStringRef> idWK = toWK(id);
+    WKBundleRemoveMockNetworkService(InjectedBundle::shared().bundle(), idWK.get());
+}
+
+void TestRunner::addMockSwitchPowerUpnpService()
+{
+    WKBundleAddMockSwitchPowerUpnpService(InjectedBundle::shared().bundle());
+}
+
+void TestRunner::removeMockSwitchPowerUpnpService()
+{
+    WKBundleRemoveMockSwitchPowerUpnpService(InjectedBundle::shared().bundle());
+}
+
 bool TestRunner::callShouldCloseOnWebView()
 {
     WKBundleFrameRef mainFrame = WKBundlePageGetMainFrame(InjectedBundle::shared().page()->page());

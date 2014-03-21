@@ -428,6 +428,31 @@ int TestRunner::numberOfPendingGeolocationPermissionRequests()
     return DumpRenderTreeSupportGtk::numberOfPendingGeolocationPermissionRequests(view);
 }
 
+void TestRunner::addMockNetworkService(JSStringRef name, JSStringRef type, JSStringRef config, JSStringRef host)
+{
+    GUniquePtr<gchar> cName(JSStringCopyUTF8CString(name));
+    GUniquePtr<gchar> cType(JSStringCopyUTF8CString(type));
+    GUniquePtr<gchar> cConfig(JSStringCopyUTF8CString(config));
+    GUniquePtr<gchar> cHost(JSStringCopyUTF8CString(host));
+    DumpRenderTreeSupportGtk::addMockNetworkService(cName.get(), cType.get(), cConfig.get(), cHost.get());
+}
+
+void TestRunner::removeMockNetworkService(JSStringRef id)
+{
+    GUniquePtr<gchar> cId(JSStringCopyUTF8CString(id));
+    DumpRenderTreeSupportGtk::removeMockNetworkService(cId.get());
+}
+
+void TestRunner::addMockSwitchPowerUpnpService()
+{
+    DumpRenderTreeSupportGtk::addMockSwitchPowerUpnpService();
+}
+
+void TestRunner::removeMockSwitchPowerUpnpService()
+{
+    DumpRenderTreeSupportGtk::removeMockSwitchPowerUpnpService();
+}
+
 void TestRunner::addMockSpeechInputResult(JSStringRef result, double confidence, JSStringRef language)
 {
     // FIXME: Implement for speech input layout tests.

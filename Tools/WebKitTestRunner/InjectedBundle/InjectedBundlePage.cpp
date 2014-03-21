@@ -30,6 +30,13 @@
 #include "StringFunctions.h"
 #include "WebCoreTestSupport.h"
 #include <cmath>
+#if defined(XP_UNIX)
+#include <sys/types.h>
+#include <ifaddrs.h>
+#include <netinet/in.h> 
+#include <arpa/inet.h>
+#include <unistd.h>
+#endif
 #include <JavaScriptCore/JSRetainPtr.h>
 #include <WebKit2/WKArray.h>
 #include <WebKit2/WKBundle.h>
@@ -1043,6 +1050,62 @@ static inline bool isLocalHost(WKStringRef host)
     return WKStringIsEqualToUTF8CString(host, "127.0.0.1") || WKStringIsEqualToUTF8CString(host, "localhost");
 }
 
+static inline bool isLocalAddr(WKStringRef hostRef) 
+{
+#if defined(XP_UNIX)
+    const char* host = toSTD(hostRef).c_str();
+    char hostname[54];
+    char* ptr;
+    struct ifaddrs* ifAddr = 0;
+    struct ifaddrs* ifa = 0;
+    void* sinAddr;
+    bool isLocal = false;
+
+    gethostname(hostname, sizeof(hostname));
+    ptr = strchr(hostname, '.');
+    if(ptr)
+        *ptr = '\0';
+
+    if (!strncmp(host, hostname, strlen(hostname)))
+        isLocal = true;
+
+    getifaddrs(&ifAddr);
+
+    for (ifa = ifAddr; (ifa != NULL) && !isLocal; ifa = ifa->ifa_next) 
+    {
+        if (ifa ->ifa_addr->sa_family == AF_INET)
+        {
+            char addressBuffer[INET_ADDRSTRLEN];
+
+            sinAddr = &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
+            inet_ntop(AF_INET, sinAddr, addressBuffer, INET_ADDRSTRLEN);
+            
+            if (WKStringIsEqualToUTF8CString(hostRef, addressBuffer))
+                isLocal = true;
+        } 
+        else if (ifa->ifa_addr->sa_family == AF_INET6)
+        {
+            char addressBuffer[INET6_ADDRSTRLEN];
+
+            sinAddr = &((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr;
+            inet_ntop(AF_INET6, sinAddr, addressBuffer, INET6_ADDRSTRLEN);
+            
+            if (WKStringIsEqualToUTF8CString(hostRef, addressBuffer))
+                isLocal = true;
+        } 
+    }
+
+    if (ifAddr!=NULL) 
+        freeifaddrs(ifAddr);
+
+    fprintf(stderr, "%s : host %s hostname %s (isLocal %d)\n", __FUNCTION__, host, hostname, isLocal);
+
+    return isLocal;
+#else
+    return false;
+#endif
+}
+
 static inline bool isHTTPOrHTTPSScheme(WKStringRef scheme)
 {
     return WKStringIsEqualToUTF8CStringIgnoringCase(scheme, "http") || WKStringIsEqualToUTF8CStringIgnoringCase(scheme, "https");
@@ -1078,7 +1141,8 @@ WKURLRequestRef InjectedBundlePage::willSendRequestForFrame(WKBundlePageRef page
     if (host && !WKStringIsEmpty(host.get())
         && isHTTPOrHTTPSScheme(scheme.get())
         && !WKStringIsEqualToUTF8CString(host.get(), "255.255.255.255") // Used in some tests that expect to get back an error.
-        && !isLocalHost(host.get())) {
+        && !isLocalHost(host.get())
+        && !isLocalAddr(host.get())) {
         bool mainFrameIsExternal = false;
         if (InjectedBundle::shared().isTestRunning()) {
             WKBundleFrameRef mainFrame = InjectedBundle::shared().topLoadingFrame();

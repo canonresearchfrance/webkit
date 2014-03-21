@@ -43,7 +43,6 @@
 #include "WorkQueue.h"
 #include "ewk_private.h" // FIXME: create some WebCoreSupport/DumpRenderTree.cpp instead
 
-#include <EWebKit.h>
 #include <Ecore.h>
 #include <Eina.h>
 #include <Evas.h>
@@ -58,6 +57,11 @@ using namespace WebCore;
 
 HashMap<unsigned long, CString> DumpRenderTreeChrome::m_dumpAssignedUrls;
 Evas_Object* DumpRenderTreeChrome::m_provisionalLoadFailedFrame = 0;
+Eina_Bool DumpRenderTreeChrome::m_forceNoBlockRequest = EINA_FALSE;
+Eina_Bool DumpRenderTreeChrome::m_waitNetworkServiceUpdate = EINA_FALSE;
+Eina_Bool DumpRenderTreeChrome::m_waitNetworkServiceCancel = EINA_FALSE;
+Vector<Ewk_NetworkServices*> DumpRenderTreeChrome::m_networkServices;
+
 
 PassOwnPtr<DumpRenderTreeChrome> DumpRenderTreeChrome::create(Evas* evas)
 {
@@ -133,6 +137,10 @@ Evas_Object* DumpRenderTreeChrome::createView() const
     evas_object_smart_callback_add(view, "populate,visited,links", onWebViewPopulateVisitedLinks, 0);
     evas_object_smart_callback_add(view, "inspector,view,create", onInspectorViewCreate, 0);
     evas_object_smart_callback_add(view, "inspector,view,close", onInspectorViewClose, 0);
+    evas_object_smart_callback_add(view, "networkservices,request,started", onWebViewNetworkServicesRequestStarted, 0);
+    evas_object_smart_callback_add(view, "networkservices,request,updated", onWebViewNetworkServicesRequestUpdated, 0);
+    evas_object_smart_callback_add(view, "networkservices,request,finished", onWebViewNetworkServicesRequestFinished, 0);
+    evas_object_smart_callback_add(view, "networkservices,request,canceled", onWebViewNetworkServicesRequestCanceled, 0);
 
     connectEditingCallbacks(view);
 
@@ -242,6 +250,19 @@ void DumpRenderTreeChrome::clearExtraViews()
     for (; it != m_extraViews.end(); ++it)
         evas_object_del(*it);
     m_extraViews.clear();
+}
+
+void DumpRenderTreeChrome::clearNetworkServices(bool forceRemoveMockServices)
+{
+    Vector<Ewk_NetworkServices*>::iterator it = m_networkServices.begin();
+
+    for (; it != m_networkServices.end(); ++it)
+        ewk_network_services_free(*it);
+
+    m_networkServices.clear();
+
+    if (forceRemoveMockServices)
+        DumpRenderTreeSupportEfl::removeAllMockNetworkServices();
 }
 
 Evas_Object* DumpRenderTreeChrome::mainFrame() const
@@ -566,7 +587,8 @@ void DumpRenderTreeChrome::onWillSendRequest(void*, Evas_Object*, void* eventInf
 
     URL url = URL(ParsedURLString, messages->request->url);
 
-    if (url.isValid()
+    if (!m_forceNoBlockRequest  
+        && url.isValid()
         && url.protocolIsInHTTPFamily()
         && url.host() != "127.0.0.1"
         && url.host() != "255.255.255.255"
@@ -575,6 +597,7 @@ void DumpRenderTreeChrome::onWillSendRequest(void*, Evas_Object*, void* eventInf
         messages->request->url = 0;
         return;
     }
+    m_forceNoBlockRequest = EINA_FALSE;
 
     const std::string& destination = gTestRunner->redirectionDestinationForURL(url.string().utf8().data());
     if (destination.length())
@@ -689,6 +712,180 @@ void DumpRenderTreeChrome::onInspectorFrameLoadFinished(void*, Evas_Object*, voi
     if (inspectorView)
         ecore_main_loop_quit();
 }
+
+void DumpRenderTreeChrome::onWebViewNetworkServicesRequestStarted(void*, Evas_Object*, void* eventInfo)
+{
+    ASSERT(eventInfo);
+    Ewk_NetworkServices* services = static_cast<Ewk_NetworkServices*>(eventInfo);
+
+    if (m_networkServices.contains(services)) {
+        printf("ERROR : Adding an existing request\n");
+        return;
+    } else {
+        printf("Add request\n");
+        m_networkServices.append(services);
+    }
+}
+
+void DumpRenderTreeChrome::onWebViewNetworkServicesRequestUpdated(void*, Evas_Object*, void* eventInfo)
+{
+    ASSERT(eventInfo);
+    Ewk_NetworkServices* services = static_cast<Ewk_NetworkServices*>(eventInfo);
+    const char *origin = ewk_network_services_origin_get(services);
+
+    if (m_networkServices.contains(services)) {
+        // This notification able the browser list refresh.
+        // Deal the case when a discovery is finish, the browser has been notify 
+        // and a new service is publish or a sevice disapear.
+        printf("Update request (origin \"%s\")\n", origin);
+
+        if (m_waitNetworkServiceUpdate == EINA_TRUE) {
+            m_waitNetworkServiceUpdate = EINA_FALSE;
+            processNetworkServices();
+        }
+    } else 
+        printf("ERROR : Update an unknown request ?! (origin \"%s\")\n", origin);
+}
+
+void DumpRenderTreeChrome::onWebViewNetworkServicesRequestFinished(void*, Evas_Object*, void* eventInfo)
+{
+    processNetworkServices(); 
+
+    // TODO : Do not remove Ewk_NetworkServices which contain Ewk_NetworkService 
+    // with the config "keepRequest"
+    // Temporary : clear all Ewk_NetworkServices
+    if ((m_waitNetworkServiceUpdate == EINA_FALSE) && 
+        (m_waitNetworkServiceCancel == EINA_FALSE))
+        clearNetworkServices(false);
+}
+
+void DumpRenderTreeChrome::onWebViewNetworkServicesRequestCanceled(void*, Evas_Object*, void* eventInfo)
+{
+    ASSERT(eventInfo);
+    Ewk_NetworkServices* services = static_cast<Ewk_NetworkServices*>(eventInfo);
+    const char *origin = ewk_network_services_origin_get(services);
+    size_t pos = m_networkServices.find(services);
+
+    if (pos == notFound) 
+        printf("ERROR : Cancel an unknown request ?! (origin \"%s\")\n", origin);
+    else {
+        // This notification able the browser list refresh.
+        // Deal the case when a new network services request fire whereas there is a pending request.
+        printf("Cancel request (origin \"%s\")\n", origin);
+        m_networkServices.remove(pos);
+        ewk_network_services_free(services);
+    }
+}
+
+void DumpRenderTreeChrome::processNetworkServices()
+{
+    Vector<Ewk_NetworkServices*>::iterator it = m_networkServices.begin();
+
+    for (; it != m_networkServices.end(); ++it) {
+        Ewk_NetworkServices* services = *it;
+        const char *origin = ewk_network_services_origin_get(services);
+        unsigned long length = ewk_network_services_length_get(services);
+        unsigned long i; 
+        bool notify_denied = false;
+        bool skip_update = false;
+        unsigned int nb_allowed = 0; 
+        unsigned int nb_denied = 0; 
+        unsigned int nb_online = 0; 
+        unsigned int nb_offline = 0; 
+
+        printf("WebView network services request permission %ld service(s) (origin \"%s\")\n", length, origin);
+
+        for (i=0; i<length; i++) 
+        {
+            Ewk_NetworkService *service = ewk_network_services_item_get(services, i);
+            const char* type = ewk_network_service_type_get(service);
+            const char* config = ewk_network_service_config_get(service);
+            Eina_Bool online = ewk_network_service_is_online(service);
+
+            if (online == EINA_TRUE) nb_online++;
+            else nb_offline++;
+
+            if (strncmp(type, "zeroconf:_test-", 15) == 0) 
+            {
+                char *ptr = strdup(config);
+                char *sptr = ptr;
+                int len = strlen(ptr);
+                char *saveptr;
+                char *rule;
+    
+                /* remote '"' on config */
+                ptr[len-1] = '\0';
+                ptr++;
+
+                while ((rule = strtok_r(ptr, "|", &saveptr)) != NULL) {
+                    ptr = NULL;
+                    if (!strcmp(rule, "allowed")) {
+                        /* Apply security policy */
+                        Eina_Bool corsEnable = ewk_network_service_is_cors_enable(service);
+
+                        if (corsEnable == EINA_FALSE) {
+                            char* dest = strdup(ewk_network_service_url_get(service));
+                            char* p;
+        
+                            p = strchr(dest, ':'); /* offset "protocol://" */
+                            p+= 3; /* skip "://" */
+                            p = strchr(p, '/');
+                            if (p) p[0] = '\0';
+
+                            ewk_security_policy_whitelist_origin_add(origin, dest, EINA_TRUE);
+                            free(dest);
+                        }
+                        
+                        ewk_network_service_allowed_set(service, EINA_TRUE);
+                        nb_allowed++;
+                    }  else if (!strcmp(rule, "denied")) {
+                        ewk_network_service_allowed_set(service, EINA_FALSE);
+                        nb_denied++;
+                    } else if (!strcmp(rule, "all_denied")) {
+                        notify_denied = true;
+                    } else if (!strcmp(rule, "wait_update") && !skip_update && online) {
+                        m_waitNetworkServiceUpdate = EINA_TRUE;
+                    } else if (!strcmp(rule, "skip_update")) {
+                        skip_update = true;
+                        m_waitNetworkServiceUpdate = EINA_FALSE;
+                    } else if (!strcmp(rule, "wait_cancel_once")) {
+                        if (m_waitNetworkServiceCancel == EINA_TRUE)
+                            m_waitNetworkServiceCancel = EINA_FALSE;
+                        else
+                            m_waitNetworkServiceCancel = EINA_TRUE;
+                    }
+
+                }
+
+                free(sptr);
+
+            }
+            else if (strncmp(type, "upnp:", 5) == 0)
+            {
+            }
+        }
+        m_forceNoBlockRequest = EINA_TRUE;
+
+        if ((m_waitNetworkServiceUpdate == EINA_TRUE) || (m_waitNetworkServiceCancel == EINA_TRUE))
+            continue;
+
+        printf("\tServices:\n");
+        printf("\t - %d allowed\n", nb_allowed);
+        printf("\t - %d denied\n", nb_denied);
+        printf("\t - %d online\n", nb_online);
+        printf("\t - %d offline\n", nb_offline);
+
+        if (notify_denied)
+            ewk_network_services_denied_notify(services);
+        else
+            ewk_network_services_allowed_notify(services);
+
+        /* TODO : remove Ewk_NetworkServices ??? */
+        /*m_networkServices.remove(services);
+        ewk_network_services_free(services);*/
+    }
+    
+   }
 
 void DumpRenderTreeChrome::onFrameProvisionalLoad(void*, Evas_Object* frame, void*)
 {

@@ -257,6 +257,12 @@ public:
     void setMockGeolocationPosition(double latitude, double longitude, double accuracy, JSValueRef altitude, JSValueRef altitudeAccuracy, JSValueRef heading, JSValueRef speed);
     void setMockGeolocationPositionUnavailableError(JSStringRef message);
 
+    // Network Services Discovery
+    void addMockNetworkService(JSStringRef name, JSStringRef type, JSStringRef config, JSStringRef host);
+    void removeMockNetworkService(JSStringRef id);
+    void addMockSwitchPowerUpnpService();
+    void removeMockSwitchPowerUpnpService();
+
     void setPageVisibility(JSStringRef state);
     void resetPageVisibility();
 

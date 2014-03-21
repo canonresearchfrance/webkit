@@ -159,6 +159,21 @@ private:
     static void decidePolicyForResponse(WKPageRef, WKFrameRef, WKURLResponseRef, WKURLRequestRef, bool canShowMIMEType, WKFramePolicyListenerRef, WKTypeRef, const void*);
     void decidePolicyForResponse(WKFrameRef, WKURLResponseRef, WKFramePolicyListenerRef);
 
+    // WKPageNetworkServicesClient
+    void processNetworkServices(WKPageRef);
+
+    static void didNetworkServicesRequestStarted(WKPageRef, WKNetworkServicesRequestRef, const void*);
+    void didNetworkServicesRequestStarted(WKPageRef, WKNetworkServicesRequestRef);
+
+    static void didNetworkServicesRequestFinished(WKPageRef, const void*);
+    void didNetworkServicesRequestFinished(WKPageRef);
+
+    static void didNetworkServicesRequestUpdated(WKPageRef, WKNetworkServicesRequestRef, const void*);
+    void didNetworkServicesRequestUpdated(WKPageRef, WKNetworkServicesRequestRef);
+
+    static void didNetworkServicesRequestCanceled(WKPageRef, WKNetworkServicesRequestRef, const void*);
+    void didNetworkServicesRequestCanceled(WKPageRef, WKNetworkServicesRequestRef);
+
     static WKPageRef createOtherPage(WKPageRef oldPage, WKURLRequestRef, WKDictionaryRef, WKEventModifiers, WKEventMouseButton, const void*);
 
     static void runModal(WKPageRef, const void* clientInfo);
@@ -212,6 +227,10 @@ private:
 
     bool m_policyDelegateEnabled;
     bool m_policyDelegatePermissive;
+
+    Vector<WKNetworkServicesRequestRef> m_networkServicesRequests;
+    bool m_waitNetworkServiceUpdate;
+    bool m_waitNetworkServiceCancel;
 
     bool m_handlesAuthenticationChallenges;
     String m_authenticationUsername;

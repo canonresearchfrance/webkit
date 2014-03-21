@@ -36,6 +36,9 @@
 #include <WebKit2/WKContextPrivate.h>
 #include <WebKit2/WKCredential.h>
 #include <WebKit2/WKIconDatabase.h>
+#include <WebKit2/WKNetworkService.h>
+#include <WebKit2/WKNetworkServicesManager.h>
+#include <WebKit2/WKNetworkServicesRequest.h>
 #include <WebKit2/WKNotification.h>
 #include <WebKit2/WKNotificationManager.h>
 #include <WebKit2/WKNotificationPermissionRequest.h>
@@ -116,6 +119,8 @@ TestController::TestController(int argc, const char* argv[])
     , m_isGeolocationPermissionAllowed(false)
     , m_policyDelegateEnabled(false)
     , m_policyDelegatePermissive(false)
+    , m_waitNetworkServiceUpdate(false)
+    , m_waitNetworkServiceCancel(false)
     , m_handlesAuthenticationChallenges(false)
     , m_shouldBlockAllPlugins(false)
     , m_forceComplexText(false)
@@ -490,6 +495,15 @@ void TestController::createWebViewWithOptions(WKDictionaryRef options)
     };
     WKPageSetPagePolicyClient(m_mainWebView->page(), &pagePolicyClient.base);
 
+    WKPageNetworkServicesClientV0 networkServicesClient = {
+        { 0, this },
+        didNetworkServicesRequestStarted,
+        didNetworkServicesRequestFinished,
+        didNetworkServicesRequestUpdated,
+        didNetworkServicesRequestCanceled
+    };
+    WKPageSetNetworkServicesClient(m_mainWebView->page(), &networkServicesClient.base);
+
     m_mainWebView->didInitializeClients();
 }
 
@@ -612,6 +626,10 @@ bool TestController::resetStateToConsistentValues()
     m_geolocationPermissionRequests.clear();
     m_isGeolocationPermissionSet = false;
     m_isGeolocationPermissionAllowed = false;
+
+    // Reset Network services status.
+    m_waitNetworkServiceUpdate = false;
+    m_waitNetworkServiceCancel = false;
 
     // Reset Custom Policy Delegate.
     setCustomPolicyDelegate(false, false);
@@ -1280,6 +1298,180 @@ void TestController::decidePolicyForResponse(WKFrameRef frame, WKURLResponseRef 
     }
 
     WKFramePolicyListenerIgnore(listener);
+}
+
+void TestController::processNetworkServices(WKPageRef page) 
+{
+    for (size_t i = 0; i < m_networkServicesRequests.size(); i++) {
+        WKNetworkServicesRequestRef request = m_networkServicesRequests[i];
+        unsigned long length = WKNetworkServicesRequestGetLength(request);
+        WKStringRef originRef = WKNetworkServicesRequestGetOrigin(request);
+        bool notify_denied = false;
+        bool skip_update = false;        
+        unsigned int nb_allowed = 0; 
+        unsigned int nb_denied = 0; 
+        unsigned int nb_online = 0; 
+        unsigned int nb_offline = 0;
+
+        printf("WebView network services request permission %ld service(s) (origin \"%s\")\n", length, toSTD(originRef).c_str());
+
+        for (size_t index=0; index<length; index++) 
+        {
+            WKNetworkServiceRef service = WKNetworkServicesRequestGetItem(request, index);
+            WKStringRef idRef = WKNetworkServiceGetId(service);
+            WKStringRef typeRef = WKNetworkServiceGetType(service);
+            WKStringRef configRef = WKNetworkServiceGetConfig(service);
+            bool online = WKNetworkServiceIsOnline(service);
+            const char* type = toSTD(typeRef).c_str();
+
+            if (online) nb_online++;
+            else nb_offline++;
+
+            if (strncmp(type, "zeroconf:_test-", 15) == 0) 
+            {
+                const char* config = toSTD(configRef).c_str();
+                char *ptr = strdup(config);
+                char *sptr = ptr;
+                int len = strlen(ptr);
+                char *saveptr;
+                char *rule;
+    
+                /* remote '"' on config */
+                ptr[len-1] = '\0';
+                ptr++;
+
+                while ((rule = strtok_r(ptr, "|", &saveptr)) != NULL) {
+                    ptr = NULL;
+                    if (!strcmp(rule, "allowed")) {
+                        /* Apply security policy */
+                        bool corsEnable = WKNetworkServiceIsCorsEnable(service);
+
+                        if (corsEnable == EINA_FALSE) {
+                            WKStringRef destRef = WKNetworkServiceGetUrl(service);
+                            char* dest = strdup(toSTD(destRef).c_str());
+                            char* p;
+        
+                            p = strchr(dest, ':'); /* offset "protocol://" */
+                            p+= 3; /* skip "://" */
+                            p = strchr(p, '/');
+                            if (p) p[0] = '\0';
+
+                            // TODO : Whitelist origin for legacy devices src (origin)
+                            free(dest);
+                        }
+
+                        WKNetworkServicesRequestSetServiceAlllowed(request, idRef, true);
+                        nb_allowed++;
+                    }  else if (!strcmp(rule, "denied")) {
+                        WKNetworkServicesRequestSetServiceAlllowed(request, idRef, false);
+                        nb_denied++;
+                    } else if (!strcmp(rule, "all_denied")) {
+                        notify_denied = true;
+                    } else if (!strcmp(rule, "wait_update") && !skip_update && online) {
+                        m_waitNetworkServiceUpdate = true;
+                    } else if (!strcmp(rule, "skip_update")) {
+                        skip_update = true;
+                        m_waitNetworkServiceUpdate = false;
+                    } else if (!strcmp(rule, "wait_cancel_once")) {
+                        if (m_waitNetworkServiceCancel)
+                            m_waitNetworkServiceCancel = false;
+                        else
+                            m_waitNetworkServiceCancel = true;
+                    }
+                }
+
+                free(sptr);
+            }
+            /*else if (strcmp(type, "upnp:...???") == 0)
+            {
+            }*/
+        }
+
+        if (m_waitNetworkServiceUpdate || m_waitNetworkServiceCancel)
+            continue;
+
+        printf("\tServices:\n");
+        printf("\t - %d allowed\n", nb_allowed);
+        printf("\t - %d denied\n", nb_denied);
+        printf("\t - %d online\n", nb_online);
+        printf("\t - %d offline\n", nb_offline);
+
+        if (notify_denied) {
+            WKNetworkServicesRequestNotifyDenied(request);
+        } else {
+            WKNetworkServicesRequestNotifyAllowed(request);
+        }
+    }
+}
+
+void TestController::didNetworkServicesRequestStarted(WKPageRef page, WKNetworkServicesRequestRef request, const void* clientInfo)
+{
+    static_cast<TestController*>(const_cast<void*>(clientInfo))->didNetworkServicesRequestStarted(page, request);
+}
+
+void TestController::didNetworkServicesRequestStarted(WKPageRef page, WKNetworkServicesRequestRef request)
+{
+    if (m_networkServicesRequests.contains(request)) {
+        printf("ERROR : Adding an existing request\n");
+        return;
+    } else {
+        printf("Add request\n");
+        m_networkServicesRequests.append(request);
+    }
+}
+
+void TestController::didNetworkServicesRequestFinished(WKPageRef page, const void* clientInfo)
+{
+    static_cast<TestController*>(const_cast<void*>(clientInfo))->didNetworkServicesRequestFinished(page);
+}
+
+void TestController::didNetworkServicesRequestFinished(WKPageRef page)
+{
+    processNetworkServices(page);
+
+    if (!m_waitNetworkServiceUpdate && !m_waitNetworkServiceCancel)
+        m_networkServicesRequests.clear();
+}
+
+void TestController::didNetworkServicesRequestUpdated(WKPageRef page, WKNetworkServicesRequestRef request, const void* clientInfo)
+{
+    static_cast<TestController*>(const_cast<void*>(clientInfo))->didNetworkServicesRequestUpdated(page, request);
+}
+
+void TestController::didNetworkServicesRequestUpdated(WKPageRef page, WKNetworkServicesRequestRef request)
+{
+    WKStringRef originRef = WKNetworkServicesRequestGetOrigin(request);
+
+    if (m_networkServicesRequests.contains(request)) {
+        printf("Update request (origin \"%s\")\n", toSTD(originRef).c_str());
+
+        if (m_waitNetworkServiceUpdate) {
+            m_waitNetworkServiceUpdate = false;
+            processNetworkServices(page);
+
+            if (!m_waitNetworkServiceUpdate)
+                m_networkServicesRequests.clear();
+        }
+    } else 
+        printf("ERROR : Update an unknown request ?! (origin \"%s\")\n", toSTD(originRef).c_str());
+}
+
+void TestController::didNetworkServicesRequestCanceled(WKPageRef page, WKNetworkServicesRequestRef request, const void* clientInfo)
+{
+    static_cast<TestController*>(const_cast<void*>(clientInfo))->didNetworkServicesRequestCanceled(page, request);
+}
+
+void TestController::didNetworkServicesRequestCanceled(WKPageRef page, WKNetworkServicesRequestRef request)
+{
+    WKStringRef originRef = WKNetworkServicesRequestGetOrigin(request);
+    size_t pos = m_networkServicesRequests.find(request);
+
+    if (pos == notFound) 
+        printf("ERROR : Cancel an unknown request ?! (origin \"%s\")\n", toSTD(originRef).c_str());
+    else {
+        printf("Cancel request (origin \"%s\")\n", toSTD(originRef).c_str());
+        m_networkServicesRequests.remove(pos);
+    }
 }
 
 } // namespace WTR

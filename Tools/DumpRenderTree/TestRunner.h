@@ -102,6 +102,10 @@ public:
     void setMockDeviceOrientation(bool canProvideAlpha, double alpha, bool canProvideBeta, double beta, bool canProvideGamma, double gamma);
     void setMockGeolocationPosition(double latitude, double longitude, double accuracy, bool providesAltitude, double altitude, bool providesAltitudeAccuracy, double altitudeAccuracy, bool providesHeading, double heading, bool providesSpeed, double speed);
     void setMockGeolocationPositionUnavailableError(JSStringRef message);
+    void addMockNetworkService(JSStringRef name, JSStringRef type, JSStringRef config, JSStringRef host);
+    void removeMockNetworkService(JSStringRef id);
+    void addMockSwitchPowerUpnpService();
+    void removeMockSwitchPowerUpnpService();
     void addMockSpeechInputResult(JSStringRef result, double confidence, JSStringRef language);
     void setMockSpeechInputDumpRect(bool flag);
     void setPersistentUserStyleSheetLocation(JSStringRef path);

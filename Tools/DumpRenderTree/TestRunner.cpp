@@ -1104,6 +1104,67 @@ static JSValueRef setMockGeolocationPositionUnavailableErrorCallback(JSContextRe
     return JSValueMakeUndefined(context);
 }
 
+#if ENABLE(DISCOVERY)
+static JSValueRef addMockNetworkServiceCallback(JSContextRef context, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], JSValueRef* exception)
+{
+    if (argumentCount < 4)
+        return JSValueMakeUndefined(context);
+
+    JSRetainPtr<JSStringRef> name(Adopt, JSValueToStringCopy(context, arguments[0], exception));
+    ASSERT(!*exception);
+
+    JSRetainPtr<JSStringRef> type(Adopt, JSValueToStringCopy(context, arguments[1], exception));
+    ASSERT(!*exception);
+
+    JSRetainPtr<JSStringRef> config(Adopt, JSValueToStringCopy(context, arguments[2], exception));
+    ASSERT(!*exception);
+
+    JSRetainPtr<JSStringRef> host(Adopt, JSValueToStringCopy(context, arguments[3], exception));
+    ASSERT(!*exception);
+
+    TestRunner* controller = static_cast<TestRunner*>(JSObjectGetPrivate(thisObject));
+    controller->addMockNetworkService(name.get(), type.get(), config.get(), host.get());
+
+    return JSValueMakeUndefined(context);
+}
+
+static JSValueRef removeMockNetworkServiceCallback(JSContextRef context, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], JSValueRef* exception)
+{
+    if (argumentCount < 1)
+        return JSValueMakeUndefined(context);
+
+    JSRetainPtr<JSStringRef> id(Adopt, JSValueToStringCopy(context, arguments[0], exception));
+    ASSERT(!*exception);
+
+    TestRunner* controller = static_cast<TestRunner*>(JSObjectGetPrivate(thisObject));
+    controller->removeMockNetworkService(id.get());
+
+    return JSValueMakeUndefined(context);
+}
+
+static JSValueRef addMockSwitchPowerUpnpServiceCallback(JSContextRef context, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], JSValueRef* exception)
+{
+    if (argumentCount != 0)
+        return JSValueMakeUndefined(context);
+
+    TestRunner* controller = static_cast<TestRunner*>(JSObjectGetPrivate(thisObject));
+    controller->addMockSwitchPowerUpnpService();
+
+    return JSValueMakeUndefined(context);
+}
+
+static JSValueRef removeMockSwitchPowerUpnpServiceCallback(JSContextRef context, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], JSValueRef* exception)
+{
+    if (argumentCount != 0)
+        return JSValueMakeUndefined(context);
+
+    TestRunner* controller = static_cast<TestRunner*>(JSObjectGetPrivate(thisObject));
+    controller->removeMockSwitchPowerUpnpService();
+
+    return JSValueMakeUndefined(context);
+}
+#endif
+
 static JSValueRef addMockSpeechInputResultCallback(JSContextRef context, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], JSValueRef* exception)
 {
     if (argumentCount < 3)
@@ -2178,6 +2239,12 @@ JSStaticFunction* TestRunner::staticFunctions()
         { "setMockDeviceOrientation", setMockDeviceOrientationCallback, kJSPropertyAttributeReadOnly | kJSPropertyAttributeDontDelete },
         { "setMockGeolocationPositionUnavailableError", setMockGeolocationPositionUnavailableErrorCallback, kJSPropertyAttributeReadOnly | kJSPropertyAttributeDontDelete },
         { "setMockGeolocationPosition", setMockGeolocationPositionCallback, kJSPropertyAttributeReadOnly | kJSPropertyAttributeDontDelete },
+#if ENABLE(DISCOVERY)
+        { "addMockNetworkService", addMockNetworkServiceCallback, kJSPropertyAttributeReadOnly | kJSPropertyAttributeDontDelete },
+        { "removeMockNetworkService", removeMockNetworkServiceCallback, kJSPropertyAttributeReadOnly | kJSPropertyAttributeDontDelete },
+        { "addMockSwitchPowerUpnpService", addMockSwitchPowerUpnpServiceCallback, kJSPropertyAttributeReadOnly | kJSPropertyAttributeDontDelete },
+        { "removeMockSwitchPowerUpnpService", removeMockSwitchPowerUpnpServiceCallback, kJSPropertyAttributeReadOnly | kJSPropertyAttributeDontDelete },
+#endif
         { "addMockSpeechInputResult", addMockSpeechInputResultCallback, kJSPropertyAttributeReadOnly | kJSPropertyAttributeDontDelete },
         { "setMockSpeechInputDumpRect", setMockSpeechInputDumpRectCallback, kJSPropertyAttributeReadOnly | kJSPropertyAttributeDontDelete },
         { "setNewWindowsCopyBackForwardList", setNewWindowsCopyBackForwardListCallback, kJSPropertyAttributeReadOnly | kJSPropertyAttributeDontDelete },

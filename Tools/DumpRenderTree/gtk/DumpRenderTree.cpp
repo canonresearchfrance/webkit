@@ -97,6 +97,12 @@ bool waitForPolicy = false;
 // This is a list of opened webviews
 GSList* webViewList = 0;
 
+// This is a list of network services requests
+static GSList* networkServicesList = 0;
+static gboolean waitNetworkServiceUpdate = FALSE;
+static gboolean waitNetworkServiceCancel = FALSE;
+static gboolean forceNoBlockRequest = FALSE;
+
 // current b/f item at the end of the previous test
 static WebKitWebHistoryItem* prevTestBFItem = NULL;
 
@@ -105,6 +111,15 @@ const unsigned historyItemIndent = 8;
 static void runTest(const string& inputLine);
 
 static void didRunInsecureContent(WebKitWebFrame*, WebKitSecurityOrigin*, const char* url);
+
+static void clearNetworkServices(gboolean forceRemoveMockServices)
+{
+    g_slist_free(networkServicesList);
+    networkServicesList = 0;
+
+    if (forceRemoveMockServices)
+        DumpRenderTreeSupportGtk::removeAllMockNetworkServices();
+}
 
 static bool shouldLogFrameLoadDelegates(const string& pathOrURL)
 {
@@ -770,6 +785,8 @@ static void runTest(const string& inputLine)
     WorkQueue::shared()->clear();
     WorkQueue::shared()->setFrozen(false);
 
+    clearNetworkServices(TRUE);
+
     bool isSVGW3CTest = (testURL.find("svg/W3C-SVG-1.1") != string::npos);
     GtkAllocation size;
     size.x = size.y = 0;
@@ -1090,6 +1107,170 @@ geolocationPolicyDecisionRequested(WebKitWebView*, WebKitWebFrame*, WebKitGeoloc
     return TRUE;
 }
 
+static void processNetworkServices()
+{
+    for(GSList *node = networkServicesList; node; node = g_slist_next(node)) {
+        WebKitNetworkServices* services = WEBKIT_NETWORK_SERVICES(node->data);
+        const gchar* origin = webkit_network_services_get_origin(services);
+        unsigned long length = webkit_network_services_get_length(services);
+        GSList *allServices = webkit_network_services_get_all_services(services);
+        gboolean notify_denied = FALSE;
+        gboolean skip_update = FALSE;
+        guint nb_allowed = 0;
+        guint nb_denied = 0;
+        guint nb_online = 0;
+        guint nb_offline = 0;
+
+        printf("WebView network services request permission %ld service(s) (origin \"%s\")\n", length, origin);
+
+        for(GSList *srv = allServices; srv; srv = g_slist_next(srv))
+        {
+            WebKitNetworkService *service = WEBKIT_NETWORK_SERVICE(srv->data);
+            const gchar* type = webkit_network_service_get_servicetype(service);
+            const gchar* config = webkit_network_service_get_config(service);
+            gboolean online = webkit_network_service_is_online(service);
+
+            if (online == TRUE) nb_online++;
+            else nb_offline++;
+
+            if (strncmp(type, "zeroconf:_test-", 15) == 0)
+            {
+                char *ptr = strdup(config);
+                char *sptr = ptr;
+                int len = strlen(ptr);
+                char *saveptr;
+                char *rule;
+
+                /* remote '"' on config */
+                ptr[len-1] = '\0';
+                ptr++;
+
+                while ((rule = strtok_r(ptr, "|", &saveptr)) != NULL) {
+                    ptr = NULL;
+                    if (!strcmp(rule, "allowed")) {
+                        bool corsEnable = webkit_network_service_is_cors_enable(service);
+                        
+                        if (corsEnable == EINA_FALSE) {
+                            char* dest = strdup(webkit_network_service_get_url(service));
+                            char* p;
+        
+                            p = strchr(dest, ':'); /* offset "protocol://" */
+                            p+= 3; /* skip "://" */
+                            p = strchr(p, '/');
+                            if (p) p[0] = '\0';
+
+                            // TODO : Whitelist origin for legacy devices src (origin)
+                            free(dest);
+                        }
+
+                        webkit_network_service_set_allowed(service, TRUE);
+                        nb_allowed++;
+                    }  else if (!strcmp(rule, "denied")) {
+                        webkit_network_service_set_allowed(service, FALSE);
+                        nb_denied++;
+                    } else if (!strcmp(rule, "all_denied")) {
+                        notify_denied = true;
+                    } else if (!strcmp(rule, "wait_update") && !skip_update && online) {
+                        waitNetworkServiceUpdate = TRUE;
+                    } else if (!strcmp(rule, "skip_update")) {
+                        skip_update = true;
+                        waitNetworkServiceUpdate = FALSE;
+                    } else if (!strcmp(rule, "wait_cancel_once")) {
+                        if (waitNetworkServiceCancel == TRUE)
+                            waitNetworkServiceCancel = FALSE;
+                        else
+                            waitNetworkServiceCancel = TRUE;
+                    }
+
+                }
+
+                free(sptr);
+
+            }
+            else if (strncmp(type, "upnp:", 5) == 0)
+            {
+            }
+        }
+        forceNoBlockRequest = TRUE;
+
+        if ((waitNetworkServiceUpdate == TRUE) || (waitNetworkServiceCancel == TRUE))
+            continue;
+
+        printf("\tServices:\n");
+        printf("\t - %d allowed\n", nb_allowed);
+        printf("\t - %d denied\n", nb_denied);
+        printf("\t - %d online\n", nb_online);
+        printf("\t - %d offline\n", nb_offline);
+
+        if (notify_denied)
+            webkit_network_services_notify_denied(services);
+        else
+            webkit_network_services_notify_allowed(services);
+
+        /* TODO : remove WebKitNetworkServices ??? */
+        /*g_slist_remove(networkServicesList, services);
+        g_object_unref(services);*/
+    }
+}
+
+static void networkServicesRequestStarted(WebKitWebView*, WebKitNetworkServices* networkServices)
+{
+    ASSERT(networkServices);
+
+    if (g_slist_find(networkServicesList, networkServices))
+        printf("ERROR : Adding an existing request\n");
+    else {
+        printf("Add request\n");
+        g_object_ref(networkServices);
+        networkServicesList = g_slist_prepend(networkServicesList, networkServices);
+    }
+}
+
+static void networkServicesRequestFinished(WebKitWebView*)
+{
+    processNetworkServices();
+
+    if ((waitNetworkServiceUpdate == FALSE) &&
+        (waitNetworkServiceCancel == FALSE))
+        clearNetworkServices(FALSE);
+}
+
+static void networkServicesRequestUpdated(WebKitWebView*, WebKitNetworkServices* networkServices)
+{
+    ASSERT(networkServices);
+
+    const gchar* origin = webkit_network_services_get_origin(networkServices);
+
+    if (g_slist_find(networkServicesList, networkServices)) {
+        // This notification able the browser list refresh.
+        // Deal the case when a discovery is finish, the browser has been notify
+        // and a new service is publish or a sevice disapear.
+        printf("Update request (origin \"%s\")\n", origin);
+
+        if (waitNetworkServiceUpdate == TRUE) {
+            waitNetworkServiceUpdate = FALSE;
+            processNetworkServices();
+        }
+    } else
+        printf("ERROR : Update an unknown request ?! (origin \"%s\")\n", origin);
+}
+
+static void networkServicesRequestCanceled(WebKitWebView*, WebKitNetworkServices* networkServices)
+{
+    ASSERT(networkServices);
+    const gchar* origin = webkit_network_services_get_origin(networkServices);
+    gint index = g_slist_index(networkServicesList, networkServices);
+
+    if (index == -1)
+        printf("ERROR : Cancel an unknown request ?! (origin \"%s\")\n", origin);
+    else {
+        // This notification able the browser list refresh.
+        // Deal the case when a new network services request fire whereas there is a pending request.
+        printf("Cancel request (origin \"%s\")\n", origin);
+        networkServicesList = g_slist_remove(networkServicesList, networkServices);
+        g_object_unref(networkServices);
+    }
+}
 
 static WebKitWebView* webViewCreate(WebKitWebView*, WebKitWebFrame*);
 
@@ -1306,7 +1487,8 @@ static void willSendRequestCallback(WebKitWebView* webView, WebKitWebFrame* webF
     if (SOUP_URI_IS_VALID(uri)) {
         GUniquePtr<char> uriString(soup_uri_to_string(uri, FALSE));
 
-        if (SOUP_URI_VALID_FOR_HTTP(uri) && g_strcmp0(uri->host, "127.0.0.1")
+        if (!forceNoBlockRequest
+            && SOUP_URI_VALID_FOR_HTTP(uri) && g_strcmp0(uri->host, "127.0.0.1")
             && g_strcmp0(uri->host, "255.255.255.255")
             && g_ascii_strncasecmp(uri->host, "localhost", 9)) {
             printf("Blocked access to external URL %s\n", uriString.get());
@@ -1316,6 +1498,7 @@ static void willSendRequestCallback(WebKitWebView* webView, WebKitWebFrame* webF
             soup_uri_free(uri);
             return;
         }
+        forceNoBlockRequest = FALSE;
 
         const string& destination = gTestRunner->redirectionDestinationForURL(uriString.get());
         if (!destination.empty())
@@ -1444,6 +1627,10 @@ static WebKitWebView* createWebView()
                      "signal::database-quota-exceeded", databaseQuotaExceeded, 0,
                      "signal::document-load-finished", webViewDocumentLoadFinished, 0,
                      "signal::geolocation-policy-decision-requested", geolocationPolicyDecisionRequested, 0,
+                     "signal::networkservices-request-started", networkServicesRequestStarted, 0,
+                     "signal::networkservices-request-finished", networkServicesRequestFinished, 0,
+                     "signal::networkservices-request-updated", networkServicesRequestUpdated, 0,
+                     "signal::networkservices-request-canceled", networkServicesRequestCanceled, 0,
                      "signal::onload-event", webViewOnloadEvent, 0,
                      "signal::drag-begin", dragBeginCallback, 0,
                      "signal::drag-end", dragEndCallback, 0,

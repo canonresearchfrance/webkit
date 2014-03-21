@@ -169,6 +169,12 @@ interface TestRunner {
     void setMockGeolocationPosition(double latitude, double longitude, double accuracy, [Default=Undefined] optional object altitude, optional object altitudeAccuracy, optional object heading, optional object speed);
     void setMockGeolocationPositionUnavailableError(DOMString errorMessage);
 
+    // Network Services Discovery
+    void addMockNetworkService(in DOMString name, in DOMString type, in DOMString config, in DOMString host);
+    void removeMockNetworkService(in DOMString id);
+    void addMockSwitchPowerUpnpService();
+    void removeMockSwitchPowerUpnpService();
+
     // Audio testing.
     [PassContext] void setAudioResult(object data);
 

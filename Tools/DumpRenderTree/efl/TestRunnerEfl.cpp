@@ -367,6 +367,26 @@ void TestRunner::setGeolocationPermission(bool allow)
     DumpRenderTreeSupportEfl::setMockGeolocationPermission(view, allow);
 }
 
+void TestRunner::addMockNetworkService(JSStringRef name, JSStringRef type, JSStringRef config, JSStringRef host)
+{
+    DumpRenderTreeSupportEfl::addMockNetworkService(name->string().utf8().data(), type->string().utf8().data(), config->string().utf8().data(), host->string().utf8().data());
+}
+
+void TestRunner::removeMockNetworkService(JSStringRef id)
+{
+    DumpRenderTreeSupportEfl::removeMockNetworkService(id->string().utf8().data());
+}
+
+void TestRunner::addMockSwitchPowerUpnpService()
+{
+    DumpRenderTreeSupportEfl::addMockSwitchPowerUpnpService();
+}
+
+void TestRunner::removeMockSwitchPowerUpnpService()
+{
+    DumpRenderTreeSupportEfl::removeMockSwitchPowerUpnpService();
+}
+
 int TestRunner::numberOfPendingGeolocationPermissionRequests()
 {
     Evas_Object* view = browser->mainView();

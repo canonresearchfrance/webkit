@@ -305,6 +305,7 @@ static void runTest(const char* inputLine)
     gTestRunner->setDeveloperExtrasEnabled(false);
 
     browser->clearExtraViews();
+    DumpRenderTreeChrome::clearNetworkServices();
 
     // FIXME: Move to DRTChrome::resetDefaultsToConsistentValues() after bug 85209 lands.
     WebCoreTestSupport::resetInternalsObject(DumpRenderTreeSupportEfl::globalContextRefForFrame(browser->mainFrame()));
