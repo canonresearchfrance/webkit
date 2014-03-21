@@ -1,0 +1,10 @@
+
+interface NotifyEvent : Event {
+
+    readonly attribute DOMString data;
+
+    void initNotifyEvent([Default=Undefined] optional DOMString typeArg, 
+                       [Default=Undefined] optional boolean canBubbleArg, 
+                       [Default=Undefined] optional boolean cancelableArg, 
+                       [Default=Undefined] optional DOMString dataArg);
+};

@@ -30,6 +30,7 @@ namespace WebCore {
 #define DOM_EVENT_NAMES_FOR_EACH(macro) \
     \
     macro(abort) \
+    macro(available) \
     macro(beforecopy) \
     macro(beforecut) \
     macro(beforeload) \
@@ -94,6 +95,7 @@ namespace WebCore {
     macro(mouseover) \
     macro(mouseup) \
     macro(mousewheel) \
+    macro(notify) \
     macro(noupdate) \
     macro(obsolete) \
     macro(offline) \
@@ -112,9 +114,12 @@ namespace WebCore {
     macro(select) \
     macro(selectstart) \
     macro(selectionchange) \
+    macro(servicefound) \
+    macro(servicelost) \
     macro(storage) \
     macro(submit) \
     macro(textInput) \
+    macro(unavailable) \
     macro(unload) \
     macro(updateready) \
     macro(upgradeneeded) \
