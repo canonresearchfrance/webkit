@@ -126,6 +126,13 @@ public:
     static void setMockGeolocationPositionUnavailableError(const Evas_Object*, const char* errorMessage);
     static int numberOfPendingGeolocationPermissionRequests(const Evas_Object*);
 
+    // Network Services Discovery
+    static void addMockNetworkService(const char* name, const char* type, const char* config, const char* host);
+    static void removeMockNetworkService(const char* id);
+    static void removeAllMockNetworkServices();
+    static void addMockSwitchPowerUpnpService();
+    static void removeMockSwitchPowerUpnpService();
+
 #if HAVE(ACCESSIBILITY)
     static AtkObject* focusedAccessibleElement(const Evas_Object*);
     static AtkObject* rootAccessibleElement(const Evas_Object*);

@@ -113,6 +113,10 @@
 #include "NetworkInfoClientEfl.h"
 #endif
 
+#if ENABLE(DISCOVERY)
+#include "NetworkServicesClientEfl.h"
+#endif
+
 #if ENABLE(INPUT_TYPE_COLOR)
 #include "ColorChooserClient.h"
 #endif
@@ -685,6 +689,10 @@ static Ewk_View_Private_Data* _ewk_view_priv_new(Ewk_View_Smart_Data* smartData)
 
 #if ENABLE(NETWORK_INFO)
     WebCore::provideNetworkInfoTo(priv->page.get(), new WebCore::NetworkInfoClientEfl);
+#endif
+
+#if ENABLE(DISCOVERY)
+    WebCore::provideNetworkServicesTo(priv->page.get(), new NetworkServicesClientEfl(smartData->self, priv->page.get()));
 #endif
 
 #if ENABLE(VIBRATION)

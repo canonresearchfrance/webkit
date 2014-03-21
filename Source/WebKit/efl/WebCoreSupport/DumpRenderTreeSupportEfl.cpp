@@ -75,6 +75,11 @@
 #include <wtf/CurrentTime.h>
 #endif
 
+#if ENABLE(DISCOVERY)
+#include <NetworkServicePublisherAvahiMock.h>
+#include <NetworkServicePublisherGupnpMock.h>
+#endif
+
 #if HAVE(ACCESSIBILITY)
 #include "AXObjectCache.h"
 #include "AccessibilityObject.h"
@@ -725,6 +730,48 @@ int DumpRenderTreeSupportEfl::numberOfPendingGeolocationPermissionRequests(const
 #else
     UNUSED_PARAM(ewkView);
     return 0;
+#endif
+}
+
+void DumpRenderTreeSupportEfl::addMockNetworkService(const char* name, const char* type, const char* config, const char* host)
+{
+#if ENABLE(DISCOVERY)
+    WebCore::NetworkServicePublisherAvahiMock::addService(name, type, config, host);
+#else
+    UNUSED_PARAM(name);
+    UNUSED_PARAM(type);
+    UNUSED_PARAM(config);
+    UNUSED_PARAM(host);
+#endif
+}
+
+void DumpRenderTreeSupportEfl::removeMockNetworkService(const char* id)
+{
+#if ENABLE(DISCOVERY)
+    WebCore::NetworkServicePublisherAvahiMock::removeService(id);
+#else
+    UNUSED_PARAM(id);
+#endif
+}
+
+void DumpRenderTreeSupportEfl::removeAllMockNetworkServices()
+{
+#if ENABLE(DISCOVERY)
+    WebCore::NetworkServicePublisherAvahiMock::removeAllServices();
+#endif
+}
+
+void DumpRenderTreeSupportEfl::addMockSwitchPowerUpnpService()
+{
+#if ENABLE(DISCOVERY)
+    WebCore::NetworkServicePublisherGupnpMock::addSwitchPowerService();
+#endif
+}
+
+void DumpRenderTreeSupportEfl::removeMockSwitchPowerUpnpService()
+{
+#if ENABLE(DISCOVERY)
+    WebCore::NetworkServicePublisherGupnpMock::removeSwitchPowerService();
 #endif
 }
 

@@ -38,6 +38,8 @@
 #include "ewk_js.h"
 #include "ewk_main.h"
 #include "ewk_network.h"
+#include "ewk_network_service.h"
+#include "ewk_network_services.h"
 #include "ewk_security_origin.h"
 #include "ewk_security_policy.h"
 #include "ewk_settings.h"
