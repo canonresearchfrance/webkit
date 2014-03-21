@@ -36,6 +36,7 @@
 #include <WebKit2/WKIconDatabase.h>
 #include <WebKit2/WKInspector.h>
 #include <WebKit2/WKInspectorClientGtk.h>
+#include <WebKit2/WKNetworkServicesManager.h>
 #include <WebKit2/WKRetainPtr.h>
 #include <WebKit2/WKSerializedScriptValue.h>
 #include <WebKit2/WKSoupCustomProtocolRequestManager.h>

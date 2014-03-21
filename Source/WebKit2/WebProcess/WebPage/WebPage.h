@@ -41,6 +41,7 @@
 #include "InjectedBundlePageUIClient.h"
 #include "MessageReceiver.h"
 #include "MessageSender.h"
+#include "NetworkServicesRequestManager.h"
 #include "TapHighlightController.h"
 #include "Plugin.h"
 #include "SandboxExtension.h"
@@ -103,6 +104,10 @@ OBJC_CLASS NSObject;
 OBJC_CLASS WKAccessibilityWebPageObject;
 
 #define ENABLE_PRIMARY_SNAPSHOTTED_PLUGIN_HEURISTIC 1
+#endif
+
+#if ENABLE(DISCOVERY)
+#include "WebNetworkServices.h"
 #endif
 
 namespace API {
@@ -421,6 +426,10 @@ public:
 
 #if ENABLE(GEOLOCATION)
     GeolocationPermissionRequestManager& geolocationPermissionRequestManager() { return m_geolocationPermissionRequestManager; }
+#endif
+
+#if ENABLE(DISCOVERY)
+    NetworkServicesRequestManager& networkServicesRequestManager() { return m_networkServicesRequestManager; }
 #endif
 
 #if PLATFORM(IOS)
@@ -883,6 +892,13 @@ private:
     void didSelectItemFromActiveContextMenu(const WebContextMenuItemData&);
 #endif
 
+#if ENABLE(DISCOVERY)
+    // Network services
+    void didReceiveNetworkServiceAllowance(uint64_t requestID, const String& serviceID, bool allowed);
+    void didReceiveNetworkServicesPermissionDecision(uint64_t requestID, bool allowed);
+    void getNetworkServices(uint64_t requestID, WebNetworkServices::Data&);
+#endif
+
     void changeSelectedIndex(int32_t index);
     void setCanStartMediaTimerFired();
     void didUpdateViewStateTimerFired();
@@ -1033,6 +1049,10 @@ private:
 
 #if ENABLE(GEOLOCATION)
     GeolocationPermissionRequestManager m_geolocationPermissionRequestManager;
+#endif
+
+#if ENABLE(DISCOVERY)
+    NetworkServicesRequestManager m_networkServicesRequestManager;
 #endif
 
     OwnPtr<WebCore::PrintContext> m_printContext;

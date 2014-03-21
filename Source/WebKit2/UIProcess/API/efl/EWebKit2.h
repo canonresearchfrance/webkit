@@ -45,6 +45,8 @@
 #include "ewk_main.h"
 #include "ewk_navigation_data.h"
 #include "ewk_navigation_policy_decision.h"
+#include "ewk_network_service.h"
+#include "ewk_network_services.h"
 #include "ewk_object.h"
 #include "ewk_page_group.h"
 #include "ewk_popup_menu.h"

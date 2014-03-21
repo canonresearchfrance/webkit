@@ -136,6 +136,10 @@ webkit2_built_sources += \
 	DerivedSources/WebKit2/WebNetworkInfoManagerMessages.h \
 	DerivedSources/WebKit2/WebNetworkInfoManagerProxyMessageReceiver.cpp \
 	DerivedSources/WebKit2/WebNetworkInfoManagerProxyMessages.h \
+	DerivedSources/WebKit2/WebNetworkServicesManagerMessageReceiver.cpp \
+	DerivedSources/WebKit2/WebNetworkServicesManagerMessages.h \
+	DerivedSources/WebKit2/WebNetworkServicesManagerProxyMessageReceiver.cpp \
+	DerivedSources/WebKit2/WebNetworkServicesManagerProxyMessages.h \
 	DerivedSources/WebKit2/WebNotificationManagerMessageReceiver.cpp \
 	DerivedSources/WebKit2/WebNotificationManagerMessages.h \
 	DerivedSources/WebKit2/WebOriginDataManagerMessageReceiver.cpp \
@@ -487,6 +491,10 @@ webkit2_sources += \
 	Source/WebKit2/Shared/WebMouseEvent.cpp \
 	Source/WebKit2/Shared/WebNavigationDataStore.h \
 	Source/WebKit2/Shared/WebNetworkInfo.h \
+	Source/WebKit2/Shared/WebNetworkService.cpp \
+	Source/WebKit2/Shared/WebNetworkService.h \
+	Source/WebKit2/Shared/WebNetworkServices.cpp \
+	Source/WebKit2/Shared/WebNetworkServices.h \
 	Source/WebKit2/Shared/WebOpenPanelParameters.cpp \
 	Source/WebKit2/Shared/WebOpenPanelParameters.h \
 	Source/WebKit2/Shared/WebPageCreationParameters.cpp \
@@ -585,6 +593,12 @@ webkit2_sources += \
 	Source/WebKit2/UIProcess/API/C/WKNetworkInfo.h \
 	Source/WebKit2/UIProcess/API/C/WKNetworkInfoManager.cpp \
 	Source/WebKit2/UIProcess/API/C/WKNetworkInfoManager.h \
+	Source/WebKit2/UIProcess/API/C/WKNetworkService.cpp \
+	Source/WebKit2/UIProcess/API/C/WKNetworkService.h \
+	Source/WebKit2/UIProcess/API/C/WKNetworkServicesManager.cpp \
+	Source/WebKit2/UIProcess/API/C/WKNetworkServicesManager.h \
+	Source/WebKit2/UIProcess/API/C/WKNetworkServicesRequest.cpp \
+	Source/WebKit2/UIProcess/API/C/WKNetworkServicesRequest.h \
 	Source/WebKit2/UIProcess/API/C/WKNotification.cpp \
 	Source/WebKit2/UIProcess/API/C/WKNotification.h \
 	Source/WebKit2/UIProcess/API/C/WKNotificationManager.cpp \
@@ -602,6 +616,7 @@ webkit2_sources += \
 	Source/WebKit2/UIProcess/API/C/WKPageGroup.cpp \
 	Source/WebKit2/UIProcess/API/C/WKPageGroup.h \
 	Source/WebKit2/UIProcess/API/C/WKPage.h \
+	Source/WebKit2/UIProcess/API/C/WKPageNetworkServicesClient.h \
 	Source/WebKit2/UIProcess/API/C/WKPagePrivate.h \
 	Source/WebKit2/UIProcess/API/C/WKPageContextMenuClient.h \
 	Source/WebKit2/UIProcess/API/C/WKPageFindClient.h \
@@ -708,6 +723,8 @@ webkit2_sources += \
 	Source/WebKit2/UIProcess/API/gtk/WebKitNavigationPolicyDecision.cpp \
 	Source/WebKit2/UIProcess/API/gtk/WebKitNavigationPolicyDecision.h \
 	Source/WebKit2/UIProcess/API/gtk/WebKitNavigationPolicyDecisionPrivate.h \
+	Source/WebKit2/UIProcess/API/gtk/WebKitNetworkServicesProvider.cpp \
+	Source/WebKit2/UIProcess/API/gtk/WebKitNetworkServicesProvider.h \
 	Source/WebKit2/UIProcess/API/gtk/WebKitPermissionRequest.cpp \
 	Source/WebKit2/UIProcess/API/gtk/WebKitPermissionRequest.h \
 	Source/WebKit2/UIProcess/API/gtk/WebKitPlugin.cpp \
@@ -795,6 +812,14 @@ webkit2_sources += \
 	Source/WebKit2/UIProcess/BackingStore.h \
 	Source/WebKit2/UIProcess/DefaultUndoController.cpp \
 	Source/WebKit2/UIProcess/DefaultUndoController.h \
+	Source/WebKit2/UIProcess/Discovery/NetworkServicesRequestManagerProxy.cpp \
+	Source/WebKit2/UIProcess/Discovery/NetworkServicesRequestManagerProxy.h \
+	Source/WebKit2/UIProcess/Discovery/NetworkServicesRequestProxy.cpp \
+	Source/WebKit2/UIProcess/Discovery/NetworkServicesRequestProxy.h \
+	Source/WebKit2/UIProcess/Discovery/WebNetworkServicesManagerProxy.cpp \
+	Source/WebKit2/UIProcess/Discovery/WebNetworkServicesManagerProxy.h \
+	Source/WebKit2/UIProcess/Discovery/WebNetworkServicesProvider.cpp \
+	Source/WebKit2/UIProcess/Discovery/WebNetworkServicesProvider.h \
 	Source/WebKit2/UIProcess/Downloads/DownloadProxy.cpp \
 	Source/WebKit2/UIProcess/Downloads/DownloadProxy.h \
 	Source/WebKit2/UIProcess/Downloads/DownloadProxyMap.cpp \
@@ -954,6 +979,8 @@ webkit2_sources += \
 	Source/WebKit2/UIProcess/WebNetworkInfoManagerProxy.h \
 	Source/WebKit2/UIProcess/WebNetworkInfoProvider.cpp \
 	Source/WebKit2/UIProcess/WebNetworkInfoProvider.h \
+	Source/WebKit2/UIProcess/WebNetworkServicesProxyClient.cpp \
+	Source/WebKit2/UIProcess/WebNetworkServicesProxyClient.h \
 	Source/WebKit2/UIProcess/WebOpenPanelResultListenerProxy.cpp \
 	Source/WebKit2/UIProcess/WebOpenPanelResultListenerProxy.h \
 	Source/WebKit2/UIProcess/WebOriginDataManagerProxy.cpp \
@@ -1003,6 +1030,10 @@ webkit2_sources += \
 	Source/WebKit2/WebProcess/Cookies/soup/WebKitSoupCookieJarSqlite.cpp \
 	Source/WebKit2/WebProcess/Cookies/soup/WebKitSoupCookieJarSqlite.h \
 	Source/WebKit2/WebProcess/Databases/IndexedDB/WebIDBFactoryBackend.h \
+	Source/WebKit2/WebProcess/Discovery/NetworkServicesRequestManager.cpp \
+	Source/WebKit2/WebProcess/Discovery/NetworkServicesRequestManager.h \
+	Source/WebKit2/WebProcess/Discovery/WebNetworkServicesManager.cpp \
+	Source/WebKit2/WebProcess/Discovery/WebNetworkServicesManager.h \
 	Source/WebKit2/WebProcess/FileAPI/BlobRegistryProxy.cpp \
 	Source/WebKit2/WebProcess/FileAPI/BlobRegistryProxy.h \
 	Source/WebKit2/WebProcess/FullScreen/WebFullScreenManager.cpp \
@@ -1205,6 +1236,8 @@ webkit2_sources += \
 	Source/WebKit2/WebProcess/WebCoreSupport/WebInspectorFrontendClient.h \
 	Source/WebKit2/WebProcess/WebCoreSupport/WebNetworkInfoClient.cpp \
 	Source/WebKit2/WebProcess/WebCoreSupport/WebNetworkInfoClient.h \
+	Source/WebKit2/WebProcess/WebCoreSupport/WebNetworkServicesClient.cpp \
+	Source/WebKit2/WebProcess/WebCoreSupport/WebNetworkServicesClient.h \
 	Source/WebKit2/WebProcess/WebCoreSupport/WebNotificationClient.cpp \
 	Source/WebKit2/WebProcess/WebCoreSupport/WebNotificationClient.h \
 	Source/WebKit2/WebProcess/WebCoreSupport/WebPlatformStrategies.cpp \

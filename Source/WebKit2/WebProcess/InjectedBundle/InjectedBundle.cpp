@@ -59,6 +59,8 @@
 #include <WebCore/JSDOMWindow.h>
 #include <WebCore/JSNotification.h>
 #include <WebCore/MainFrame.h>
+#include <WebCore/NetworkServicePublisherAvahiMock.h>
+#include <WebCore/NetworkServicePublisherGupnpMock.h>
 #include <WebCore/Page.h>
 #include <WebCore/PageGroup.h>
 #include <WebCore/PrintContext.h>
@@ -605,6 +607,41 @@ uint64_t InjectedBundle::webNotificationID(JSContextRef jsContext, JSValueRef js
     UNUSED_PARAM(jsContext);
     UNUSED_PARAM(jsNotification);
     return 0;
+#endif
+}
+
+void InjectedBundle::addMockNetworkService(const String& name, const String& type, const String& config, const String& host)
+{
+#if ENABLE(DISCOVERY)
+    WebCore::NetworkServicePublisherAvahiMock::addService(name.utf8().data(), type.utf8().data(), config.utf8().data(), host.utf8().data());
+#else
+    UNUSED_PARAM(name);
+    UNUSED_PARAM(type);
+    UNUSED_PARAM(config);
+    UNUSED_PARAM(host);
+#endif
+}
+
+void InjectedBundle::removeMockNetworkService(const String& id)
+{
+#if ENABLE(DISCOVERY)
+    WebCore::NetworkServicePublisherAvahiMock::removeService(id.utf8().data());
+#else
+    UNUSED_PARAM(id);
+#endif
+}
+
+void InjectedBundle::addMockSwitchPowerUpnpService()
+{
+#if ENABLE(DISCOVERY)
+    WebCore::NetworkServicePublisherGupnpMock::addSwitchPowerService();
+#endif
+}
+
+void InjectedBundle::removeMockSwitchPowerUpnpService()
+{
+#if ENABLE(DISCOVERY)
+    WebCore::NetworkServicePublisherGupnpMock::removeSwitchPowerService();
 #endif
 }
 

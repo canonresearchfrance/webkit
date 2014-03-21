@@ -229,6 +229,13 @@ messages -> WebPage LegacyReceiver {
 
     SetWindowResizerSize(WebCore::IntSize intersectsView)
 
+#if ENABLE(DISCOVERY)
+    # Network services
+    DidReceiveNetworkServiceAllowance(uint64_t requestID, String serviceID, bool allowed)
+    DidReceiveNetworkServicesPermissionDecision(uint64_t requestID, bool allowed)
+    GetNetworkServices(uint64_t requestID) -> (WebKit::WebNetworkServices::Data networkServicesData)
+#endif
+    
     # Printing.
     BeginPrinting(uint64_t frameID, WebKit::PrintInfo printInfo)
     EndPrinting()

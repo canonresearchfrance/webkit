@@ -69,6 +69,10 @@ class WebPageProxy;
 #if ENABLE(VIBRATION)
 class VibrationClientEfl;
 #endif
+
+#if ENABLE(DISCOVERY)
+class NetworkServicesClientEfl;
+#endif
 }
 
 namespace WebCore {
@@ -264,6 +268,9 @@ private:
     std::unique_ptr<WebKit::ViewClientEfl> m_viewClient;
 #if ENABLE(VIBRATION)
     std::unique_ptr<WebKit::VibrationClientEfl> m_vibrationClient;
+#endif
+#if ENABLE(DISCOVERY)
+    OwnPtr<WebKit::NetworkServicesClientEfl> m_networkServicesClient;
 #endif
     std::unique_ptr<EwkBackForwardList> m_backForwardList;
     std::unique_ptr<EwkSettings> m_settings;

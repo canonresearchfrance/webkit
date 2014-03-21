@@ -60,6 +60,7 @@ class AuthenticationChallengeProxy;
 class AuthenticationDecisionListener;
 class DownloadProxy;
 class GeolocationPermissionRequestProxy;
+class NetworkServicesRequestProxy;
 class NotificationPermissionRequest;
 class WebApplicationCacheManagerProxy;
 class WebBackForwardList;
@@ -85,6 +86,8 @@ class WebKeyValueStorageManager;
 class WebMediaCacheManagerProxy;
 class WebNetworkInfoManagerProxy;
 class WebNetworkInfo;
+class WebNetworkService;
+class WebNetworkServicesManagerProxy;
 class WebNotification;
 class WebNotificationProvider;
 class WebNotificationManagerProxy;
@@ -131,6 +134,9 @@ WK_ADD_API_MAPPING(WKMediaCacheManagerRef, WebMediaCacheManagerProxy)
 WK_ADD_API_MAPPING(WKNavigationDataRef, API::NavigationData)
 WK_ADD_API_MAPPING(WKNetworkInfoManagerRef, WebNetworkInfoManagerProxy)
 WK_ADD_API_MAPPING(WKNetworkInfoRef, WebNetworkInfo)
+WK_ADD_API_MAPPING(WKNetworkServicesManagerRef, WebNetworkServicesManagerProxy)
+WK_ADD_API_MAPPING(WKNetworkServicesRequestRef, NetworkServicesRequestProxy)
+WK_ADD_API_MAPPING(WKNetworkServiceRef, WebNetworkService)
 WK_ADD_API_MAPPING(WKNotificationManagerRef, WebNotificationManagerProxy)
 WK_ADD_API_MAPPING(WKNotificationPermissionRequestRef, NotificationPermissionRequest)
 WK_ADD_API_MAPPING(WKNotificationProviderRef, WebNotificationProvider)

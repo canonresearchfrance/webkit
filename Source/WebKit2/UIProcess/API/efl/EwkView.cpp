@@ -80,6 +80,10 @@
 #include "VibrationClientEfl.h"
 #endif
 
+#if ENABLE(DISCOVERY)
+#include "NetworkServicesClientEfl.h"
+#endif
+
 #if ENABLE(FULLSCREEN_API)
 #include "WebFullScreenManagerProxy.h"
 #endif
@@ -271,6 +275,9 @@ EwkView::EwkView(WKViewRef view, Evas_Object* evasObject)
     , m_viewClient(std::make_unique<ViewClientEfl>(this))
 #if ENABLE(VIBRATION)
     , m_vibrationClient(std::make_unique<VibrationClientEfl>(this))
+#endif
+#if ENABLE(DISCOVERY)
+    , m_networkServicesClient(NetworkServicesClientEfl::create(this))
 #endif
     , m_backForwardList(std::make_unique<EwkBackForwardList>(WKPageGetBackForwardList(wkPage())))
     , m_settings(std::make_unique<EwkSettings>(this))

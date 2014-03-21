@@ -25,6 +25,7 @@
 #include "WebCertificateInfo.h"
 #include "WebCookieManagerProxy.h"
 #include "WebGeolocationManagerProxy.h"
+#include "WebNetworkServicesManagerProxy.h"
 #include "WebKitBatteryProvider.h"
 #include "WebKitCertificateInfoPrivate.h"
 #include "WebKitCookieManagerPrivate.h"
@@ -33,6 +34,7 @@
 #include "WebKitFaviconDatabasePrivate.h"
 #include "WebKitGeolocationProvider.h"
 #include "WebKitInjectedBundleClient.h"
+#include "WebKitNetworkServicesProvider.h"
 #include "WebKitPluginPrivate.h"
 #include "WebKitPrivate.h"
 #include "WebKitRequestManagerClient.h"
@@ -148,6 +150,9 @@ struct _WebKitWebContextPrivate {
 #if ENABLE(BATTERY_STATUS)
     RefPtr<WebKitBatteryProvider> batteryProvider;
 #endif
+#if ENABLE(DISCOVERY)
+    RefPtr<WebKitNetworkServicesProvider> networkServicesProvider;
+#endif
 #if ENABLE(SPELLCHECK)
     OwnPtr<WebKitTextChecker> textChecker;
 #endif
@@ -241,6 +246,9 @@ static gpointer createDefaultWebContext(gpointer)
 #endif
 #if ENABLE(BATTERY_STATUS)
     priv->batteryProvider = WebKitBatteryProvider::create(priv->context->supplement<WebBatteryManagerProxy>());
+#endif
+#if ENABLE(DISCOVERY)
+    priv->networkServicesProvider = WebKitNetworkServicesProvider::create(priv->context->supplement<WebNetworkServicesManagerProxy>());
 #endif
 #if ENABLE(SPELLCHECK)
     priv->textChecker = WebKitTextChecker::create();

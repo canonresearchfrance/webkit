@@ -47,6 +47,7 @@
 #include "WebIconDatabaseProxy.h"
 #include "WebMediaCacheManager.h"
 #include "WebMemorySampler.h"
+#include "WebNetworkServicesManager.h"
 #include "WebPage.h"
 #include "WebPageCreationParameters.h"
 #include "WebPageGroupProxyMessages.h"
@@ -183,7 +184,10 @@ WebProcess::WebProcess()
     addSupplement<WebCookieManager>();
     addSupplement<WebMediaCacheManager>();
     addSupplement<AuthenticationManager>();
-    
+
+#if ENABLE(DISCOVERY)
+    addSupplement<WebNetworkServicesManager>();
+#endif
 #if ENABLE(SQL_DATABASE)
     addSupplement<WebDatabaseManager>();
 #endif

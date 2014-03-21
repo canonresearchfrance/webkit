@@ -77,6 +77,10 @@
 #include "WebNetworkInfoManagerProxy.h"
 #endif
 
+#if ENABLE(DISCOVERY)
+#include "WebNetworkServicesManagerProxy.h"
+#endif
+
 #if ENABLE(DATABASE_PROCESS)
 #include "DatabaseProcessCreationParameters.h"
 #include "DatabaseProcessMessages.h"
@@ -191,6 +195,9 @@ WebContext::WebContext(const String& injectedBundlePath)
 #endif
 #if ENABLE(NETWORK_INFO)
     addSupplement<WebNetworkInfoManagerProxy>();
+#endif
+#if ENABLE(DISCOVERY)
+    addSupplement<WebNetworkServicesManagerProxy>();
 #endif
 
     contexts().append(this);

@@ -314,6 +314,26 @@ uint64_t WKBundleGetWebNotificationID(WKBundleRef bundleRef, JSContextRef contex
     return toImpl(bundleRef)->webNotificationID(context, notification);
 }
 
+void WKBundleAddMockNetworkService(WKBundleRef bundleRef, WKStringRef nameRef, WKStringRef typeRef, WKStringRef configRef, WKStringRef hostRef)
+{
+    toImpl(bundleRef)->addMockNetworkService(toWTFString(nameRef), toWTFString(typeRef), toWTFString(configRef), toWTFString(hostRef));
+}
+
+void WKBundleRemoveMockNetworkService(WKBundleRef bundleRef, WKStringRef idRef)
+{
+    toImpl(bundleRef)->removeMockNetworkService(toWTFString(idRef));
+}
+
+void WKBundleAddMockSwitchPowerUpnpService(WKBundleRef bundleRef)
+{
+    toImpl(bundleRef)->addMockSwitchPowerUpnpService();
+}
+
+void WKBundleRemoveMockSwitchPowerUpnpService(WKBundleRef bundleRef)
+{
+    toImpl(bundleRef)->removeMockSwitchPowerUpnpService();
+}
+
 void WKBundleSetTabKeyCyclesThroughElements(WKBundleRef bundleRef, WKBundlePageRef pageRef, bool enabled)
 {
     toImpl(bundleRef)->setTabKeyCyclesThroughElements(toImpl(pageRef), enabled);

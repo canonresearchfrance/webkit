@@ -116,6 +116,8 @@ MESSAGE_RECEIVERS = \
     WebInspectorProxy \
     WebMediaCacheManager \
     WebMediaCacheManagerProxy \
+    WebNetworkServicesManager \
+    WebNetworkServicesManagerProxy \
     WebNotificationManager \
     WebOriginDataManager \
     WebOriginDataManagerProxy \

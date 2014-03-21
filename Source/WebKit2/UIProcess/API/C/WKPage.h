@@ -38,6 +38,7 @@
 #include <WebKit2/WKPageFormClient.h>
 #include <WebKit2/WKPageLoadTypes.h>
 #include <WebKit2/WKPageLoaderClient.h>
+#include <WebKit2/WKPageNetworkServicesClient.h>
 #include <WebKit2/WKPagePolicyClient.h>
 #include <WebKit2/WKPageUIClient.h>
 #include <WebKit2/WKPageVisibilityTypes.h>
@@ -192,6 +193,8 @@ WK_EXPORT void WKPageFindStringMatches(WKPageRef page, WKStringRef string, WKFin
 WK_EXPORT void WKPageGetImageForFindMatch(WKPageRef page, int32_t matchIndex);
 WK_EXPORT void WKPageSelectFindMatch(WKPageRef page, int32_t matchIndex);
 
+WK_EXPORT void WKPageGetNetworkServicesFromID(WKPageRef page, uint64_t requestID);
+
 WK_EXPORT void WKPageSetPageContextMenuClient(WKPageRef page, const WKPageContextMenuClientBase* client);
 WK_EXPORT void WKPageSetPageFindClient(WKPageRef page, const WKPageFindClientBase* client);
 WK_EXPORT void WKPageSetPageFindMatchesClient(WKPageRef page, const WKPageFindMatchesClientBase* client);
@@ -199,6 +202,7 @@ WK_EXPORT void WKPageSetPageFormClient(WKPageRef page, const WKPageFormClientBas
 WK_EXPORT void WKPageSetPageLoaderClient(WKPageRef page, const WKPageLoaderClientBase* client);
 WK_EXPORT void WKPageSetPagePolicyClient(WKPageRef page, const WKPagePolicyClientBase* client);
 WK_EXPORT void WKPageSetPageUIClient(WKPageRef page, const WKPageUIClientBase* client);
+WK_EXPORT void WKPageSetNetworkServicesClient(WKPageRef page, const WKPageNetworkServicesClientBase* client);
 
 WK_EXPORT void WKPageSetSession(WKPageRef page, WKSessionRef session);
 

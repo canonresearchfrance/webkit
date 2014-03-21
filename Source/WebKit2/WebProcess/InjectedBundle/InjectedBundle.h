@@ -123,6 +123,10 @@ public:
     void removeAllWebNotificationPermissions(WebPage*);
     uint64_t webNotificationID(JSContextRef, JSValueRef);
     PassRefPtr<API::Data> createWebDataFromUint8Array(JSContextRef, JSValueRef);
+    void addMockNetworkService(const String&, const String&, const String&, const String&);
+    void removeMockNetworkService(const String&);
+    void addMockSwitchPowerUpnpService();
+    void removeMockSwitchPowerUpnpService();
 
     // UserContent API
     void addUserScript(WebPageGroupProxy*, InjectedBundleScriptWorld*, const String& source, const String& url, API::Array* whitelist, API::Array* blacklist, WebCore::UserScriptInjectionTime, WebCore::UserContentInjectedFrames);

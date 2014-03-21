@@ -43,6 +43,9 @@ class BatteryProvider;
 #if ENABLE(NETWORK_INFO)
 class NetworkInfoProvider;
 #endif
+#if ENABLE(DISCOVERY)
+class NetworkServicesProvider;
+#endif
 }
 
 class EwkContext : public EwkObject {
@@ -109,6 +112,9 @@ private:
 #endif
 #if ENABLE(NETWORK_INFO)
     RefPtr<WebKit::NetworkInfoProvider> m_networkInfoProvider;
+#endif
+#if ENABLE(DISCOVERY)
+    RefPtr<WebKit::NetworkServicesProvider> m_networkServicesProvider;
 #endif
     std::unique_ptr<WebKit::DownloadManagerEfl> m_downloadManager;
     std::unique_ptr<WebKit::RequestManagerClientEfl> m_requestManagerClient;

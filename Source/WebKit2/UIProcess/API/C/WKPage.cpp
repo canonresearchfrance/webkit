@@ -1470,6 +1470,13 @@ void WKPageSetSession(WKPageRef pageRef, WKSessionRef session)
     toImpl(pageRef)->setSession(*toImpl(session));
 }
 
+void WKPageSetNetworkServicesClient(WKPageRef pageRef, const WKPageNetworkServicesClientBase* wkClient)
+{
+#if ENABLE(DISCOVERY)
+    toImpl(pageRef)->initializeNetworkServicesClient(wkClient);
+#endif
+}
+
 void WKPageRunJavaScriptInMainFrame(WKPageRef pageRef, WKStringRef scriptRef, void* context, WKPageRunJavaScriptFunction callback)
 {
     toImpl(pageRef)->runJavaScriptInMainFrame(toImpl(scriptRef)->string(), ScriptValueCallback::create(context, callback));

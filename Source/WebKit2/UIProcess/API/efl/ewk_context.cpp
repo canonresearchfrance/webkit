@@ -25,6 +25,7 @@
 #include "ContextHistoryClientEfl.h"
 #include "DownloadManagerEfl.h"
 #include "NetworkInfoProvider.h"
+#include "NetworkServicesProvider.h"
 #include "RequestManagerClientEfl.h"
 #include "WKAPICast.h"
 #include "WKContextSoup.h"
@@ -70,6 +71,9 @@ EwkContext::EwkContext(WKContextRef context)
 #endif
 #if ENABLE(NETWORK_INFO)
     , m_networkInfoProvider(NetworkInfoProvider::create(context))
+#endif
+#if ENABLE(DISCOVERY)
+    , m_networkServicesProvider(NetworkServicesProvider::create(context))
 #endif
     , m_downloadManager(std::make_unique<DownloadManagerEfl>(context))
     , m_requestManagerClient(std::make_unique<RequestManagerClientEfl>(context))

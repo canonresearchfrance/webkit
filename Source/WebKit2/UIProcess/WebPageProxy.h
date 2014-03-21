@@ -37,6 +37,7 @@
 #include "InteractionInformationAtPosition.h"
 #include "LayerTreeContext.h"
 #include "MessageSender.h"
+#include "NetworkServicesRequestManagerProxy.h"
 #include "NotificationPermissionRequestManagerProxy.h"
 #include "PageLoadState.h"
 #include "PlatformProcessIdentifier.h"
@@ -51,6 +52,8 @@
 #include "WebFormClient.h"
 #include "WebFrameProxy.h"
 #include "WebHitTestResult.h"
+#include "WebNetworkServices.h"
+#include "WebNetworkServicesProxyClient.h"
 #include "WebPageContextMenuClient.h"
 #include "WebPageCreationParameters.h"
 #include "WebPreferences.h"
@@ -164,6 +167,10 @@ struct WebPopupItem;
 
 #if ENABLE(VIBRATION)
 class WebVibrationProxy;
+#endif
+
+#if ENABLE(DISCOVERY)
+class NetworkServicesRequestProxy;
 #endif
 
 typedef GenericCallback<WKStringRef, StringImpl*> StringCallback;
@@ -377,9 +384,14 @@ public:
     void initializeFindClient(const WKPageFindClientBase*);
     void initializeFindMatchesClient(const WKPageFindMatchesClientBase*);
     void initializeFormClient(const WKPageFormClientBase*);
+#if ENABLE(DISCOVERY)
+    void initializeNetworkServicesClient(const WKPageNetworkServicesClientBase*);
+#endif
+
     void setLoaderClient(std::unique_ptr<API::LoaderClient>);
     void setPolicyClient(std::unique_ptr<API::PolicyClient>);
     void setUIClient(std::unique_ptr<API::UIClient>);
+
 #if PLATFORM(EFL)
     void initializeUIPopupMenuClient(const WKPageUIPopupMenuClientBase*);
 #endif
@@ -863,6 +875,10 @@ public:
 
     void didReceiveAuthenticationChallengeProxy(uint64_t frameID, PassRefPtr<AuthenticationChallengeProxy>);
 
+#if ENABLE(DISCOVERY)
+    PassRefPtr<NetworkServicesRequestProxy> getNetworkServices(uint64_t requestID);
+#endif
+
     int64_t spellDocumentTag();
     void didFinishCheckingText(uint64_t requestID, const Vector<WebCore::TextCheckingResult>&);
     void didCancelCheckingText(uint64_t requestID);
@@ -1005,6 +1021,14 @@ private:
 
     void requestNotificationPermission(uint64_t notificationID, const String& originString);
     void showNotification(const String& title, const String& body, const String& iconURL, const String& tag, const String& lang, const String& dir, const String& originString, uint64_t notificationID);
+
+#if ENABLE(DISCOVERY)    
+    void requestNetworkServicesStarted(uint64_t requestID);
+    void requestNetworkServicesFinished();
+    void requestNetworkServicesUpdated(uint64_t requestID);
+    void requestNetworkServicesCanceled(uint64_t requestID);
+#endif
+    
     void cancelNotification(uint64_t notificationID);
     void clearNotifications(const Vector<uint64_t>& notificationIDs);
     void didDestroyNotification(uint64_t notificationID);
@@ -1204,6 +1228,9 @@ private:
 #if ENABLE(CONTEXT_MENUS)
     WebPageContextMenuClient m_contextMenuClient;
 #endif
+#if ENABLE(DISCOVERY)
+    WebNetworkServicesProxyClient m_networkServicesClient;
+#endif
 
     std::unique_ptr<DrawingAreaProxy> m_drawingArea;
 #if ENABLE(ASYNC_SCROLLING)
@@ -1268,6 +1295,7 @@ private:
     RefPtr<WebOpenPanelResultListenerProxy> m_openPanelResultListener;
     GeolocationPermissionRequestManagerProxy m_geolocationPermissionRequestManager;
     NotificationPermissionRequestManagerProxy m_notificationPermissionRequestManager;
+    NetworkServicesRequestManagerProxy m_networkServicesRequestManager;
 
     WebCore::ViewState::Flags m_viewState;
 

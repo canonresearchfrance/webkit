@@ -54,6 +54,9 @@
 #if ENABLE(NETWORK_INFO)
 #include "WebNetworkInfoManagerProxy.h"
 #endif
+#if ENABLE(DISCOVERY)
+#include "WebNetworkServicesManagerProxy.h"
+#endif
 
 namespace API {
 template<> struct ClientTraits<WKContextHistoryClientBase> {
@@ -303,6 +306,16 @@ WKNetworkInfoManagerRef WKContextGetNetworkInfoManager(WKContextRef contextRef)
 {
 #if ENABLE(NETWORK_INFO)
     return toAPI(toImpl(contextRef)->supplement<WebNetworkInfoManagerProxy>());
+#else
+    UNUSED_PARAM(contextRef);
+    return 0;
+#endif
+}
+
+WKNetworkServicesManagerRef WKContextGetNetworkServicesManager(WKContextRef contextRef)
+{
+#if ENABLE(DISCOVERY)
+    return toAPI(toImpl(contextRef)->supplement<WebNetworkServicesManagerProxy>());
 #else
     UNUSED_PARAM(contextRef);
     return 0;

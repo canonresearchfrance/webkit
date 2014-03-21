@@ -39,6 +39,7 @@ typedef struct EwkObject Ewk_Download_Job;
 typedef struct EwkObject Ewk_File_Chooser_Request;
 typedef struct EwkObject Ewk_Form_Submission_Request;
 typedef struct EwkObject Ewk_Navigation_Policy_Decision;
+typedef struct EwkObject Ewk_NetworkServices;
 typedef struct EwkError Ewk_Error;
 
 namespace EwkViewCallbacks {
@@ -59,6 +60,10 @@ enum CallbackType {
     LoadFinished,
     LoadProgress,
     MenuBarVisible,
+    NetworkServicesRequestStarted,
+    NetworkServicesRequestFinished,
+    NetworkServicesRequestUpdated,
+    NetworkServicesRequestCancelled,
     ProvisionalLoadFailed,
     ProvisionalLoadRedirect,
     ProvisionalLoadStarted,
@@ -172,6 +177,10 @@ DECLARE_EWK_VIEW_CALLBACK(ProvisionalLoadFailed, "load,provisional,failed", Ewk_
 DECLARE_EWK_VIEW_CALLBACK(ProvisionalLoadRedirect, "load,provisional,redirect", void);
 DECLARE_EWK_VIEW_CALLBACK(ProvisionalLoadStarted, "load,provisional,started", void);
 DECLARE_EWK_VIEW_CALLBACK(MenuBarVisible, "menubar,visible", bool*);
+DECLARE_EWK_VIEW_CALLBACK(NetworkServicesRequestStarted, "networkservices,request,started", Ewk_NetworkServices*);
+DECLARE_EWK_VIEW_CALLBACK(NetworkServicesRequestFinished, "networkservices,request,finished", void);
+DECLARE_EWK_VIEW_CALLBACK(NetworkServicesRequestUpdated, "networkservices,request,updated", Ewk_NetworkServices*);
+DECLARE_EWK_VIEW_CALLBACK(NetworkServicesRequestCancelled, "networkservices,request,canceled", Ewk_NetworkServices*);
 DECLARE_EWK_VIEW_CALLBACK(NavigationPolicyDecision, "policy,decision,navigation", Ewk_Navigation_Policy_Decision*);
 DECLARE_EWK_VIEW_CALLBACK(NewWindowPolicyDecision, "policy,decision,new,window", Ewk_Navigation_Policy_Decision*);
 DECLARE_EWK_VIEW_CALLBACK(StatusBarVisible, "statusbar,visible", bool*);

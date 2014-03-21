@@ -119,6 +119,10 @@
 #include "WebVibrationProxy.h"
 #endif
 
+#if ENABLE(DISCOVERY)
+#include "NetworkServicesRequestProxy.h"
+#endif
+
 #ifndef NDEBUG
 #include <wtf/RefCountedLeakCounter.h>
 #endif
@@ -263,6 +267,7 @@ WebPageProxy::WebPageProxy(PageClient& pageClient, WebProcessProxy& process, uin
     , m_userAgent(standardUserAgent())
     , m_geolocationPermissionRequestManager(*this)
     , m_notificationPermissionRequestManager(*this)
+    , m_networkServicesRequestManager(*this)
     , m_viewState(ViewState::NoFlags)
     , m_backForwardList(WebBackForwardList::create(*this))
     , m_loadStateAtProcessExit(FrameLoadState::State::Finished)
@@ -490,6 +495,13 @@ void WebPageProxy::initializeFindMatchesClient(const WKPageFindMatchesClientBase
 void WebPageProxy::initializeContextMenuClient(const WKPageContextMenuClientBase* client)
 {
     m_contextMenuClient.initialize(client);
+}
+#endif
+
+#if ENABLE(DISCOVERY)
+void WebPageProxy::initializeNetworkServicesClient(const WKPageNetworkServicesClientBase* client)
+{
+    m_networkServicesClient.initialize(client);
 }
 #endif
 
@@ -3845,6 +3857,10 @@ void WebPageProxy::resetState()
 
     m_notificationPermissionRequestManager.invalidateRequests();
 
+#if ENABLE(DISCOVERY)
+    m_networkServicesRequestManager.invalidateRequests();
+#endif
+
     m_toolTip = String();
 
     m_mainFrameHasHorizontalScrollbar = false;
@@ -4018,6 +4034,17 @@ void WebPageProxy::didReceiveAuthenticationChallengeProxy(uint64_t frameID, Pass
     m_loaderClient->didReceiveAuthenticationChallengeInFrame(this, frame, authenticationChallenge.get());
 }
 
+#if ENABLE(DISCOVERY)
+PassRefPtr<NetworkServicesRequestProxy> WebPageProxy::getNetworkServices(uint64_t requestID)
+{
+    RefPtr<NetworkServicesRequestProxy> request = m_networkServicesRequestManager.getRequest(requestID);
+
+    process().sendSync(Messages::WebPage::GetNetworkServices(requestID), Messages::WebPage::GetNetworkServices::Reply(request->webNetworkServices()->data()), m_pageID);
+
+    return request;
+}
+#endif
+
 void WebPageProxy::exceededDatabaseQuota(uint64_t frameID, const String& originIdentifier, const String& databaseName, const String& displayName, uint64_t currentQuota, uint64_t currentOriginUsage, uint64_t currentDatabaseUsage, uint64_t expectedUsage, PassRefPtr<Messages::WebPageProxy::ExceededDatabaseQuota::DelayedReply> reply)
 {
     ExceededDatabaseQuotaRecords& records = ExceededDatabaseQuotaRecords::shared();
@@ -4079,6 +4106,39 @@ void WebPageProxy::showNotification(const String& title, const String& body, con
 {
     m_process->context().supplement<WebNotificationManagerProxy>()->show(this, title, body, iconURL, tag, lang, dir, originString, notificationID);
 }
+
+#if ENABLE(DISCOVERY)
+void WebPageProxy::requestNetworkServicesStarted(uint64_t requestID)
+{
+    RefPtr<NetworkServicesRequestProxy> request = m_networkServicesRequestManager.createRequest(requestID);
+
+    if (request)
+        m_networkServicesClient.requestStarted(this, request.get());
+}
+
+void WebPageProxy::requestNetworkServicesFinished()
+{
+    m_networkServicesClient.requestFinished(this);
+}
+
+void WebPageProxy::requestNetworkServicesUpdated(uint64_t requestID)
+{
+    RefPtr<NetworkServicesRequestProxy> request = m_networkServicesRequestManager.getRequest(requestID);
+
+    if (request) {
+        request->invalidate();
+        m_networkServicesClient.requestUpdated(this, request.get());
+    }
+}
+
+void WebPageProxy::requestNetworkServicesCanceled(uint64_t requestID)
+{
+    RefPtr<NetworkServicesRequestProxy> request = m_networkServicesRequestManager.getRequest(requestID);
+
+    if (request)
+        m_networkServicesClient.requestCanceled(this, request.get());
+}
+#endif
 
 void WebPageProxy::cancelNotification(uint64_t notificationID)
 {

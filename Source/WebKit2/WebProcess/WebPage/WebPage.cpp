@@ -76,6 +76,7 @@
 #include "WebInspectorClient.h"
 #include "WebInspectorMessages.h"
 #include "WebNotificationClient.h"
+#include "WebNetworkServices.h"
 #include "WebOpenPanelResultListener.h"
 #include "WebPageCreationParameters.h"
 #include "WebPageGroupProxy.h"
@@ -158,6 +159,10 @@
 
 #if ENABLE(NETWORK_INFO)
 #include "WebNetworkInfoClient.h"
+#endif
+
+#if ENABLE(DISCOVERY)
+#include "WebNetworkServicesClient.h"
 #endif
 
 #if ENABLE(VIBRATION)
@@ -266,6 +271,9 @@ WebPage::WebPage(uint64_t pageID, const WebPageCreationParameters& parameters)
 #if ENABLE(GEOLOCATION)
     , m_geolocationPermissionRequestManager(this)
 #endif
+#if ENABLE(DISCOVERY)
+    , m_networkServicesRequestManager(this)
+#endif
     , m_canRunBeforeUnloadConfirmPanel(parameters.canRunBeforeUnloadConfirmPanel)
     , m_canRunModal(parameters.canRunModal)
     , m_isRunningModal(false)
@@ -343,6 +351,9 @@ WebPage::WebPage(uint64_t pageID, const WebPageCreationParameters& parameters)
 #endif
 #if ENABLE(NETWORK_INFO)
     WebCore::provideNetworkInfoTo(m_page.get(), new WebNetworkInfoClient(this));
+#endif
+#if ENABLE(DISCOVERY)
+    WebCore::provideNetworkServicesTo(m_page.get(), new WebNetworkServicesClient(this));
 #endif
 #if ENABLE(NOTIFICATIONS) || ENABLE(LEGACY_NOTIFICATIONS)
     WebCore::provideNotification(m_page.get(), new WebNotificationClient(this));
@@ -3017,6 +3028,23 @@ void WebPage::didSelectItemFromActiveContextMenu(const WebContextMenuItemData& i
 
     m_contextMenu->itemSelected(item);
     m_contextMenu = 0;
+}
+#endif
+
+#if ENABLE(DISCOVERY)
+void WebPage::didReceiveNetworkServiceAllowance(uint64_t requestID, const String& serviceID, bool allowed)
+{
+    m_networkServicesRequestManager.didReceiveNetworkServiceAllowance(requestID, serviceID, allowed);
+}
+
+void WebPage::didReceiveNetworkServicesPermissionDecision(uint64_t requestID, bool allowed)
+{
+    m_networkServicesRequestManager.didReceiveNetworkServicesPermissionDecision(requestID, allowed);
+}
+
+void WebPage::getNetworkServices(uint64_t requestID, WebNetworkServices::Data& networkServicesData)
+{
+    m_networkServicesRequestManager.getNetworkServices(requestID, networkServicesData);
 }
 #endif
 

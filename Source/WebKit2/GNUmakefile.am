@@ -117,6 +117,7 @@ libwebkit2gtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_CPP
 	-I$(srcdir)/Source/WebKit2/UIProcess/API/cpp \
 	-I$(srcdir)/Source/WebKit2/UIProcess/API/gtk \
 	-I$(srcdir)/Source/WebKit2/UIProcess/Authentication \
+	-I$(srcdir)/Source/WebKit2/UIProcess/Discovery \
 	-I$(srcdir)/Source/WebKit2/UIProcess/Downloads \
 	-I$(srcdir)/Source/WebKit2/UIProcess/gtk \
 	-I$(srcdir)/Source/WebKit2/UIProcess/Launcher \
@@ -136,6 +137,7 @@ libwebkit2gtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_CPP
 	-I$(srcdir)/Source/WebKit2/WebProcess/Cookies \
 	-I$(srcdir)/Source/WebKit2/WebProcess/Databases \
 	-I$(srcdir)/Source/WebKit2/WebProcess/Databases/IndexedDB \
+	-I$(srcdir)/Source/WebKit2/WebProcess/Discovery \
 	-I$(srcdir)/Source/WebKit2/WebProcess/FileAPI \
 	-I$(srcdir)/Source/WebKit2/WebProcess/FullScreen \
 	-I$(srcdir)/Source/WebKit2/WebProcess/Geolocation \
@@ -186,11 +188,14 @@ libwebkit2gtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_CPP
 	$(webcore_cppflags) \
 	$(webcoregtk_cppflags) \
 	$(javascriptcore_cppflags) \
+	$(AVAHI_CFLAGS) \
 	$(COVERAGE_CFLAGS) \
 	$(ENCHANT_CFLAGS) \
 	$(FREETYPE_CFLAGS) \
 	$(GEOCLUE_CFLAGS) \
 	$(GLIB_CFLAGS) \
+	$(GSSDP_CFLAGS) \
+	$(GUPNP_CFLAGS) \
 	$(GTK_CFLAGS) \
 	$(GTK_UNIX_PRINTING_CFLAGS) \
 	$(LIBSOUP_CFLAGS) \
@@ -251,6 +256,7 @@ libwebkit2gtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_LIB
 	libGObjectDOMBindings.la \
 	libWebCoreGtk.la \
 	libWebKit2Platform.la \
+	$(AVAHI_LIBS) \
 	$(CAIRO_LIBS) \
 	$(COVERAGE_LDFLAGS) \
 	$(ENCHANT_LIBS) \
@@ -261,6 +267,8 @@ libwebkit2gtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_LIB
 	$(GSTREAMER_LIBS) \
 	$(GTK_LIBS) \
 	$(GTK_UNIX_PRINTING_LIBS) \
+	$(GSSDP_LIBS) \
+	$(GUPNP_LIBS) \
 	$(JPEG_LIBS) \
 	$(LIBSECRET_LIBS) \
 	$(LIBSOUP_LIBS) \
@@ -419,6 +427,7 @@ vpath %.messages.in = \
 	$(WebKit2)/Shared/Plugins \
 	$(WebKit2)/UIProcess \
 	$(WebKit2)/UIProcess/ApplicationCache \
+	$(WebKit2)/UIProcess/Discovery \
 	$(WebKit2)/UIProcess/Downloads \
 	$(WebKit2)/UIProcess/Geolocation \
 	$(WebKit2)/UIProcess/Network \
@@ -430,6 +439,7 @@ vpath %.messages.in = \
 	$(WebKit2)/WebProcess/ApplicationCache \
 	$(WebKit2)/WebProcess/Battery \
 	$(WebKit2)/WebProcess/Cookies \
+	$(WebKit2)/WebProcess/Discovery \
 	$(WebKit2)/WebProcess/FullScreen \
 	$(WebKit2)/WebProcess/Geolocation \
 	$(WebKit2)/WebProcess/IconDatabase \

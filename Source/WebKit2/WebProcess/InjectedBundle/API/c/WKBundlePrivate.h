@@ -70,6 +70,10 @@ WK_EXPORT void WKBundleSetWebNotificationPermission(WKBundleRef bundle, WKBundle
 WK_EXPORT void WKBundleRemoveAllWebNotificationPermissions(WKBundleRef bundle, WKBundlePageRef page);
 WK_EXPORT uint64_t WKBundleGetWebNotificationID(WKBundleRef bundle, JSContextRef context, JSValueRef notification);
 WK_EXPORT WKDataRef WKBundleCreateWKDataFromUInt8Array(WKBundleRef bundle, JSContextRef context, JSValueRef data);
+WK_EXPORT void WKBundleAddMockNetworkService(WKBundleRef bundle, WKStringRef name, WKStringRef type, WKStringRef config, WKStringRef host);
+WK_EXPORT void WKBundleRemoveMockNetworkService(WKBundleRef bundle, WKStringRef id);
+WK_EXPORT void WKBundleAddMockSwitchPowerUpnpService(WKBundleRef bundle);
+WK_EXPORT void WKBundleRemoveMockSwitchPowerUpnpService(WKBundleRef bundle);
 WK_EXPORT void WKBundleSetAsynchronousSpellCheckingEnabled(WKBundleRef bundleRef, WKBundlePageGroupRef pageGroupRef, bool enabled);
 
 // UserContent API

@@ -92,6 +92,8 @@ list(APPEND WebKit2_SOURCES
     UIProcess/API/efl/ewk_main.cpp
     UIProcess/API/efl/ewk_navigation_data.cpp
     UIProcess/API/efl/ewk_navigation_policy_decision.cpp
+    UIProcess/API/efl/ewk_network_service.cpp
+    UIProcess/API/efl/ewk_network_services.cpp
     UIProcess/API/efl/ewk_object.cpp
     UIProcess/API/efl/ewk_page_group.cpp
     UIProcess/API/efl/ewk_popup_menu.cpp
@@ -136,6 +138,8 @@ list(APPEND WebKit2_SOURCES
     UIProcess/efl/FormClientEfl.cpp
     UIProcess/efl/InputMethodContextEfl.cpp
     UIProcess/efl/NetworkInfoProvider.cpp
+    UIProcess/efl/NetworkServicesClientEfl.cpp
+    UIProcess/efl/NetworkServicesProvider.cpp
     UIProcess/efl/PageLoadClientEfl.cpp
     UIProcess/efl/PagePolicyClientEfl.cpp
     UIProcess/efl/PageUIClientEfl.cpp
@@ -245,6 +249,9 @@ list(APPEND WebKit2_INCLUDE_DIRECTORIES
     ${GLIB_INCLUDE_DIRS}
     ${LIBSOUP_INCLUDE_DIRS}
     ${WTF_DIR}
+    ${AVAHI_INCLUDE_DIRS}
+    ${GSSDP_INCLUDE_DIRS}
+    ${GUPNP_INCLUDE_DIRS}
 )
 
 list(APPEND WebKit2_LIBRARIES
@@ -277,12 +284,17 @@ list(APPEND WebProcess_SOURCES
 )
 
 list(APPEND WebProcess_LIBRARIES
+    ${AVAHI_GLIB_LIBRARIES}
+    ${AVAHI_CLIENT_LIBRARIES}
+    ${AVAHI_COMMON_LIBRARIES}
     ${CAIRO_LIBRARIES}
     ${ECORE_IMF_EVAS_LIBRARIES}
     ${ECORE_IMF_LIBRARIES}
     ${EDJE_LIBRARIES}
     ${EFLDEPS_LIBRARIES}
     ${EVAS_LIBRARIES}
+    ${GSSDP_LIBRARIES}
+    ${GUPNP_LIBRARIES}
     ${LIBXML2_LIBRARIES}
     ${LIBXSLT_LIBRARIES}
     ${OPENGL_LIBRARIES}
@@ -352,6 +364,8 @@ set(EWebKit2_HEADERS
     "${CMAKE_CURRENT_SOURCE_DIR}/UIProcess/API/efl/ewk_main.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/UIProcess/API/efl/ewk_navigation_data.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/UIProcess/API/efl/ewk_navigation_policy_decision.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/UIProcess/API/efl/ewk_network_service.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/UIProcess/API/efl/ewk_network_services.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/UIProcess/API/efl/ewk_object.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/UIProcess/API/efl/ewk_page_group.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/UIProcess/API/efl/ewk_popup_menu.h"
@@ -461,6 +475,7 @@ set(EWK2UnitTests_BINARIES
     test_ewk2_eina_shared_string
     test_ewk2_favicon_database
     test_ewk2_file_chooser_request
+    test_ewk2_network_services
     test_ewk2_object
     test_ewk2_page_group
     test_ewk2_popup_menu

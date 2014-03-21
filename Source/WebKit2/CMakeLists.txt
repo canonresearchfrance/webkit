@@ -27,6 +27,7 @@ set(WebKit2_INCLUDE_DIRECTORIES
     "${WEBKIT2_DIR}/UIProcess/API/cpp"
     "${WEBKIT2_DIR}/UIProcess/Authentication"
     "${WEBKIT2_DIR}/UIProcess/CoordinatedGraphics"
+    "${WEBKIT2_DIR}/UIProcess/Discovery"
     "${WEBKIT2_DIR}/UIProcess/Downloads"
     "${WEBKIT2_DIR}/UIProcess/InspectorServer"
     "${WEBKIT2_DIR}/UIProcess/Launcher"
@@ -39,6 +40,7 @@ set(WebKit2_INCLUDE_DIRECTORIES
     "${WEBKIT2_DIR}/WebProcess/ApplicationCache"
     "${WEBKIT2_DIR}/WebProcess/Battery"
     "${WEBKIT2_DIR}/WebProcess/Cookies"
+    "${WEBKIT2_DIR}/WebProcess/Discovery"
     "${WEBKIT2_DIR}/WebProcess/Databases"
     "${WEBKIT2_DIR}/WebProcess/Databases/IndexedDB"
     "${WEBKIT2_DIR}/WebProcess/FileAPI"
@@ -64,6 +66,7 @@ set(WebKit2_INCLUDE_DIRECTORIES
     "${WEBKIT2_DIR}/WebProcess/WebPage/CoordinatedGraphics"
     "${WEBCORE_DIR}"
     "${WEBCORE_DIR}/Modules/battery"
+    "${WEBCORE_DIR}/Modules/discovery"
     "${WEBCORE_DIR}/Modules/mediastream"
     "${WEBCORE_DIR}/Modules/networkinfo"
     "${WEBCORE_DIR}/Modules/notifications"
@@ -95,6 +98,11 @@ set(WebKit2_INCLUDE_DIRECTORIES
     "${WEBCORE_DIR}/platform"
     "${WEBCORE_DIR}/platform/animation"
     "${WEBCORE_DIR}/platform/audio"
+    "${WEBCORE_DIR}/platform/discovery"
+    "${WEBCORE_DIR}/platform/discovery/avahi"
+    "${WEBCORE_DIR}/platform/discovery/gssdp"
+    "${WEBCORE_DIR}/platform/discovery/gssdp/soup"
+    "${WEBCORE_DIR}/platform/discovery/gupnp"
     "${WEBCORE_DIR}/platform/graphics"
     "${WEBCORE_DIR}/platform/graphics/filters"
     "${WEBCORE_DIR}/platform/graphics/harfbuzz"
@@ -229,6 +237,8 @@ set(WebKit2_SOURCES
     Shared/WebMemorySampler.cpp
     Shared/WebMouseEvent.cpp
     Shared/WebNetworkInfo.cpp
+    Shared/WebNetworkService.cpp
+    Shared/WebNetworkServices.cpp
     Shared/WebOpenPanelParameters.cpp
     Shared/WebPageCreationParameters.cpp
     Shared/WebPageGroupData.cpp
@@ -340,6 +350,7 @@ set(WebKit2_SOURCES
     UIProcess/WebMediaCacheManagerProxy.cpp
     UIProcess/WebNetworkInfoManagerProxy.cpp
     UIProcess/WebNetworkInfoProvider.cpp
+    UIProcess/WebNetworkServicesProxyClient.cpp
     UIProcess/WebOpenPanelResultListenerProxy.cpp
     UIProcess/WebOriginDataManagerProxy.cpp
     UIProcess/WebOriginDataManagerProxyChangeClient.cpp
@@ -382,6 +393,9 @@ set(WebKit2_SOURCES
     UIProcess/API/C/WKNavigationDataRef.cpp
     UIProcess/API/C/WKNetworkInfo.cpp
     UIProcess/API/C/WKNetworkInfoManager.cpp
+    UIProcess/API/C/WKNetworkService.cpp
+    UIProcess/API/C/WKNetworkServicesManager.cpp
+    UIProcess/API/C/WKNetworkServicesRequest.cpp
     UIProcess/API/C/WKNotification.cpp
     UIProcess/API/C/WKNotificationManager.cpp
     UIProcess/API/C/WKNotificationPermissionRequest.cpp
@@ -408,6 +422,11 @@ set(WebKit2_SOURCES
     UIProcess/CoordinatedGraphics/CoordinatedDrawingAreaProxy.cpp
     UIProcess/CoordinatedGraphics/CoordinatedLayerTreeHostProxy.cpp
     UIProcess/CoordinatedGraphics/WebPageProxyCoordinatedGraphics.cpp
+
+    UIProcess/Discovery/NetworkServicesRequestManagerProxy.cpp
+    UIProcess/Discovery/NetworkServicesRequestProxy.cpp
+    UIProcess/Discovery/WebNetworkServicesManagerProxy.cpp
+    UIProcess/Discovery/WebNetworkServicesProvider.cpp
 
     UIProcess/Downloads/DownloadProxy.cpp
     UIProcess/Downloads/DownloadProxyMap.cpp
@@ -444,6 +463,9 @@ set(WebKit2_SOURCES
     WebProcess/Battery/WebBatteryManager.cpp
 
     WebProcess/Cookies/WebCookieManager.cpp
+
+    WebProcess/Discovery/NetworkServicesRequestManager.cpp
+    WebProcess/Discovery/WebNetworkServicesManager.cpp
 
     WebProcess/Databases/IndexedDB/WebIDBFactoryBackend.cpp
 
@@ -540,6 +562,7 @@ set(WebKit2_SOURCES
     WebProcess/WebCoreSupport/WebInspectorClient.cpp
     WebProcess/WebCoreSupport/WebInspectorFrontendClient.cpp
     WebProcess/WebCoreSupport/WebNetworkInfoClient.cpp
+    WebProcess/WebCoreSupport/WebNetworkServicesClient.cpp
     WebProcess/WebCoreSupport/WebNotificationClient.cpp
     WebProcess/WebCoreSupport/WebPlatformStrategies.cpp
     WebProcess/WebCoreSupport/WebPlugInClient.cpp
@@ -609,6 +632,8 @@ set(WebKit2_MESSAGES_IN_FILES
 
     UIProcess/CoordinatedGraphics/CoordinatedLayerTreeHostProxy.messages.in
 
+    UIProcess/Discovery/WebNetworkServicesManagerProxy.messages.in
+
     UIProcess/Downloads/DownloadProxy.messages.in
 
     UIProcess/Network/NetworkProcessProxy.messages.in
@@ -626,6 +651,8 @@ set(WebKit2_MESSAGES_IN_FILES
     WebProcess/Battery/WebBatteryManager.messages.in
 
     WebProcess/Cookies/WebCookieManager.messages.in
+
+    WebProcess/Discovery/WebNetworkServicesManager.messages.in
 
     WebProcess/FullScreen/WebFullScreenManager.messages.in
 
