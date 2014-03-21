@@ -1,0 +1,52 @@
+<html>
+  <head>
+    <script src="../resources/js-test-pre.js"></script>
+    <script src="resources/discovery-testing.js"></script>
+    <script>
+      description('Tests that available event is send when a new service requested is published.');
+
+      function setOnline() {
+        window.testRunner.addMockNetworkService('TestRunner1', '_test-available._tcp', 'allowed', null);
+      }
+
+      function onSuccess(services) {
+        dumpServices(services);
+        for (var i = 0; i < services.length; ++i) {
+            debug("* register onavailable for service " + i);
+            services[i].onavailable = function availableService() {
+                debug("* service available : " + this.name);
+    
+                if (window.testRunner) {
+                    window.testRunner.notifyDone();
+                }
+            }
+        }
+            
+        window.testRunner.removeMockNetworkService('TestRunner1._test-available._tcp.local.');
+
+        // wait a while
+        window.setTimeout(setOnline, 2000);
+      }
+
+      function getServices() {
+        getNetworkServicesWithCallbacks(['zeroconf:_test-available._tcp'], onSuccess);
+      }
+
+      function buttonClicked() {
+
+        window.testRunner.addMockNetworkService('TestRunner1', '_test-available._tcp', 'allowed', null);
+        window.testRunner.addMockNetworkService('TestRunner2', '_test-available._tcp', 'allowed', null);
+
+        // wait a while
+        window.setTimeout(getServices, 2000);
+
+        testRunner.waitUntilDone();
+      }
+    </script>
+  </head>
+<body onload="simulateButtonPress()">
+<input type="button" id="button" value="Get Network Services" onmouseup="buttonClicked()">
+<script src="../resources/js-test-post.js"></script>
+</body>
+<p id="description"></p>
+</html>

@@ -1,0 +1,23 @@
+Add request
+WebView network services request permission 1 service(s) (origin "file://")
+	Services:
+	 - 1 allowed
+	 - 0 denied
+	 - 1 online
+	 - 0 offline
+This test checks whether event handlers on NetworkServices survive garbage collection.
+
+On success, you will see a series of "PASS" messages, followed by "TEST COMPLETE".
+
+
+PASS successfullyParsed is true
+
+TEST COMPLETE
+* register default error callback
+* sent network services request
+* got reply: 1 service(s) on 1 services available
+* services[0]: zeroconf:_test-event-listener-gc._tcp
+* event handler fired after garbage collection.
+* service unavailable
+
+

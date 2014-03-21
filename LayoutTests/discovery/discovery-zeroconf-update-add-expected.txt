@@ -1,0 +1,24 @@
+Add request
+WebView network services request permission 1 service(s) (origin "file://")
+Update request (origin "file://")
+WebView network services request permission 2 service(s) (origin "file://")
+	Services:
+	 - 2 allowed
+	 - 0 denied
+	 - 2 online
+	 - 0 offline
+Tests that update API is fired when a service is added or removed during a pending request.
+
+On success, you will see a series of "PASS" messages, followed by "TEST COMPLETE".
+
+
+PASS successfullyParsed is true
+
+TEST COMPLETE
+* register default error callback
+* sent network services request
+* got reply: 2 service(s) on 2 services available
+* services[0]: zeroconf:_test-update-add._tcp
+* services[1]: zeroconf:_test-update-add._tcp
+
+

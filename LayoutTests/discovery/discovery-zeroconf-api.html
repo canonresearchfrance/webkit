@@ -1,0 +1,26 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+<script src="../resources/js-test-pre.js"></script>
+<script src="resources/discovery-testing.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+      description('Tests that getNetworkServices API is available and support all characters for valid service type.');
+
+      shouldBeDefined("navigator.getNetworkServices");
+
+      function onSuccess(services) {
+          dumpServices(services);
+
+          if (window.testRunner) {
+              window.testRunner.notifyDone();
+          }
+      }
+
+      getNetworkServicesWithCallbacks(['zeroconf:!:#$%&*+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ^_abcdefghijklmnopqrstuvwxyz{|}~'], onSuccess);
+</script>
+<script src="../resources/js-test-post.js"></script>
+</body>
+<p id="description"></p>
+</html>

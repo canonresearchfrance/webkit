@@ -1,0 +1,46 @@
+<html>
+  <head>
+    <script src="../resources/js-test-pre.js"></script>
+    <script src="resources/discovery-testing.js"></script>
+    <script>
+      description('Tests that unavailable event is send when a service requested is removed.');
+
+      function onSuccess(services) {
+        dumpServices(services);
+        
+        for (var i = 0; i < services.length; ++i) {
+            debug("* register onunavailable for service " + i);
+            services[i].onunavailable = function unavailableService() {
+                debug("* service unavailable : " + this.name);
+    
+                if (window.testRunner) {
+                    window.testRunner.notifyDone();
+                }
+            }
+        }
+            
+        window.testRunner.removeMockNetworkService('TestRunner1._test-unavailable._tcp.local.');
+      }
+
+      function getServices() {
+        getNetworkServicesWithCallbacks(['zeroconf:_test-unavailable._tcp'], onSuccess);
+      }
+
+      function buttonClicked() {
+
+        window.testRunner.addMockNetworkService('TestRunner1', '_test-unavailable._tcp', 'allowed', null);
+        window.testRunner.addMockNetworkService('TestRunner2', '_test-unavailable._tcp', 'allowed', null);
+
+        // wait a while
+        window.setTimeout(getServices, 2000);
+
+        testRunner.waitUntilDone();
+      }
+    </script>
+  </head>
+<body onload="simulateButtonPress()">
+<input type="button" id="button" value="Get Network Services" onmouseup="buttonClicked()">
+<script src="../resources/js-test-post.js"></script>
+</body>
+<p id="description"></p>
+</html>

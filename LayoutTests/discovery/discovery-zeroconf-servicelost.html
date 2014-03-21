@@ -1,0 +1,48 @@
+<html>
+  <head>
+    <script src="../resources/js-test-pre.js"></script>
+    <script src="resources/discovery-testing.js"></script>
+    <script type="text/javascript">
+      description('Tests that servicelost event is send when a service requested is removed.');
+
+      function onSuccess(services) {
+          dumpServices(services);
+
+          services.onservicelost = function() {
+              debug("* service lost");
+              getNetworkServicesWithCallbacks(['zeroconf:_test-onservicelost._tcp'], onSuccess2);
+          }
+
+          window.testRunner.removeMockNetworkService('TestRunner1._test-onservicelost._tcp.local.');
+      }
+
+      function onSuccess2(services) {
+          dumpServices(services);
+
+          if (window.testRunner) {
+              window.testRunner.notifyDone();
+          }
+      }  
+
+      function getServices() {
+        getNetworkServicesWithCallbacks(['zeroconf:_test-onservicelost._tcp'], onSuccess);
+      }
+
+      function buttonClicked() {
+
+        window.testRunner.addMockNetworkService('TestRunner1', '_test-onservicelost._tcp', 'allowed', null);
+        window.testRunner.addMockNetworkService('TestRunner2', '_test-onservicelost._tcp', 'allowed', null);
+
+        // wait a while
+        window.setTimeout(getServices, 2000);
+
+        testRunner.waitUntilDone();
+      }
+    </script>
+  </head>
+<body onload="simulateButtonPress()">
+<input type="button" id="button" value="Get Network Services" onmouseup="buttonClicked()">
+<script src="../resources/js-test-post.js"></script>
+</body>
+<p id="description"></p>
+</html>

@@ -1,0 +1,43 @@
+<html>
+  <head>
+    <script src="../resources/js-test-pre.js"></script>
+    <script src="resources/discovery-testing.js"></script>
+    <script type="text/javascript">
+      description('Tests that update API is fired when a service is added or removed during a pending request.');
+
+      function onSuccess(services) {
+          dumpServices(services);
+
+          if (window.testRunner) {
+              window.testRunner.notifyDone();
+          }
+      }
+
+      function addService() {
+        window.testRunner.addMockNetworkService('TestRunner2', '_test-update-add._tcp', 'allowed|skip_update', null);
+      }
+
+      function getServices() {
+        getNetworkServicesWithCallbacks(['zeroconf:_test-update-add._tcp'], onSuccess);
+
+        // wait a while
+        window.setTimeout(addService, 5000);
+      }
+
+      function buttonClicked() {
+
+        window.testRunner.addMockNetworkService('TestRunner1', '_test-update-add._tcp', 'allowed|wait_update', null);
+
+        // wait a while
+        window.setTimeout(getServices, 2000);
+
+        testRunner.waitUntilDone();
+      }
+    </script>
+  </head>
+<body onload="simulateButtonPress()">
+<input type="button" id="button" value="Get Network Services" onmouseup="buttonClicked()">
+<script src="../resources/js-test-post.js"></script>
+</body>
+<p id="description"></p>
+</html>

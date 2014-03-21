@@ -1,0 +1,46 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+<script src="../resources/js-test-pre.js"></script>
+<script src="resources/discovery-testing.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+      description('Tests that getNetworkServices call twice notify the cancel of the first request.');
+
+      function onSuccess(services) {
+          dumpServices(services);
+
+          if (window.testRunner) {
+              window.testRunner.notifyDone();
+          }
+      }
+
+      function cancelGetServices() {
+        getNetworkServicesWithCallbacks(['zeroconf:_test-cancel-done._tcp'], onSuccess);
+      }
+
+      function getServices() {
+        getNetworkServicesWithCallbacks(['zeroconf:_test-cancel._tcp'], onSuccess);
+
+        window.setTimeout(cancelGetServices, 5000);
+      }
+
+      function buttonClicked() {
+
+        window.testRunner.addMockNetworkService('TestRunner1', '_test-cancel._tcp', 'allowed|wait_cancel_once', null);
+        window.testRunner.addMockNetworkService('TestRunner1', '_test-cancel-done._tcp', 'allowed|wait_cancel_once', null);
+
+        // wait a while
+        window.setTimeout(getServices, 2000);
+
+        testRunner.waitUntilDone();
+      }
+
+</script>
+<body onload="simulateButtonPress()">
+<input type="button" id="button" value="Get Network Services" onmouseup="buttonClicked()">
+<script src="../resources/js-test-post.js"></script>
+</body>
+<p id="description"></p>
+</html>

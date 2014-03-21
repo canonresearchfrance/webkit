@@ -1,0 +1,68 @@
+<html>
+  <head>
+    <script src="../resources/js-test-pre.js"></script>
+    <script src="resources/discovery-testing.js"></script>
+    <script>
+
+      function notifyDone() {
+        window.testRunner.notifyDone();
+      }
+
+      function onSuccess(services) {
+        dumpServices(services);
+        debug("* service id     : " + services[0].id);
+        debug("* service type   : " + services[0].type);
+        debug("* service name   : " + services[0].name);
+
+        console.log("service config : " + services[0].config);
+
+        services[0].onnotify = function(msg) {
+            console.log("onnotify : " + msg.data);
+            window.setTimeout(notifyDone, 2000);
+        };
+
+        var svcXhr = new XMLHttpRequest();
+        svcXhr.open("POST", services[0].url);
+
+        svcXhr.setRequestHeader('SOAPAction', 'urn:schemas-upnp-org:service:SwitchPower:1#SetTarget');
+        svcXhr.setRequestHeader('Content-Type', 'text/xml; charset="utf-8";');
+
+        svcXhr.onreadystatechange = function ( response ) {
+            if( response.readyState != 4 || response.status != 200 )
+                return;
+            debug("* " + services[0].name + " response received: " + response.responseXML);
+        }
+
+        var svcMsg = '<?xml version="1.0" encoding="utf-8"?>' +
+                 '<s:Envelope s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" ' +
+                   'xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">' +
+                   '<s:Body>' +
+                     '<u:SetTarget xmlns:u="urn:schemas-upnp-org:service:SwitchPower:1">' +
+                       '<NewTargetValue>1</NewTargetValue>' +
+                     '</u:SetTarget>' +
+                   '</s:Body>' +
+                 '</s:Envelope>';
+
+        svcXhr.send(svcMsg);
+      }
+
+      function getServices() {
+        getNetworkServicesWithCallbacks(['upnp:urn:schemas-upnp-org:service:SwitchPower:1'], onSuccess);
+      }
+
+      function buttonClicked() {
+
+        window.testRunner.addMockSwitchPowerUpnpService();
+
+        // wait a while
+        window.setTimeout(getServices, 2000);
+
+        testRunner.waitUntilDone();
+      }
+    </script>
+  </head>
+<body onload="simulateButtonPress()">
+<input type="button" id="button" value="Get Network Services" onmouseup="buttonClicked()">
+<script src="../resources/js-test-post.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+Tests errorCallback notification when bad parameters are used.
+
+On success, you will see a series of "PASS" messages, followed by "TEST COMPLETE".
+
+
+PASS successfullyParsed is true
+
+TEST COMPLETE
+* sent network services request
+* got failure (count 1): 2
+* sent network services request
+* got failure (count 2): 2
+* sent network services request
+* got failure (count 3): 2
+* sent network services request
+
+

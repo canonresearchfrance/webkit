@@ -1,0 +1,40 @@
+Add request
+WebView network services request permission 1 service(s) (origin "file://")
+	Services:
+	 - 0 allowed
+	 - 0 denied
+	 - 1 online
+	 - 0 offline
+CONSOLE MESSAGE: line 17: service config : <device xmlns="urn:schemas-upnp-org:device-1-0">
+    <deviceType>urn:schemas-upnp-org:device:BinaryLight:1</deviceType>
+    <friendlyName>Kitchen Lights</friendlyName>
+    <manufacturer>OpenedHand</manufacturer>
+    <modelName>Virtual Light</modelName>
+    <UDN>uuid:cc93d8e6-6b8b-4f60-87ca-228c36b5b0e8</UDN>
+    
+    <serviceList>
+      <service>
+        <serviceType>urn:schemas-upnp-org:service:SwitchPower:1</serviceType>
+        <serviceId>urn:upnp-org:serviceId:SwitchPower:1</serviceId>
+        <SCPDURL>/SwitchPower1.xml</SCPDURL>
+        <controlURL>/SwitchPower/Control</controlURL>
+        <eventSubURL>/SwitchPower/Event</eventSubURL>
+      </service>
+    </serviceList>
+  </device>
+CONSOLE MESSAGE: line 20: onnotify : <e:propertyset xmlns:e="urn:schemas-upnp-org:event-1-0">
+    <e:property>
+      <Status>1</Status>
+    </e:property>
+  </e:propertyset>
+PASS successfullyParsed is true
+
+TEST COMPLETE
+* register default error callback
+* sent network services request
+* got reply: 1 service(s) on 1 services available
+* services[0]: upnp:urn:schemas-upnp-org:service:SwitchPower:1
+* service id     : uuid:cc93d8e6-6b8b-4f60-87ca-228c36b5b0e8::urn:upnp-org:serviceId:SwitchPower:1
+* service type   : upnp:urn:schemas-upnp-org:service:SwitchPower:1
+* service name   : urn:upnp-org:serviceId:SwitchPower:1
+

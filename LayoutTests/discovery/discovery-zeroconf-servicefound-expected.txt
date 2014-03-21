@@ -1,0 +1,36 @@
+Add request
+WebView network services request permission 2 service(s) (origin "file://")
+	Services:
+	 - 2 allowed
+	 - 0 denied
+	 - 2 online
+	 - 0 offline
+Add request
+WebView network services request permission 3 service(s) (origin "file://")
+	Services:
+	 - 3 allowed
+	 - 0 denied
+	 - 3 online
+	 - 0 offline
+Tests that servicefound event is send when a new service requested is published.
+
+On success, you will see a series of "PASS" messages, followed by "TEST COMPLETE".
+
+
+PASS successfullyParsed is true
+
+TEST COMPLETE
+* register default error callback
+* sent network services request
+* got reply: 2 service(s) on 2 services available
+* services[0]: zeroconf:_test-servicefound._tcp
+* services[1]: zeroconf:_test-servicefound._tcp
+* service found
+* register default error callback
+* sent network services request
+* got reply: 3 service(s) on 3 services available
+* services[0]: zeroconf:_test-servicefound._tcp
+* services[1]: zeroconf:_test-servicefound._tcp
+* services[2]: zeroconf:_test-servicefound._tcp
+
+

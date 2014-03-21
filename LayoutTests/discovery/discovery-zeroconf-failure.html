@@ -1,0 +1,33 @@
+<html>
+  <head>
+    <script src="../resources/js-test-pre.js"></script>
+    <script src="resources/discovery-testing.js"></script>
+    <script>
+      description('Tests errorCallback notification when bad parameters are used.');
+
+      var count = 0;
+      function onFailure(error) {
+          count++;
+          debug("* got failure (count " + count + "): " + error.code);
+          if (count == 1) {
+            getNetworkServicesWithCallbacks([], null, onFailure);
+          } else if (count == 2) {
+            getNetworkServicesWithCallbacks(['zeroconf:@@@', 'upnp:@@@'], null, onFailure);
+          }
+          if (count == 3 && window.testRunner) {
+              getNetworkServicesWithCallbacks(['@@@'], null, null);
+              window.testRunner.notifyDone();
+          }
+      }
+       
+      function buttonClicked() {
+        getNetworkServicesWithCallbacks([], null, onFailure);
+      }
+    </script>
+  </head>
+<body onload="simulateButtonPress()">
+<input type="button" id="button" value="Get Network Services" onmouseup="buttonClicked()">
+<script src="../resources/js-test-post.js"></script>
+</body>
+<p id="description"></p>
+</html>

@@ -1,0 +1,26 @@
+Add request
+WebView network services request permission 1 service(s) (origin "file://")
+Cancel request (origin "file://")
+Add request
+WebView network services request permission 1 service(s) (origin "file://")
+	Services:
+	 - 1 allowed
+	 - 0 denied
+	 - 1 online
+	 - 0 offline
+Tests that getNetworkServices call twice notify the cancel of the first request.
+
+On success, you will see a series of "PASS" messages, followed by "TEST COMPLETE".
+
+
+PASS successfullyParsed is true
+
+TEST COMPLETE
+* register default error callback
+* sent network services request
+* register default error callback
+* sent network services request
+* got reply: 1 service(s) on 1 services available
+* services[0]: zeroconf:_test-cancel-done._tcp
+
+

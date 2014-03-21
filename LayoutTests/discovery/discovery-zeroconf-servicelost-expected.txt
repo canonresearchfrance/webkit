@@ -1,0 +1,34 @@
+Add request
+WebView network services request permission 2 service(s) (origin "file://")
+	Services:
+	 - 2 allowed
+	 - 0 denied
+	 - 2 online
+	 - 0 offline
+Add request
+WebView network services request permission 1 service(s) (origin "file://")
+	Services:
+	 - 1 allowed
+	 - 0 denied
+	 - 1 online
+	 - 0 offline
+Tests that servicelost event is send when a service requested is removed.
+
+On success, you will see a series of "PASS" messages, followed by "TEST COMPLETE".
+
+
+PASS successfullyParsed is true
+
+TEST COMPLETE
+* register default error callback
+* sent network services request
+* got reply: 2 service(s) on 2 services available
+* services[0]: zeroconf:_test-onservicelost._tcp
+* services[1]: zeroconf:_test-onservicelost._tcp
+* service lost
+* register default error callback
+* sent network services request
+* got reply: 1 service(s) on 1 services available
+* services[0]: zeroconf:_test-onservicelost._tcp
+
+

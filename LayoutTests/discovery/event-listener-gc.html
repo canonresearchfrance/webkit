@@ -1,0 +1,65 @@
+<html>
+  <head>
+    <script src="../resources/js-test-pre.js"></script>
+    <script src="resources/discovery-testing.js"></script>
+    <script type="text/javascript">
+      description('This test checks whether event handlers on NetworkServices survive garbage collection.');
+
+      var didCollect = false;
+      
+      function collect() {
+          didCollect = true;
+          gc();
+      }
+        
+      function onServiceLost() {
+          if (didCollect)
+              debug("* event handler fired after garbage collection.");
+
+          debug("* service unavailable");
+          if (window.testRunner) {
+            window.testRunner.notifyDone();
+          }
+      }
+
+      function onSuccess(services) {
+          dumpServices(services);
+
+          services.onservicelost = function() {
+              if (didCollect)
+                debug("* event handler fired after garbage collection.");
+
+              debug("* service unavailable");
+              if (window.testRunner) {
+                window.testRunner.notifyDone();
+              }
+          };
+
+          //services.addEventListener('servicelost', onServiceLost, true);
+
+          window.testRunner.removeMockNetworkService('TestRunner1._test-event-listener-gc._tcp.local.');
+
+          setTimeout('collect();', 0); // timeout ensures stack references to services are cleared when we collect
+      }
+
+      function getServices() {
+        getNetworkServicesWithCallbacks(['zeroconf:_test-event-listener-gc._tcp'], onSuccess);
+      }
+
+      function buttonClicked() {
+
+        window.testRunner.addMockNetworkService('TestRunner1', '_test-event-listener-gc._tcp', 'allowed', null);
+
+        // wait a while
+        window.setTimeout(getServices, 2000);
+
+        testRunner.waitUntilDone();
+      }
+    </script>
+  </head>
+<body onload="simulateButtonPress()">
+<input type="button" id="button" value="Get Network Services" onmouseup="buttonClicked()">
+<script src="../resources/js-test-post.js"></script>
+</body>
+<p id="description"></p>
+</html>

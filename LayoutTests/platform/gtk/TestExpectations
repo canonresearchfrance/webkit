@@ -845,6 +845,24 @@ webkit.org/b/119264 transitions/created-while-suspended.html [ Pass Slow ]
 
 webkit.org/b/120201 js/regress/emscripten-memops.html [ Pass Slow ]
 
+# These tests are slow due to the local network services publishing.
+Bug(GTK) discovery/discovery-base-api.html [ Pass Slow ]
+Bug(GTK) discovery/discovery-upnp-api.html [ Pass Slow ]
+Bug(GTK) discovery/discovery-upnp-event.html [ Pass Slow ]
+Bug(GTK) discovery/discovery-zeroconf-all-denied.html [ Pass Slow ]
+Bug(GTK) discovery/discovery-zeroconf-api.html [ Pass Slow ]
+Bug(GTK) discovery/discovery-zeroconf-cancel.html [ Pass Slow ]
+Bug(GTK) discovery/discovery-zeroconf-denied.html [ Pass Slow ]
+Bug(GTK) discovery/discovery-zeroconf-failure.html [ Pass Slow ]
+Bug(GTK) discovery/discovery-zeroconf-offline.html [ Pass Slow ]
+Bug(GTK) discovery/discovery-zeroconf-onavailable.html [ Pass Slow ]
+Bug(GTK) discovery/discovery-zeroconf-online.html [ Pass Slow ]
+Bug(GTK) discovery/discovery-zeroconf-onunavailable.html [ Pass Slow ]
+Bug(GTK) discovery/discovery-zeroconf-reply.html [ Pass Slow ]
+Bug(GTK) discovery/discovery-zeroconf-update-add.html [ Pass Slow ]
+Bug(GTK) discovery/discovery-zeroconf-update-remove.html [ Pass Slow ]
+Bug(GTK) discovery/event-listener-gc.html [ Pass Slow ]
+
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of slow tests
 #////////////////////////////////////////////////////////////////////////////////////////

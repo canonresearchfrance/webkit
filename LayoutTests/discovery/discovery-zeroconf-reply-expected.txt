@@ -1,0 +1,16 @@
+Add request
+WebView network services request permission 1 service(s) (origin "file://")
+	Services:
+	 - 1 allowed
+	 - 0 denied
+	 - 1 online
+	 - 0 offline
+PASS successfullyParsed is true
+
+TEST COMPLETE
+* register default error callback
+* sent network services request
+* got reply: 1 service(s)
+* Xhr send to TestRunner
+* response received
+
