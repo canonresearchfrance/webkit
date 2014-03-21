@@ -75,6 +75,7 @@
 #include "InspectorClientGtk.h"
 #include "MainFrame.h"
 #include "MemoryCache.h"
+#include "NetworkServicesClientGtk.h"
 #include "MouseEventWithHitTestResults.h"
 #include "NotImplemented.h"
 #include "PageCache.h"
@@ -101,6 +102,7 @@
 #include "webkitmarshal.h"
 #include "webkitnetworkrequest.h"
 #include "webkitnetworkresponse.h"
+#include "webkitnetworkservices.h"
 #include "webkitviewportattributes.h"
 #include "webkitviewportattributesprivate.h"
 #include "webkitwebbackforwardlist.h"
@@ -206,6 +208,10 @@ enum {
     DOCUMENT_LOAD_FINISHED,
     GEOLOCATION_POLICY_DECISION_REQUESTED,
     GEOLOCATION_POLICY_DECISION_CANCELLED,
+    NETWORK_SERVICES_REQUEST_STARTED,
+    NETWORK_SERVICES_REQUEST_FINISHED,
+    NETWORK_SERVICES_REQUEST_UPDATED,
+    NETWORK_SERVICES_REQUEST_CANCELED,
     ONLOAD_EVENT,
     FRAME_CREATED,
     SHOULD_BEGIN_EDITING,
@@ -2558,6 +2564,88 @@ static void webkit_web_view_class_init(WebKitWebViewClass* webViewClass)
         G_TYPE_NONE, 1,
         WEBKIT_TYPE_WEB_FRAME);
 
+    /**
+     * WebKitWebView::networkservices-request-started:
+     * @web_view: the object on which the signal is emitted
+     * @network_services: the network_services request permission.
+     *
+     * This signal is emitted when a page wants to obtain the user's
+     * access to local network. The decision can be made asynchronously, 
+     * but you must call g_object_ref() the @network_services, and return 
+     * %TRUE if you are going to handle the request. To actually make the
+     * decision you need to call webkit_network_services_notify_allowed() or
+     * webkit_network_services_notify_denied() on @network_services.
+     *
+     * Since: 2.4
+     */
+    webkit_web_view_signals[NETWORK_SERVICES_REQUEST_STARTED] = g_signal_new("networkservices-request-started",
+        G_TYPE_FROM_CLASS(webViewClass),
+        (GSignalFlags)(G_SIGNAL_RUN_LAST),
+        0,
+        NULL, NULL,
+        g_cclosure_marshal_VOID__OBJECT,
+        G_TYPE_NONE, 1,
+        WEBKIT_TYPE_NETWORK_SERVICES);
+
+    /**
+     * WebKitWebView::networkservices-request-finished:
+     * @web_view: the object on which the signal is emitted
+     *
+     * This signal is emitted when local network services are discovered.
+     * To actually make the decision you need to call 
+     * webkit_network_services_get_all_services() and provide descision 
+     * for each network service with webkit_network_service_set_allowed().
+     *
+     * Since: 2.4
+     */
+    webkit_web_view_signals[NETWORK_SERVICES_REQUEST_FINISHED] = g_signal_new("networkservices-request-finished",
+        G_TYPE_FROM_CLASS(webViewClass),
+        (GSignalFlags)(G_SIGNAL_RUN_LAST),
+        0,
+        NULL, NULL,
+        g_cclosure_marshal_VOID__OBJECT,
+        G_TYPE_NONE, 0);
+
+    /**
+     * WebKitWebView::networkservices-request-updated:
+     * @web_view: the object on which the signal is emitted
+     * @network_services: the network_services request permission.
+     *
+     * This signal is emitted when new local network services whereas 
+     * permission are pending. The #WebKitWebView::networkservices-request-finished
+     * fire but webkit_network_services_notify_allowed() or
+     * webkit_network_services_notify_denied() have not been called on @network_services.
+     *
+     * Since: 2.4
+     */
+    webkit_web_view_signals[NETWORK_SERVICES_REQUEST_UPDATED] = g_signal_new("networkservices-request-updated",
+        G_TYPE_FROM_CLASS(webViewClass),
+        (GSignalFlags)(G_SIGNAL_RUN_LAST),
+        0,
+        NULL, NULL,
+        g_cclosure_marshal_VOID__OBJECT,
+        G_TYPE_NONE, 1,
+        WEBKIT_TYPE_NETWORK_SERVICES);
+
+    /**
+     * WebKitWebView::networkservices-request-canceled:
+     * @web_view: the object on which the signal is emitted
+     * @network_services: the network_services request permission.
+     *
+     * This signal is emitted when a page canel local network services
+     * request.
+     *
+     * Since: 2.4
+     */
+    webkit_web_view_signals[NETWORK_SERVICES_REQUEST_CANCELED] = g_signal_new("networkservices-request-canceled",
+        G_TYPE_FROM_CLASS(webViewClass),
+        (GSignalFlags)(G_SIGNAL_RUN_LAST),
+        0,
+        NULL, NULL,
+        g_cclosure_marshal_VOID__OBJECT,
+        G_TYPE_NONE, 1,
+        WEBKIT_TYPE_NETWORK_SERVICES);
+
     /*
      * DOM-related signals. These signals are experimental, for now,
      * and may change API and ABI. Their comments lack one * on
@@ -3833,6 +3921,9 @@ static void webkit_web_view_init(WebKitWebView* webView)
 
 #if ENABLE(BATTERY_STATUS)
     WebCore::provideBatteryTo(priv->corePage, new BatteryClientGtk);
+#endif
+#if ENABLE(DISCOVERY)
+    WebCore::provideNetworkServicesTo(priv->corePage, new WebKit::NetworkServicesClient(webView, priv->corePage));
 #endif
 
     if (DumpRenderTreeSupportGtk::dumpRenderTreeModeEnabled()) {

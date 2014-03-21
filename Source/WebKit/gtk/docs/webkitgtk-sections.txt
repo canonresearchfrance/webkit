@@ -734,6 +734,57 @@ webkit_file_chooser_request_get_type
 </SECTION>
 
 <SECTION>
+<FILE>webkitnetworkservices</FILE>
+<TITLE>WebKitNetworkServices</TITLE>
+WebKitNetworkServices
+webkit_network_services_get_all_services
+webkit_network_services_get_length
+webkit_network_services_get_origin
+webkit_network_services_get_services_available
+webkit_network_services_notify_allowed
+webkit_network_services_notify_denied
+
+<SUBSECTION Standard>
+WEBKIT_IS_NETWORK_SERVICES
+WEBKIT_IS_NETWORK_SERVICES_CLASS
+WEBKIT_NETWORK_SERVICES
+WEBKIT_NETWORK_SERVICES_CLASS
+WEBKIT_NETWORK_SERVICES_GET_CLASS
+WEBKIT_TYPE_NETWORK_SERVICES
+
+<SUBSECTION Private>
+WebKitNetworkServicesClass
+WebKitNetworkServicesPrivate
+webkit_network_services_get_type
+</SECTION>
+
+<SECTION>
+<FILE>webkitnetworkservice</FILE>
+<TITLE>WebKitNetworkService</TITLE>
+WebKitNetworkService
+webkit_network_service_get_config
+webkit_network_service_get_id
+webkit_network_service_get_name
+webkit_network_service_get_servicetype
+webkit_network_service_get_url
+webkit_network_service_is_online
+webkit_network_service_set_allowed
+
+<SUBSECTION Standard>
+WEBKIT_IS_NETWORK_SERVICE
+WEBKIT_IS_NETWORK_SERVICE_CLASS
+WEBKIT_NETWORK_SERVICE
+WEBKIT_NETWORK_SERVICE_CLASS
+WEBKIT_NETWORK_SERVICE_GET_CLASS
+WEBKIT_TYPE_NETWORK_SERVICE
+
+<SUBSECTION Private>
+WebKitNetworkServiceClass
+WebKitNetworkServicePrivate
+webkit_network_service_get_type
+</SECTION>
+
+<SECTION>
 <FILE>webkitdefines</FILE>
 WEBKIT_API
 WEBKITGTK_API_VERSION

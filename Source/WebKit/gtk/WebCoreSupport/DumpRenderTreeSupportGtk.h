@@ -101,6 +101,13 @@ public:
     static void setMockGeolocationPositionUnavailableError(WebKitWebView*, const gchar* errorMessage);
     static int numberOfPendingGeolocationPermissionRequests(WebKitWebView*);
 
+    // Network Services Discovery
+    static void addMockNetworkService(const gchar* name, const gchar* type, const gchar* config, const gchar* host);
+    static void removeMockNetworkService(const gchar* id);
+    static void removeAllMockNetworkServices();
+    static void addMockSwitchPowerUpnpService();
+    static void removeMockSwitchPowerUpnpService();
+
     static void setPageCacheSupportsPlugins(WebKitWebView*, bool enabled);
     static void setCSSGridLayoutEnabled(WebKitWebView*, bool enabled);
     static void setCSSRegionsEnabled(WebKitWebView*, bool enabled);

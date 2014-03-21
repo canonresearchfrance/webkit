@@ -54,6 +54,8 @@
 #include "JSNodeList.h"
 #include "MemoryCache.h"
 #include "MutationObserver.h"
+#include "NetworkServicePublisherAvahiMock.h"
+#include "NetworkServicePublisherGupnpMock.h"
 #include "NodeList.h"
 #include "PageGroup.h"
 #include "PrintContext.h"
@@ -563,6 +565,49 @@ int DumpRenderTreeSupportGtk::numberOfPendingGeolocationPermissionRequests(WebKi
     return 0;
 #endif
 }
+
+void DumpRenderTreeSupportGtk::addMockNetworkService(const gchar* name, const gchar* type, const gchar* config, const gchar* host)
+{
+#if ENABLE(DISCOVERY)
+    WebCore::NetworkServicePublisherAvahiMock::addService(name, type, config, host);
+#else
+    UNUSED_PARAM(name);
+    UNUSED_PARAM(type);
+    UNUSED_PARAM(config);
+    UNUSED_PARAM(host);
+#endif
+}
+
+void DumpRenderTreeSupportGtk::removeMockNetworkService(const gchar* id)
+{
+#if ENABLE(DISCOVERY)
+    WebCore::NetworkServicePublisherAvahiMock::removeService(id);
+#else
+    UNUSED_PARAM(id);
+#endif
+}
+
+void DumpRenderTreeSupportGtk::removeAllMockNetworkServices()
+{
+#if ENABLE(DISCOVERY)
+    WebCore::NetworkServicePublisherAvahiMock::removeAllServices();
+#endif
+}
+
+void DumpRenderTreeSupportGtk::addMockSwitchPowerUpnpService()
+{
+#if ENABLE(DISCOVERY)
+    WebCore::NetworkServicePublisherGupnpMock::addSwitchPowerService();
+#endif
+}
+
+void DumpRenderTreeSupportGtk::removeMockSwitchPowerUpnpService()
+{
+#if ENABLE(DISCOVERY)
+    WebCore::NetworkServicePublisherGupnpMock::removeSwitchPowerService();
+#endif
+}
+
 
 void DumpRenderTreeSupportGtk::setPageCacheSupportsPlugins(WebKitWebView* webView, bool enabled)
 {
