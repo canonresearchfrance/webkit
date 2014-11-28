@@ -36,6 +36,8 @@
 #include <WebCore/ResourceHandleClient.h>
 #include <WebCore/ResourceLoaderOptions.h>
 #include <WebCore/ResourceRequest.h>
+#include <WebCore/ResourceResolverClient.h>
+#include <WebCore/ResourceResolverAsync.h>
 #include <WebCore/ResourceResponse.h>
 #include <WebCore/SessionID.h>
 #include <WebCore/Timer.h>
@@ -48,6 +50,7 @@ namespace WebCore {
 class BlobDataFileReference;
 class ResourceHandle;
 class ResourceRequest;
+class ResourceResolver;
 }
 
 namespace WebKit {
@@ -57,7 +60,7 @@ class NetworkResourceLoadParameters;
 class RemoteNetworkingContext;
 class SandboxExtension;
 
-class NetworkResourceLoader : public RefCounted<NetworkResourceLoader>, public WebCore::ResourceHandleClient, public IPC::MessageSender {
+class NetworkResourceLoader : public RefCounted<NetworkResourceLoader>, public WebCore::ResourceHandleClient, public WebCore::ResourceResolverClient, public WebCore::ResourceResolverAsyncClient, public IPC::MessageSender {
 public:
     static RefPtr<NetworkResourceLoader> create(const NetworkResourceLoadParameters& parameters, NetworkConnectionToWebProcess* connection)
     {
@@ -75,7 +78,7 @@ public:
     // Changes with redirects.
     WebCore::ResourceRequest& currentRequest() { return m_currentRequest; }
 
-    WebCore::ResourceHandle* handle() const { return m_handle.get(); }
+    WebCore::ResourceHandle* handle() const { return m_resolver ? m_resolver->handle() : nullptr; }
     void didConvertHandleToDownload();
 
     void start();
@@ -103,6 +106,7 @@ public:
     WebCore::SessionID sessionID() const { return m_parameters.sessionID; }
 
     struct SynchronousLoadData;
+    virtual bool usesAsyncCallbacks() override { return true; }
 
 private:
     NetworkResourceLoader(const NetworkResourceLoadParameters&, NetworkConnectionToWebProcess*, PassRefPtr<Messages::NetworkConnectionToWebProcess::PerformSynchronousLoad::DelayedReply>);
@@ -111,21 +115,37 @@ private:
     virtual IPC::Connection* messageSenderConnection() override;
     virtual uint64_t messageSenderDestinationID() override { return m_parameters.identifier; }
 
+    // ResourceResolverClient
+    virtual void didSendData(WebCore::ResourceResolver*, unsigned long long bytesSent, unsigned long long totalBytesToBeSent) override;
+    virtual void didReceiveData(WebCore::ResourceResolver*, const char*, unsigned, int encodedDataLength) override;
+    virtual void didReceiveBuffer(WebCore::ResourceResolver*, PassRefPtr<WebCore::SharedBuffer>, int encodedDataLength) override;
+    virtual void didFinishLoading(WebCore::ResourceResolver*, double finishTime) override;
+    virtual void didFail(WebCore::ResourceResolver*, const WebCore::ResourceError&) override;
+    virtual void wasBlocked(WebCore::ResourceResolver*) override;
+    virtual void cannotShowURL(WebCore::ResourceResolver*) override;
+    virtual bool shouldUseCredentialStorage(WebCore::ResourceResolver*) override;
+
+    // ResourceResolverAsyncClient
+    virtual void willSendRequestAsync(WebCore::ResourceResolver*, const WebCore::ResourceRequest&, const WebCore::ResourceResponse& redirectResponse) override;
+    virtual void didReceiveResponseAsync(WebCore::ResourceResolver*, const WebCore::ResourceResponse&) override;
+
+    // FIXME: Remove these ResourceHandleClient declarations.
+    using ResourceHandleClient::didSendData;
+    using ResourceHandleClient::didReceiveData;
+    using ResourceHandleClient::didReceiveBuffer;
+    using ResourceHandleClient::didFinishLoading;
+    using ResourceHandleClient::didFail;
+    using ResourceHandleClient::wasBlocked;
+    using ResourceHandleClient::cannotShowURL;
+    using ResourceHandleClient::shouldUseCredentialStorage;
+
+    using ResourceHandleClient::willSendRequestAsync;
+    using ResourceHandleClient::didReceiveResponseAsync;
+
     // ResourceHandleClient
-    virtual void willSendRequestAsync(WebCore::ResourceHandle*, const WebCore::ResourceRequest&, const WebCore::ResourceResponse& redirectResponse) override;
-    virtual void didSendData(WebCore::ResourceHandle*, unsigned long long bytesSent, unsigned long long totalBytesToBeSent) override;
-    virtual void didReceiveResponseAsync(WebCore::ResourceHandle*, const WebCore::ResourceResponse&) override;
-    virtual void didReceiveData(WebCore::ResourceHandle*, const char*, unsigned, int encodedDataLength) override;
-    virtual void didReceiveBuffer(WebCore::ResourceHandle*, PassRefPtr<WebCore::SharedBuffer>, int encodedDataLength) override;
-    virtual void didFinishLoading(WebCore::ResourceHandle*, double finishTime) override;
-    virtual void didFail(WebCore::ResourceHandle*, const WebCore::ResourceError&) override;
-    virtual void wasBlocked(WebCore::ResourceHandle*) override;
-    virtual void cannotShowURL(WebCore::ResourceHandle*) override;
-    virtual bool shouldUseCredentialStorage(WebCore::ResourceHandle*) override;
     virtual void didReceiveAuthenticationChallenge(WebCore::ResourceHandle*, const WebCore::AuthenticationChallenge&) override;
     virtual void didCancelAuthenticationChallenge(WebCore::ResourceHandle*, const WebCore::AuthenticationChallenge&) override;
     virtual void receivedCancellation(WebCore::ResourceHandle*, const WebCore::AuthenticationChallenge&) override;
-    virtual bool usesAsyncCallbacks() override { return true; }
 #if USE(PROTECTION_SPACE_AUTH_CALLBACK)
     virtual void canAuthenticateAgainstProtectionSpaceAsync(WebCore::ResourceHandle*, const WebCore::ProtectionSpace&) override;
 #endif
@@ -163,7 +183,7 @@ private:
     RefPtr<NetworkConnectionToWebProcess> m_connection;
 
     RefPtr<RemoteNetworkingContext> m_networkingContext;
-    RefPtr<WebCore::ResourceHandle> m_handle;
+    RefPtr<WebCore::ResourceResolver> m_resolver;
 
     WebCore::ResourceRequest m_currentRequest;
 

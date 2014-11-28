@@ -114,7 +114,7 @@ NetworkResourceLoader::NetworkResourceLoader(const NetworkResourceLoadParameters
 NetworkResourceLoader::~NetworkResourceLoader()
 {
     ASSERT(RunLoop::isMain());
-    ASSERT(!m_handle);
+    ASSERT(!m_resolver);
     ASSERT(!isSynchronous() || !m_synchronousLoadData->delayedReply);
 }
 
@@ -143,7 +143,7 @@ void NetworkResourceLoader::start()
         m_bufferedData = WebCore::SharedBuffer::create();
 
     bool shouldSniff = m_parameters.contentSniffingPolicy == SniffContent;
-    m_handle = ResourceHandle::create(m_networkingContext.get(), m_currentRequest, this, false /* defersLoading */, shouldSniff);
+    m_resolver = ResourceResolver::create(m_networkingContext.get(), m_currentRequest, this, this, this, false /* defersLoading */, shouldSniff);
 }
 
 void NetworkResourceLoader::setDefersLoading(bool defers)
@@ -151,8 +151,8 @@ void NetworkResourceLoader::setDefersLoading(bool defers)
     if (m_defersLoading == defers)
         return;
     m_defersLoading = defers;
-    if (m_handle) {
-        m_handle->setDefersLoading(defers);
+    if (m_resolver) {
+        m_resolver->setDefersLoading(defers);
         return;
     }
     if (!m_defersLoading)
@@ -169,17 +169,17 @@ void NetworkResourceLoader::cleanup()
 
     NetworkProcess::shared().networkResourceLoadScheduler().removeLoader(this);
 
-    if (m_handle) {
+    if (m_resolver) {
         // Explicit deref() balanced by a ref() in NetworkResourceLoader::start()
         // This might cause the NetworkResourceLoader to be destroyed and therefore we do it last.
-        m_handle = 0;
+        m_resolver = 0;
         deref();
     }
 }
 
 void NetworkResourceLoader::didConvertHandleToDownload()
 {
-    ASSERT(m_handle);
+    ASSERT(m_resolver);
     m_didConvertHandleToDownload = true;
 }
 
@@ -187,15 +187,15 @@ void NetworkResourceLoader::abort()
 {
     ASSERT(RunLoop::isMain());
 
-    if (m_handle && !m_didConvertHandleToDownload)
-        m_handle->cancel();
+    if (m_resolver && !m_didConvertHandleToDownload)
+        m_resolver->cancel();
 
     cleanup();
 }
 
-void NetworkResourceLoader::didReceiveResponseAsync(ResourceHandle* handle, const ResourceResponse& response)
+void NetworkResourceLoader::didReceiveResponseAsync(ResourceResolver* resolver, const ResourceResponse& response)
 {
-    ASSERT_UNUSED(handle, handle == m_handle);
+    ASSERT_UNUSED(resolver, resolver == m_resolver);
 
     if (m_parameters.needsCertificateInfo)
         response.includeCertificateInfo();
@@ -205,27 +205,29 @@ void NetworkResourceLoader::didReceiveResponseAsync(ResourceHandle* handle, cons
     else
         sendAbortingOnFailure(Messages::WebResourceLoader::DidReceiveResponse(response, m_parameters.isMainResource));
 
-    // m_handle will be null if the request got aborted above.
-    if (!m_handle)
+    // m_resolver will be null if the request got aborted above.
+    if (!m_resolver)
         return;
 
     // For main resources, the web process is responsible for sending back a NetworkResourceLoader::ContinueDidReceiveResponse message.
     if (m_parameters.isMainResource)
         return;
 
-    m_handle->continueDidReceiveResponse();
+    // Handle may be null in case of blobs.
+    if (m_resolver->handle())
+        m_resolver->handle()->continueDidReceiveResponse();
 }
 
-void NetworkResourceLoader::didReceiveData(ResourceHandle*, const char* /* data */, unsigned /* length */, int /* encodedDataLength */)
+void NetworkResourceLoader::didReceiveData(ResourceResolver*, const char* /* data */, unsigned /* length */, int /* encodedDataLength */)
 {
     // The NetworkProcess should never get a didReceiveData callback.
     // We should always be using didReceiveBuffer.
     ASSERT_NOT_REACHED();
 }
 
-void NetworkResourceLoader::didReceiveBuffer(ResourceHandle* handle, PassRefPtr<SharedBuffer> buffer, int reportedEncodedDataLength)
+void NetworkResourceLoader::didReceiveBuffer(ResourceResolver* resolver, PassRefPtr<SharedBuffer> buffer, int reportedEncodedDataLength)
 {
-    ASSERT_UNUSED(handle, handle == m_handle);
+    ASSERT_UNUSED(resolver, resolver == m_resolver);
 
     // FIXME: At least on OS X Yosemite we always get -1 from the resource handle.
     unsigned encodedDataLength = reportedEncodedDataLength >= 0 ? reportedEncodedDataLength : buffer->size();
@@ -240,9 +242,9 @@ void NetworkResourceLoader::didReceiveBuffer(ResourceHandle* handle, PassRefPtr<
     sendBuffer(buffer.get(), encodedDataLength);
 }
 
-void NetworkResourceLoader::didFinishLoading(ResourceHandle* handle, double finishTime)
+void NetworkResourceLoader::didFinishLoading(ResourceResolver* resolver, double finishTime)
 {
-    ASSERT_UNUSED(handle, handle == m_handle);
+    ASSERT_UNUSED(resolver, resolver == m_resolver);
 
     if (isSynchronous())
         sendReplyToSynchronousRequest(*m_synchronousLoadData, m_bufferedData.get());
@@ -255,9 +257,9 @@ void NetworkResourceLoader::didFinishLoading(ResourceHandle* handle, double fini
     cleanup();
 }
 
-void NetworkResourceLoader::didFail(ResourceHandle* handle, const ResourceError& error)
+void NetworkResourceLoader::didFail(ResourceResolver* resolver, const ResourceError& error)
 {
-    ASSERT_UNUSED(handle, handle == m_handle);
+    ASSERT_UNUSED(resolver, resolver == m_resolver);
 
     if (isSynchronous()) {
         m_synchronousLoadData->error = error;
@@ -268,9 +270,9 @@ void NetworkResourceLoader::didFail(ResourceHandle* handle, const ResourceError&
     cleanup();
 }
 
-void NetworkResourceLoader::willSendRequestAsync(ResourceHandle* handle, const ResourceRequest& request, const ResourceResponse& redirectResponse)
+void NetworkResourceLoader::willSendRequestAsync(ResourceResolver* resolver, const ResourceRequest& request, const ResourceResponse& redirectResponse)
 {
-    ASSERT_UNUSED(handle, handle == m_handle);
+    ASSERT_UNUSED(resolver, resolver == m_resolver);
 
     // We only expect to get the willSendRequest callback from ResourceHandle as the result of a redirect.
     ASSERT(!redirectResponse.isNull());
@@ -302,49 +304,51 @@ void NetworkResourceLoader::continueWillSendRequest(const ResourceRequest& newRe
 #endif
 
     if (m_currentRequest.isNull()) {
-        m_handle->cancel();
-        didFail(m_handle.get(), cancelledError(m_currentRequest));
+        m_resolver->cancel();
+        didFail(m_resolver.get(), cancelledError(m_currentRequest));
         return;
     }
 
-    m_handle->continueWillSendRequest(m_currentRequest);
+    // FIXME: m_resolver->handle() may be null in case of blob.
+    if (m_resolver->async())
+        m_resolver->async()->continueWillSendRequest(m_currentRequest);
 }
 
 void NetworkResourceLoader::continueDidReceiveResponse()
 {
     // FIXME: Remove this check once BlobResourceHandle implements didReceiveResponseAsync correctly.
     // Currently, it does not wait for response, so the load is likely to finish before continueDidReceiveResponse.
-    if (!m_handle)
+    if (!m_resolver || !m_resolver->async())
         return;
 
-    m_handle->continueDidReceiveResponse();
+    m_resolver->async()->continueDidReceiveResponse();
 }
 
-void NetworkResourceLoader::didSendData(ResourceHandle* handle, unsigned long long bytesSent, unsigned long long totalBytesToBeSent)
+void NetworkResourceLoader::didSendData(ResourceResolver* resolver, unsigned long long bytesSent, unsigned long long totalBytesToBeSent)
 {
-    ASSERT_UNUSED(handle, handle == m_handle);
+    ASSERT_UNUSED(resolver, resolver == m_resolver);
 
     if (!isSynchronous())
         send(Messages::WebResourceLoader::DidSendData(bytesSent, totalBytesToBeSent));
 }
 
-void NetworkResourceLoader::wasBlocked(ResourceHandle* handle)
+void NetworkResourceLoader::wasBlocked(ResourceResolver* resolver)
 {
-    ASSERT_UNUSED(handle, handle == m_handle);
+    ASSERT_UNUSED(resolver, resolver == m_resolver);
 
-    didFail(handle, WebKit::blockedError(m_currentRequest));
+    didFail(resolver, WebKit::blockedError(m_currentRequest));
 }
 
-void NetworkResourceLoader::cannotShowURL(ResourceHandle* handle)
+void NetworkResourceLoader::cannotShowURL(ResourceResolver* resolver)
 {
-    ASSERT_UNUSED(handle, handle == m_handle);
+    ASSERT_UNUSED(resolver, resolver == m_resolver);
 
-    didFail(handle, WebKit::cannotShowURLError(m_currentRequest));
+    didFail(resolver, WebKit::cannotShowURLError(m_currentRequest));
 }
 
-bool NetworkResourceLoader::shouldUseCredentialStorage(ResourceHandle* handle)
+bool NetworkResourceLoader::shouldUseCredentialStorage(ResourceResolver* resolver)
 {
-    ASSERT_UNUSED(handle, handle == m_handle || !m_handle); // m_handle will be 0 if called from ResourceHandle::start().
+    ASSERT_UNUSED(resolver, resolver == m_resolver || !m_resolver); // m_resolver will be 0 if called from ResourceHandle::start().
 
     // When the WebProcess is handling loading a client is consulted each time this shouldUseCredentialStorage question is asked.
     // In NetworkProcess mode we ask the WebProcess client up front once and then reuse the cached answer.
@@ -356,7 +360,7 @@ bool NetworkResourceLoader::shouldUseCredentialStorage(ResourceHandle* handle)
 
 void NetworkResourceLoader::didReceiveAuthenticationChallenge(ResourceHandle* handle, const AuthenticationChallenge& challenge)
 {
-    ASSERT_UNUSED(handle, handle == m_handle);
+    ASSERT_UNUSED(handle, handle == m_resolver->handle());
     // NetworkResourceLoader does not know whether the request is cross origin, so Web process computes an applicable credential policy for it.
     ASSERT(m_parameters.clientCredentialPolicy != DoNotAskClientForCrossOriginCredentials);
 
@@ -370,7 +374,7 @@ void NetworkResourceLoader::didReceiveAuthenticationChallenge(ResourceHandle* ha
 
 void NetworkResourceLoader::didCancelAuthenticationChallenge(ResourceHandle* handle, const AuthenticationChallenge&)
 {
-    ASSERT_UNUSED(handle, handle == m_handle);
+    ASSERT_UNUSED(handle, handle == m_resolver->handle());
 
     // This function is probably not needed (see <rdar://problem/8960124>).
     notImplemented();
@@ -378,10 +382,10 @@ void NetworkResourceLoader::didCancelAuthenticationChallenge(ResourceHandle* han
 
 void NetworkResourceLoader::receivedCancellation(ResourceHandle* handle, const AuthenticationChallenge&)
 {
-    ASSERT_UNUSED(handle, handle == m_handle);
+    ASSERT_UNUSED(handle, handle == m_resolver->handle());
 
-    m_handle->cancel();
-    didFail(m_handle.get(), cancelledError(m_currentRequest));
+    m_resolver->cancel();
+    didFail(m_resolver.get(), cancelledError(m_currentRequest));
 }
 
 void NetworkResourceLoader::startBufferingTimerIfNeeded()
@@ -396,7 +400,7 @@ void NetworkResourceLoader::startBufferingTimerIfNeeded()
 void NetworkResourceLoader::bufferingTimerFired()
 {
     ASSERT(m_bufferedData);
-    ASSERT(m_handle);
+    ASSERT(m_resolver);
     if (!m_bufferedData->size())
         return;
 
@@ -475,7 +479,7 @@ bool NetworkResourceLoader::sendAbortingOnFailure(T&& message, unsigned messageS
 void NetworkResourceLoader::canAuthenticateAgainstProtectionSpaceAsync(ResourceHandle* handle, const ProtectionSpace& protectionSpace)
 {
     ASSERT(RunLoop::isMain());
-    ASSERT_UNUSED(handle, handle == m_handle);
+    ASSERT_UNUSED(handle, handle == m_resolver->handle());
 
     // Handle server trust evaluation at platform-level if requested, for performance reasons.
     if (protectionSpace.authenticationScheme() == ProtectionSpaceAuthenticationSchemeServerTrustEvaluationRequested
@@ -496,7 +500,7 @@ void NetworkResourceLoader::canAuthenticateAgainstProtectionSpaceAsync(ResourceH
 
 void NetworkResourceLoader::continueCanAuthenticateAgainstProtectionSpace(bool result)
 {
-    m_handle->continueCanAuthenticateAgainstProtectionSpace(result);
+    m_resolver->handle()->continueCanAuthenticateAgainstProtectionSpace(result);
 }
 #endif
 

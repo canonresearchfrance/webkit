@@ -93,7 +93,7 @@ size_t NetworkResourceLoader::fileBackedResourceMinimumSize()
 
 void NetworkResourceLoader::willCacheResponseAsync(ResourceHandle* handle, CFCachedURLResponseRef cfResponse)
 {
-    ASSERT_UNUSED(handle, handle == m_handle);
+    ASSERT_UNUSED(handle, handle == m_resolver->handle());
 
     if (m_bytesReceived >= fileBackedResourceMinimumSize())
         NetworkDiskCacheMonitor::monitorFileBackingStoreCreation(cfResponse, this);
@@ -105,14 +105,14 @@ void NetworkResourceLoader::willCacheResponseAsync(ResourceHandle* handle, CFCac
 
 void NetworkResourceLoader::willCacheResponseAsync(ResourceHandle* handle, NSCachedURLResponse *nsResponse)
 {
-    ASSERT_UNUSED(handle, handle == m_handle);
+    ASSERT_UNUSED(handle, handle == m_resolver->handle());
 
 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= 1090
     if (m_bytesReceived >= fileBackedResourceMinimumSize())
         NetworkDiskCacheMonitor::monitorFileBackingStoreCreation([nsResponse _CFCachedURLResponse], this);
 #endif
 
-    m_handle->continueWillCacheResponse(nsResponse);
+    handle->continueWillCacheResponse(nsResponse);
 }
 
 #endif // !USE(CFNETWORK)
