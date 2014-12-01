@@ -29,10 +29,11 @@
 #include "NotImplemented.h"
 #include "PlatformMediaResourceLoader.h"
 #include "ResourceError.h"
-#include "ResourceHandle.h"
 #include "ResourceHandleClient.h"
 #include "ResourceRequest.h"
 #include "ResourceResponse.h"
+#include "ResourceResolver.h"
+#include "ResourceResolverClient.h"
 #include "SharedBuffer.h"
 #include <gst/app/gstappsrc.h>
 #include <gst/gst.h>
@@ -79,7 +80,7 @@ class CachedResourceStreamingClient final : public PlatformMediaResourceLoaderCl
         virtual void loadFinished() override;
 };
 
-class ResourceHandleStreamingClient : public ResourceHandleClient, public StreamingClient {
+class ResourceHandleStreamingClient : public ResourceResolverClient, public ResourceHandleClient, public StreamingClient {
     WTF_MAKE_NONCOPYABLE(ResourceHandleStreamingClient); WTF_MAKE_FAST_ALLOCATED;
     public:
         ResourceHandleStreamingClient(WebKitWebSrc*, const ResourceRequest&);
@@ -90,18 +91,20 @@ class ResourceHandleStreamingClient : public ResourceHandleClient, public Stream
         void setDefersLoading(bool);
 
     private:
-        // ResourceHandleClient virtual methods.
-        virtual char* getOrCreateReadBuffer(size_t requestedSize, size_t& actualSize);
-        virtual void willSendRequest(ResourceHandle*, ResourceRequest&, const ResourceResponse&);
-        virtual void didReceiveResponse(ResourceHandle*, const ResourceResponse&);
-        virtual void didReceiveData(ResourceHandle*, const char*, unsigned, int);
-        virtual void didReceiveBuffer(ResourceHandle*, PassRefPtr<SharedBuffer>, int encodedLength);
-        virtual void didFinishLoading(ResourceHandle*, double /*finishTime*/);
-        virtual void didFail(ResourceHandle*, const ResourceError&);
-        virtual void wasBlocked(ResourceHandle*);
-        virtual void cannotShowURL(ResourceHandle*);
+        // ResourceResolverClient virtual methods.
+        virtual void willSendRequest(ResourceResolver*, ResourceRequest&, const ResourceResponse&);
+        virtual void didReceiveResponse(ResourceResolver*, const ResourceResponse&);
+        virtual void didReceiveData(ResourceResolver*, const char*, unsigned, int);
+        virtual void didReceiveBuffer(ResourceResolver*, PassRefPtr<SharedBuffer>, int encodedLength);
+        virtual void didFinishLoading(ResourceResolver*, double /*finishTime*/);
+        virtual void didFail(ResourceResolver*, const ResourceError&);
+        virtual void wasBlocked(ResourceResolver*);
+        virtual void cannotShowURL(ResourceResolver*);
 
-        RefPtr<ResourceHandle> m_resource;
+        // ResourceHandleClient virtual method.
+        virtual char* getOrCreateReadBuffer(size_t requestedSize, size_t& actualSize);
+
+        RefPtr<ResourceResolver> m_resource;
 };
 
 #define WEBKIT_WEB_SRC_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE((obj), WEBKIT_TYPE_WEB_SRC, WebKitWebSrcPrivate))
@@ -1052,7 +1055,7 @@ void CachedResourceStreamingClient::loadFinished()
 ResourceHandleStreamingClient::ResourceHandleStreamingClient(WebKitWebSrc* src, const ResourceRequest& request)
     : StreamingClient(src)
 {
-    m_resource = ResourceHandle::create(0 /*context*/, request, this, false, false);
+    m_resource = ResourceResolver::create(0 /*context*/, request, this, nullptr, this, false, false);
 }
 
 ResourceHandleStreamingClient::~ResourceHandleStreamingClient()
@@ -1080,21 +1083,21 @@ char* ResourceHandleStreamingClient::getOrCreateReadBuffer(size_t requestedSize,
     return createReadBuffer(requestedSize, actualSize);
 }
 
-void ResourceHandleStreamingClient::willSendRequest(ResourceHandle*, ResourceRequest&, const ResourceResponse&)
+void ResourceHandleStreamingClient::willSendRequest(ResourceResolver*, ResourceRequest&, const ResourceResponse&)
 {
 }
 
-void ResourceHandleStreamingClient::didReceiveResponse(ResourceHandle*, const ResourceResponse& response)
+void ResourceHandleStreamingClient::didReceiveResponse(ResourceResolver*, const ResourceResponse& response)
 {
     handleResponseReceived(response);
 }
 
-void ResourceHandleStreamingClient::didReceiveData(ResourceHandle*, const char* /* data */, unsigned /* length */, int)
+void ResourceHandleStreamingClient::didReceiveData(ResourceResolver*, const char* /* data */, unsigned /* length */, int)
 {
     ASSERT_NOT_REACHED();
 }
 
-void ResourceHandleStreamingClient::didReceiveBuffer(ResourceHandle*, PassRefPtr<SharedBuffer> buffer, int /* encodedLength */)
+void ResourceHandleStreamingClient::didReceiveBuffer(ResourceResolver*, PassRefPtr<SharedBuffer> buffer, int /* encodedLength */)
 {
     // This pattern is suggested by SharedBuffer.h.
     const char* segment;
@@ -1105,12 +1108,12 @@ void ResourceHandleStreamingClient::didReceiveBuffer(ResourceHandle*, PassRefPtr
     }
 }
 
-void ResourceHandleStreamingClient::didFinishLoading(ResourceHandle*, double)
+void ResourceHandleStreamingClient::didFinishLoading(ResourceResolver*, double)
 {
     handleNotifyFinished();
 }
 
-void ResourceHandleStreamingClient::didFail(ResourceHandle*, const ResourceError& error)
+void ResourceHandleStreamingClient::didFail(ResourceResolver*, const ResourceError& error)
 {
     WebKitWebSrc* src = WEBKIT_WEB_SRC(m_src);
 
@@ -1119,7 +1122,7 @@ void ResourceHandleStreamingClient::didFail(ResourceHandle*, const ResourceError
     gst_app_src_end_of_stream(src->priv->appsrc);
 }
 
-void ResourceHandleStreamingClient::wasBlocked(ResourceHandle*)
+void ResourceHandleStreamingClient::wasBlocked(ResourceResolver*)
 {
     WebKitWebSrc* src = WEBKIT_WEB_SRC(m_src);
     GUniquePtr<gchar> uri;
@@ -1133,7 +1136,7 @@ void ResourceHandleStreamingClient::wasBlocked(ResourceHandle*)
     GST_ELEMENT_ERROR(src, RESOURCE, OPEN_READ, ("Access to \"%s\" was blocked", uri.get()), (0));
 }
 
-void ResourceHandleStreamingClient::cannotShowURL(ResourceHandle*)
+void ResourceHandleStreamingClient::cannotShowURL(ResourceResolver*)
 {
     WebKitWebSrc* src = WEBKIT_WEB_SRC(m_src);
     GUniquePtr<gchar> uri;
