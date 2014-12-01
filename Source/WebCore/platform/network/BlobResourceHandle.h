@@ -32,7 +32,8 @@
 #define BlobResourceHandle_h
 
 #include "FileStreamClient.h"
-#include "ResourceHandle.h"
+#include "ResourceRequest.h"
+#include "ResourceResolverAsync.h"
 #include <wtf/PassRefPtr.h>
 #include <wtf/Vector.h>
 #include <wtf/text/WTFString.h>
@@ -46,29 +47,38 @@ class ResourceHandleClient;
 class ResourceRequest;
 struct BlobDataItem;
 
-class BlobResourceHandle final : public FileStreamClient, public ResourceHandle  {
+class BlobResourceHandle final : public FileStreamClient, public ResourceResolverAsync  {
 public:
-    static PassRefPtr<BlobResourceHandle> createAsync(BlobData*, const ResourceRequest&, ResourceHandleClient*);
-
-    static void loadResourceSynchronously(BlobData*, const ResourceRequest&, ResourceError&, ResourceResponse&, Vector<char>& data);
+    static PassRefPtr<BlobResourceHandle> create(const ResourceRequest&, ResourceResolverClient*, ResourceResolverAsyncClient*);
+    static void loadResourceSynchronously(const ResourceRequest&, ResourceError&, ResourceResponse&, Vector<char>& data);
 
     void start();
     int readSync(char*, int);
 
     bool aborted() const { return m_aborted; }
 
+    // ResourceResolver methods.
+    void cancel();
+
+    void clearClient() { m_client = nullptr; m_asyncClient = nullptr; }
+    ResourceResolverClient* client() const { return m_client; }
+    bool isClient(ResourceResolverClient* client) const { return m_client == client; }
+    ResourceRequest& firstRequest() { return m_request; }
+
+    ResourceResolverAsync* async() { return this; }
+    void setAsyncClient(ResourceResolverAsyncClient* client) { m_asyncClient = client; }
+
+    // ResourceResolverAsync method.
+    virtual void continueDidReceiveResponse();
+
 private:
-    BlobResourceHandle(BlobData*, const ResourceRequest&, ResourceHandleClient*, bool async);
+    BlobResourceHandle(BlobData*, const ResourceRequest&, ResourceResolverClient*, ResourceResolverAsyncClient*, bool);
     virtual ~BlobResourceHandle();
 
     // FileStreamClient methods.
     virtual void didGetSize(long long) override;
     virtual void didOpen(bool) override;
     virtual void didRead(int) override;
-
-    // ResourceHandle methods.
-    virtual void cancel() override;
-    virtual void continueDidReceiveResponse() override;
 
     void doStart();
     void getSizeForNext();
@@ -106,6 +116,10 @@ private:
     unsigned m_sizeItemCount;
     unsigned m_readItemCount;
     bool m_fileOpened;
+
+    ResourceResolverClient *m_client;
+    ResourceResolverAsyncClient *m_asyncClient;
+    ResourceRequest m_request;
 };
 
 } // namespace WebCore

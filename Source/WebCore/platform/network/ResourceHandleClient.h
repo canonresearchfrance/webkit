@@ -27,6 +27,7 @@
 #ifndef ResourceHandleClient_h
 #define ResourceHandleClient_h
 
+#include "ResourceResolver.h"
 #include <wtf/PassRefPtr.h>
 
 #if USE(CFNETWORK)
@@ -63,6 +64,8 @@ namespace WebCore {
         StorageNotAllowed
     };
     
+    // FIXME: Remove methods redundant with ResourceResolverClient and ResourceResolverAsyncClient callbacks.
+    // ResourceHandleClient should only contain callbacks specifically needed to ResourceHandle.
     class ResourceHandleClient {
     public:
         WEBCORE_EXPORT ResourceHandleClient();
@@ -86,7 +89,6 @@ namespace WebCore {
 
         // Client will pass an updated request using ResourceHandle::continueWillSendRequest() when ready.
         WEBCORE_EXPORT virtual void willSendRequestAsync(ResourceHandle*, const ResourceRequest&, const ResourceResponse& redirectResponse);
-
         // Client will call ResourceHandle::continueDidReceiveResponse() when ready.
         WEBCORE_EXPORT virtual void didReceiveResponseAsync(ResourceHandle*, const ResourceResponse&);
 

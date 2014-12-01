@@ -1,3 +1,63 @@
+2014-12-02  Youenn Fablet  <youenn.fablet@crf.canon.fr>
+
+        Move Blob loading out of ResourceHandle
+        https://bugs.webkit.org/show_bug.cgi?id=138835
+
+        Reviewed by NOBODY (OOPS!).
+
+        Introduced ResourceResolver as a generic interface on top of ResourceHandle for classes that want to resolve resource requests.
+        Introduced ResourceResolverClient and ResourceResolverAsyncClient that correspond to some ResourceHandleClient callbacks (main data loading callbacks and async data loading callbacks).
+        Introduced ResourceResolverAsync as the interface for async resolvers (usage probably limited to NetworkResourceLoader).
+        At the end of the migration, it is expected that ResourceHandleClient will only contain the callbacks specific to ResourceHandle (authentication, specific back end callbacks....).
+        Implemented ResourceResolver API for blob loading.
+
+        Patch is covered by existing tests.
+
+        * CMakeLists.txt: Added ResourceResolver file.
+        * WebCore.exp.in: Added ResourceResolver::create to the list of exported symbols.
+        * WebCore.xcodeproj/project.pbxproj: Added ResourceResolver.h/.cp and related client header files.
+        * platform/network/BlobRegistryImpl.cpp:
+        (WebCore::loadResourceSynchronously): Made use of newly introduced BlobResourceHandle::loadResourceSynchronously.
+        (WebCore::BlobRegistryImpl::createResourceHandle): Wrapped the new BlobResourceHandle into a ResourceHandle for compatibility purposed until migration from ResourceHandle to ResourceResolver is finished.
+        * platform/network/BlobResourceHandle.cpp:
+        (WebCore::BlobResourceHandle::create): Same as removed createAsync method with the addition of blob data retrieval from the registry.
+        (WebCore::BlobResourceHandle::loadResourceSynchronously): Added blob data retrieval from the registry.
+        (WebCore::BlobResourceHandle::BlobResourceHandle): Added resolver client and async client as parameters in lieu of handle client.
+        (WebCore::BlobResourceHandle::cancel):
+        (WebCore::BlobResourceHandle::notifyResponseOnSuccess): Moving from resource handle client to resolver async client.
+        (WebCore::BlobResourceHandle::notifyResponseOnError): Ditto.
+        (WebCore::BlobResourceHandle::createAsync): Deleted.
+        * platform/network/BlobResourceHandle.h: Made BlobResourceHandle deriving from ResourceResolver and no longer from ResourceHandle.
+        * platform/network/ResourceHandleClient.h: Added FIXME to remove callbacks.
+        * platform/network/ResourceResolver.cpp: Added.
+        (WebCore::ResourceResolver::create): future replacement of ResourceHandle::create
+        (WebCore::ResourceResolver::loadResourceSynchronously): future replacement of ResourceHandle::loadResourceSynchronously.
+        * platform/network/ResourceResolver.h: Added.
+        (WebCore::ResourceResolver::~ResourceResolver):
+        (WebCore::ResourceResolver::cancel):
+        (WebCore::ResourceResolver::setDefersLoading):
+        (WebCore::ResourceResolver::async):
+        (WebCore::ResourceResolver::handle):
+        * platform/network/ResourceResolverAsync.h: Added.
+        (WebCore::ResourceResolverAsync::~ResourceResolverAsync):
+        (WebCore::ResourceResolverAsync::continueWillSendRequest):
+        (WebCore::ResourceResolverAsync::continueDidReceiveResponse):
+        (WebCore::ResourceResolverAsyncClient::~ResourceResolverAsyncClient):
+        (WebCore::ResourceResolverAsyncClient::willSendRequestAsync):
+        (WebCore::ResourceResolverAsyncClient::didReceiveResponseAsync):
+        * platform/network/ResourceResolverClient.h: Added.
+        (WebCore::ResourceResolverClient::~ResourceResolverClient):
+        (WebCore::ResourceResolverClient::willSendRequest):
+        (WebCore::ResourceResolverClient::didSendData):
+        (WebCore::ResourceResolverClient::didReceiveResponse):
+        (WebCore::ResourceResolverClient::didReceiveData):
+        (WebCore::ResourceResolverClient::didReceiveBuffer):
+        (WebCore::ResourceResolverClient::didFinishLoading):
+        (WebCore::ResourceResolverClient::didFail):
+        (WebCore::ResourceResolverClient::wasBlocked):
+        (WebCore::ResourceResolverClient::cannotShowURL):
+        (WebCore::ResourceResolverClient::shouldUseCredentialStorage):
+
 2014-11-29  Gyuyoung Kim  <gyuyoung.kim@samsung.com>
 
         Fix a build warning when CSS_SCROLL_SNAP is enabled

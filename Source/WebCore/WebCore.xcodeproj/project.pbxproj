@@ -1468,6 +1468,10 @@
 		41D168EE10226E89009BC827 /* SharedWorkerThread.h in Headers */ = {isa = PBXBuildFile; fileRef = 41D168E610226E89009BC827 /* SharedWorkerThread.h */; };
 		41D1690510238B66009BC827 /* JSSharedWorkerGlobalScope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41D1690310238B66009BC827 /* JSSharedWorkerGlobalScope.cpp */; };
 		41D1690610238B66009BC827 /* JSSharedWorkerGlobalScope.h in Headers */ = {isa = PBXBuildFile; fileRef = 41D1690410238B66009BC827 /* JSSharedWorkerGlobalScope.h */; };
+		41D6E8191A2CA16900A34359 /* ResourceResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41D6E8151A2CA15F00A34359 /* ResourceResolver.cpp */; };
+		41D6E81A1A2CA16900A34359 /* ResourceResolver.h in Headers */ = {isa = PBXBuildFile; fileRef = 41D6E8161A2CA15F00A34359 /* ResourceResolver.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		41D6E81B1A2CA16900A34359 /* ResourceResolverAsync.h in Headers */ = {isa = PBXBuildFile; fileRef = 41D6E8171A2CA15F00A34359 /* ResourceResolverAsync.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		41D6E81C1A2CA16900A34359 /* ResourceResolverClient.h in Headers */ = {isa = PBXBuildFile; fileRef = 41D6E8181A2CA15F00A34359 /* ResourceResolverClient.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		41E1B1D00FF5986900576B3B /* AbstractWorker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41E1B1CA0FF5986900576B3B /* AbstractWorker.cpp */; };
 		41E1B1D10FF5986900576B3B /* AbstractWorker.h in Headers */ = {isa = PBXBuildFile; fileRef = 41E1B1CB0FF5986900576B3B /* AbstractWorker.h */; };
 		41E1B1D30FF5986900576B3B /* SharedWorker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41E1B1CD0FF5986900576B3B /* SharedWorker.cpp */; };
@@ -8529,6 +8533,10 @@
 		41D168E610226E89009BC827 /* SharedWorkerThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SharedWorkerThread.h; path = workers/SharedWorkerThread.h; sourceTree = "<group>"; };
 		41D1690310238B66009BC827 /* JSSharedWorkerGlobalScope.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = JSSharedWorkerGlobalScope.cpp; sourceTree = "<group>"; };
 		41D1690410238B66009BC827 /* JSSharedWorkerGlobalScope.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JSSharedWorkerGlobalScope.h; sourceTree = "<group>"; };
+		41D6E8151A2CA15F00A34359 /* ResourceResolver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ResourceResolver.cpp; sourceTree = "<group>"; };
+		41D6E8161A2CA15F00A34359 /* ResourceResolver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ResourceResolver.h; sourceTree = "<group>"; };
+		41D6E8171A2CA15F00A34359 /* ResourceResolverAsync.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ResourceResolverAsync.h; sourceTree = "<group>"; };
+		41D6E8181A2CA15F00A34359 /* ResourceResolverClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ResourceResolverClient.h; sourceTree = "<group>"; };
 		41E1B1CA0FF5986900576B3B /* AbstractWorker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AbstractWorker.cpp; path = workers/AbstractWorker.cpp; sourceTree = "<group>"; };
 		41E1B1CB0FF5986900576B3B /* AbstractWorker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AbstractWorker.h; path = workers/AbstractWorker.h; sourceTree = "<group>"; };
 		41E1B1CC0FF5986900576B3B /* AbstractWorker.idl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = AbstractWorker.idl; path = workers/AbstractWorker.idl; sourceTree = "<group>"; };
@@ -16421,6 +16429,10 @@
 				8A81BF8411DCFD9000DA2B98 /* ResourceLoadTiming.h */,
 				514C76670CE923A1007EF3CD /* ResourceRequestBase.cpp */,
 				514C76680CE923A1007EF3CD /* ResourceRequestBase.h */,
+				41D6E8151A2CA15F00A34359 /* ResourceResolver.cpp */,
+				41D6E8161A2CA15F00A34359 /* ResourceResolver.h */,
+				41D6E8171A2CA15F00A34359 /* ResourceResolverAsync.h */,
+				41D6E8181A2CA15F00A34359 /* ResourceResolverClient.h */,
 				514C76690CE923A1007EF3CD /* ResourceResponseBase.cpp */,
 				514C766A0CE923A1007EF3CD /* ResourceResponseBase.h */,
 				510D4A2D103165EE0049EA54 /* SocketStreamErrorBase.cpp */,
@@ -24314,6 +24326,7 @@
 				939885C408B7E3D100E707C4 /* EventNames.h in Headers */,
 				8F67561B1288B17B0047ACA3 /* EventQueue.h in Headers */,
 				E0FEF372B17C53EAC1C1FBEE /* EventSource.h in Headers */,
+				41D6E81B1A2CA16900A34359 /* ResourceResolverAsync.h in Headers */,
 				E12EDB7B0B308A78002704B6 /* EventTarget.h in Headers */,
 				97AA3CA5145237CC003E1DA6 /* EventTargetHeaders.h in Headers */,
 				97AA3CA6145237CC003E1DA6 /* EventTargetInterfaces.h in Headers */,
@@ -24813,6 +24826,7 @@
 				BC46C1FB0C0DDC8F0020CFC3 /* JSCSSCharsetRule.h in Headers */,
 				409EBDC316B7F3A600CBA3FC /* JSCSSFontFaceLoadEvent.h in Headers */,
 				BC46C1FD0C0DDC8F0020CFC3 /* JSCSSFontFaceRule.h in Headers */,
+				41D6E81C1A2CA16900A34359 /* ResourceResolverClient.h in Headers */,
 				BC46C1FF0C0DDC8F0020CFC3 /* JSCSSImportRule.h in Headers */,
 				BC46C2010C0DDC8F0020CFC3 /* JSCSSMediaRule.h in Headers */,
 				BC46C2030C0DDC8F0020CFC3 /* JSCSSPageRule.h in Headers */,
@@ -25757,6 +25771,7 @@
 				BCEA4860097D93020094C9E4 /* RenderBlock.h in Headers */,
 				BC10D76817D8EE71005E2626 /* RenderBlockFlow.h in Headers */,
 				BCEA4862097D93020094C9E4 /* RenderBox.h in Headers */,
+				41D6E81A1A2CA16900A34359 /* ResourceResolver.h in Headers */,
 				BC96DB430F3A880E00573CB3 /* RenderBoxModelObject.h in Headers */,
 				BCEB179C143379F50052EAE9 /* RenderBoxRegionInfo.h in Headers */,
 				BCEA4866097D93020094C9E4 /* RenderButton.h in Headers */,
@@ -29833,6 +29848,7 @@
 				9343CB8112F25E510033C5EE /* TextCodecUTF8.cpp in Sources */,
 				142B97C913138943008BEF4B /* TextControlInnerElements.cpp in Sources */,
 				97BC84B312371180000C6161 /* TextDocument.cpp in Sources */,
+				41D6E8191A2CA16900A34359 /* ResourceResolver.cpp in Sources */,
 				97BC84831236FD93000C6161 /* TextDocumentParser.cpp in Sources */,
 				B2C3DA460D006C1D00EF6F26 /* TextEncoding.cpp in Sources */,
 				C105DA620F3AA68F001DD44F /* TextEncodingDetectorICU.cpp in Sources */,

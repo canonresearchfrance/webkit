@@ -2201,6 +2201,7 @@ set(WebCore_SOURCES
     platform/network/ResourceErrorBase.cpp
     platform/network/ResourceHandle.cpp
     platform/network/ResourceHandleClient.cpp
+    platform/network/ResourceResolver.cpp
     platform/network/ResourceRequestBase.cpp
     platform/network/ResourceResponseBase.cpp
     platform/network/SocketStreamHandleBase.cpp
