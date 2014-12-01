@@ -33,6 +33,7 @@
 #include "ResourceLoaderOptions.h"
 #include "ResourceLoaderTypes.h"
 #include "ResourceRequest.h"
+#include "ResourceResolverClient.h"
 #include "ResourceResponse.h"
 #include <wtf/Forward.h>
 
@@ -52,7 +53,7 @@ class URL;
 class QuickLookHandle;
 #endif
 
-class ResourceLoader : public RefCounted<ResourceLoader>, protected ResourceHandleClient {
+class ResourceLoader : public RefCounted<ResourceLoader>, protected ResourceResolverClient, protected ResourceHandleClient {
 public:
     virtual ~ResourceLoader() = 0;
 
@@ -117,7 +118,7 @@ public:
     bool isQuickLookResource() { return m_isQuickLookResource; }
 
     const URL& url() const { return m_request.url(); }
-    ResourceHandle* handle() const { return m_handle.get(); }
+    ResourceHandle* handle() const { return m_resolver ? m_resolver->handle() : nullptr; }
     bool shouldSendResourceLoadCallbacks() const { return m_options.sendLoadCallbacks() == SendCallbacks; }
     void setSendCallbackPolicy(SendCallbackPolicy sendLoadCallbacks) { m_options.setSendLoadCallbacks(sendLoadCallbacks); }
     bool shouldSniffContent() const { return m_options.sniffContent() == SniffContent; }
@@ -162,7 +163,7 @@ protected:
     virtual CFCachedURLResponseRef willCacheResponse(ResourceHandle*, CFCachedURLResponseRef) override;
 #endif
 
-    RefPtr<ResourceHandle> m_handle;
+    RefPtr<ResourceResolver> m_resolver;
     RefPtr<Frame> m_frame;
     RefPtr<DocumentLoader> m_documentLoader;
     ResourceResponse m_response;
@@ -173,20 +174,34 @@ private:
 
     void addDataOrBuffer(const char*, unsigned, SharedBuffer*, DataPayloadType);
 
-    // ResourceHandleClient
-    virtual void willSendRequest(ResourceHandle*, ResourceRequest&, const ResourceResponse& redirectResponse) override;
-    virtual void didSendData(ResourceHandle*, unsigned long long bytesSent, unsigned long long totalBytesToBeSent) override;
-    virtual void didReceiveResponse(ResourceHandle*, const ResourceResponse&) override;
-    virtual void didReceiveData(ResourceHandle*, const char*, unsigned, int encodedDataLength) override;
-    virtual void didReceiveBuffer(ResourceHandle*, PassRefPtr<SharedBuffer>, int encodedDataLength) override;
-    virtual void didFinishLoading(ResourceHandle*, double finishTime) override;
-    virtual void didFail(ResourceHandle*, const ResourceError&) override;
-    virtual void wasBlocked(ResourceHandle*) override;
-    virtual void cannotShowURL(ResourceHandle*) override;
+    // ResourceResolverClient API.
+    virtual void willSendRequest(ResourceResolver*, ResourceRequest&, const ResourceResponse& redirectResponse) override;
+    virtual void didSendData(ResourceResolver*, unsigned long long bytesSent, unsigned long long totalBytesToBeSent) override;
+    virtual void didReceiveResponse(ResourceResolver*, const ResourceResponse&) override;
+    virtual void didReceiveData(ResourceResolver*, const char*, unsigned, int encodedDataLength) override;
+    virtual void didReceiveBuffer(ResourceResolver*, PassRefPtr<SharedBuffer>, int encodedDataLength) override;
+    virtual void didFinishLoading(ResourceResolver*, double finishTime) override;
+    virtual void didFail(ResourceResolver*, const ResourceError&) override;
+    virtual void wasBlocked(ResourceResolver*) override;
+    virtual void cannotShowURL(ResourceResolver*) override;
+    virtual bool shouldUseCredentialStorage(ResourceResolver*) override { return shouldUseCredentialStorage(); }
+
+    // FIXME: Remove these ResourceHandleClient declarations.
+    using ResourceHandleClient::willSendRequest;
+    using ResourceHandleClient::didSendData;
+    using ResourceHandleClient::didReceiveResponse;
+    using ResourceHandleClient::didReceiveData;
+    using ResourceHandleClient::didReceiveBuffer;
+    using ResourceHandleClient::didFinishLoading;
+    using ResourceHandleClient::didFail;
+    using ResourceHandleClient::wasBlocked;
+    using ResourceHandleClient::cannotShowURL;
+    using ResourceHandleClient::shouldUseCredentialStorage;
+
+    // ResourceHandleClient API.
 #if USE(NETWORK_CFDATA_ARRAY_CALLBACK)
     virtual void didReceiveDataArray(ResourceHandle*, CFArrayRef dataArray) override;
 #endif
-    virtual bool shouldUseCredentialStorage(ResourceHandle*) override { return shouldUseCredentialStorage(); }
     virtual void didReceiveAuthenticationChallenge(ResourceHandle*, const AuthenticationChallenge& challenge) override { didReceiveAuthenticationChallenge(challenge); } 
     virtual void didCancelAuthenticationChallenge(ResourceHandle*, const AuthenticationChallenge& challenge) override { didCancelAuthenticationChallenge(challenge); } 
 #if USE(PROTECTION_SPACE_AUTH_CALLBACK)

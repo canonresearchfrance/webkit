@@ -89,12 +89,12 @@ void ResourceLoader::releaseResources()
     platformStrategies()->loaderStrategy()->resourceLoadScheduler()->remove(this);
     m_identifier = 0;
 
-    if (m_handle) {
+    if (m_resolver) {
         // Clear out the ResourceHandle's client so that it doesn't try to call
         // us back after we release it, unless it has been replaced by someone else.
-        if (m_handle->client() == this)
-            m_handle->setClient(0);
-        m_handle = 0;
+        if (m_resolver->isClient(this))
+            m_resolver->clearClient();
+        m_resolver = nullptr;
     }
 
     m_resourceData = 0;
@@ -103,7 +103,7 @@ void ResourceLoader::releaseResources()
 
 bool ResourceLoader::init(const ResourceRequest& r)
 {
-    ASSERT(!m_handle);
+    ASSERT(!m_resolver);
     ASSERT(m_request.isNull());
     ASSERT(m_deferredRequest.isNull());
     ASSERT(!m_documentLoader->isSubstituteLoadPending(this));
@@ -155,7 +155,7 @@ bool ResourceLoader::init(const ResourceRequest& r)
 
 void ResourceLoader::start()
 {
-    ASSERT(!m_handle);
+    ASSERT(!m_resolver);
     ASSERT(!m_request.isNull());
     ASSERT(m_deferredRequest.isNull());
 
@@ -173,14 +173,14 @@ void ResourceLoader::start()
     }
 
     if (!m_reachedTerminalState)
-        m_handle = ResourceHandle::create(m_frame->loader().networkingContext(), m_request, this, m_defersLoading, m_options.sniffContent() == SniffContent);
+        m_resolver = ResourceResolver::create(m_frame->loader().networkingContext(), m_request, this, nullptr, this, m_defersLoading, m_options.sniffContent() == SniffContent);
 }
 
 void ResourceLoader::setDefersLoading(bool defers)
 {
     m_defersLoading = defers;
-    if (m_handle)
-        m_handle->setDefersLoading(defers);
+    if (m_resolver)
+        m_resolver->setDefersLoading(defers);
     if (!defers && !m_deferredRequest.isNull()) {
         m_request = m_deferredRequest;
         m_deferredRequest = ResourceRequest();
@@ -210,8 +210,8 @@ void ResourceLoader::willSwitchToSubstituteResource()
 {
     ASSERT(!m_documentLoader->isSubstituteLoadPending(this));
     platformStrategies()->loaderStrategy()->resourceLoadScheduler()->remove(this);
-    if (m_handle)
-        m_handle->cancel();
+    if (m_resolver)
+        m_resolver->cancel();
 }
 
 void ResourceLoader::addDataOrBuffer(const char* data, unsigned length, SharedBuffer* buffer, DataPayloadType dataPayloadType)
@@ -424,13 +424,13 @@ void ResourceLoader::cancel(const ResourceError& error)
     if (m_cancellationStatus == CalledWillCancel) {
         m_cancellationStatus = Cancelled;
 
-        if (m_handle)
-            m_handle->clearAuthentication();
+        if (handle())
+            handle()->clearAuthentication();
 
         m_documentLoader->cancelPendingSubstituteLoad(this);
-        if (m_handle) {
-            m_handle->cancel();
-            m_handle = 0;
+        if (m_resolver) {
+            m_resolver->cancel();
+            m_resolver = nullptr;
         }
         cleanupForError(nonNullError);
     }
@@ -464,57 +464,57 @@ ResourceError ResourceLoader::cannotShowURLError()
     return frameLoader()->client().cannotShowURLError(m_request);
 }
 
-void ResourceLoader::willSendRequest(ResourceHandle*, ResourceRequest& request, const ResourceResponse& redirectResponse)
+void ResourceLoader::willSendRequest(ResourceResolver*, ResourceRequest& request, const ResourceResponse& redirectResponse)
 {
     if (documentLoader()->applicationCacheHost()->maybeLoadFallbackForRedirect(this, request, redirectResponse))
         return;
     willSendRequest(request, redirectResponse);
 }
 
-void ResourceLoader::didSendData(ResourceHandle*, unsigned long long bytesSent, unsigned long long totalBytesToBeSent)
+void ResourceLoader::didSendData(ResourceResolver*, unsigned long long bytesSent, unsigned long long totalBytesToBeSent)
 {
     didSendData(bytesSent, totalBytesToBeSent);
 }
 
-void ResourceLoader::didReceiveResponse(ResourceHandle*, const ResourceResponse& response)
+void ResourceLoader::didReceiveResponse(ResourceResolver*, const ResourceResponse& response)
 {
     if (documentLoader()->applicationCacheHost()->maybeLoadFallbackForResponse(this, response))
         return;
     didReceiveResponse(response);
 }
 
-void ResourceLoader::didReceiveData(ResourceHandle*, const char* data, unsigned length, int encodedDataLength)
+void ResourceLoader::didReceiveData(ResourceResolver*, const char* data, unsigned length, int encodedDataLength)
 {
     InspectorInstrumentationCookie cookie = InspectorInstrumentation::willReceiveResourceData(m_frame.get(), identifier(), encodedDataLength);
     didReceiveData(data, length, encodedDataLength, DataPayloadBytes);
     InspectorInstrumentation::didReceiveResourceData(cookie);
 }
 
-void ResourceLoader::didReceiveBuffer(ResourceHandle*, PassRefPtr<SharedBuffer> buffer, int encodedDataLength)
+void ResourceLoader::didReceiveBuffer(ResourceResolver*, PassRefPtr<SharedBuffer> buffer, int encodedDataLength)
 {
     InspectorInstrumentationCookie cookie = InspectorInstrumentation::willReceiveResourceData(m_frame.get(), identifier(), encodedDataLength);
     didReceiveBuffer(buffer, encodedDataLength, DataPayloadBytes);
     InspectorInstrumentation::didReceiveResourceData(cookie);
 }
 
-void ResourceLoader::didFinishLoading(ResourceHandle*, double finishTime)
+void ResourceLoader::didFinishLoading(ResourceResolver*, double finishTime)
 {
     didFinishLoading(finishTime);
 }
 
-void ResourceLoader::didFail(ResourceHandle*, const ResourceError& error)
+void ResourceLoader::didFail(ResourceResolver*, const ResourceError& error)
 {
     if (documentLoader()->applicationCacheHost()->maybeLoadFallbackForError(this, error))
         return;
     didFail(error);
 }
 
-void ResourceLoader::wasBlocked(ResourceHandle*)
+void ResourceLoader::wasBlocked(ResourceResolver*)
 {
     didFail(blockedError());
 }
 
-void ResourceLoader::cannotShowURL(ResourceHandle*)
+void ResourceLoader::cannotShowURL(ResourceResolver*)
 {
     didFail(cannotShowURLError());
 }
@@ -535,7 +535,7 @@ bool ResourceLoader::isAllowedToAskUserForCredentials() const
 
 void ResourceLoader::didReceiveAuthenticationChallenge(const AuthenticationChallenge& challenge)
 {
-    ASSERT(m_handle->hasAuthenticationChallenge());
+    ASSERT(handle() && handle()->hasAuthenticationChallenge());
 
     // Protect this in this delegate method since the additional processing can do
     // anything including possibly derefing this; one example of this is Radar 3266216.
@@ -551,7 +551,7 @@ void ResourceLoader::didReceiveAuthenticationChallenge(const AuthenticationChall
     // If we can't continue with credentials, we need to cancel the load altogether.
 #if PLATFORM(COCOA) || USE(CFNETWORK) || USE(CURL) || PLATFORM(GTK) || PLATFORM(EFL)
     challenge.authenticationClient()->receivedRequestToContinueWithoutCredential(challenge);
-    ASSERT(!m_handle || !m_handle->hasAuthenticationChallenge());
+    ASSERT(!handle() || !handle()->hasAuthenticationChallenge());
 #else
     didFail(blockedError());
 #endif
@@ -593,14 +593,14 @@ void ResourceLoader::receivedCancellation(const AuthenticationChallenge&)
 
 void ResourceLoader::schedule(SchedulePair& pair)
 {
-    if (m_handle)
-        m_handle->schedule(pair);
+    if (handle())
+        handle()->schedule(pair);
 }
 
 void ResourceLoader::unschedule(SchedulePair& pair)
 {
-    if (m_handle)
-        m_handle->unschedule(pair);
+    if (handle())
+        handle()->unschedule(pair);
 }
 
 #endif

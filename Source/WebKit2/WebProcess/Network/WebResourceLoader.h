@@ -56,6 +56,7 @@ namespace WebKit {
 
 typedef uint64_t ResourceLoadIdentifier;
 
+// FIXME: Make WebResourceLoader a ResourceResolver.
 class WebResourceLoader : public RefCounted<WebResourceLoader>, public IPC::MessageSender {
 public:
     static PassRefPtr<WebResourceLoader> create(PassRefPtr<WebCore::ResourceLoader>);
