@@ -41,7 +41,7 @@
 #include "InspectorInstrumentation.h"
 #include "ManifestParser.h"
 #include "Page.h"
-#include "ResourceHandle.h"
+#include "ResourceResolver.h"
 #include "SecurityOrigin.h"
 #include "Settings.h"
 #include <wtf/HashMap.h>
@@ -330,25 +330,25 @@ void ApplicationCacheGroup::failedLoadingMainResource(DocumentLoader* loader)
 
 void ApplicationCacheGroup::stopLoading()
 {
-    if (m_manifestHandle) {
-        ASSERT(!m_currentHandle);
+    if (m_manifestResolver) {
+        ASSERT(!m_currentResolver);
 
-        ASSERT(m_manifestHandle->client() == this);
-        m_manifestHandle->setClient(0);
+        ASSERT(m_manifestResolver->isClient(this));
+        m_manifestResolver->clearClient();
 
-        m_manifestHandle->cancel();
-        m_manifestHandle = 0;
+        m_manifestResolver->cancel();
+        m_manifestResolver = 0;
     }
     
-    if (m_currentHandle) {
-        ASSERT(!m_manifestHandle);
+    if (m_currentResolver) {
+        ASSERT(!m_manifestResolver);
         ASSERT(m_cacheBeingUpdated);
 
-        ASSERT(m_currentHandle->client() == this);
-        m_currentHandle->setClient(0);
+        ASSERT(m_currentResolver->isClient(this));
+        m_currentResolver->clearClient();
 
-        m_currentHandle->cancel();
-        m_currentHandle = 0;
+        m_currentResolver->cancel();
+        m_currentResolver = 0;
     }    
 
     // FIXME: Resetting just a tiny part of the state in this function is confusing. Callers have to take care of a lot more.
@@ -448,14 +448,14 @@ void ApplicationCacheGroup::update(Frame* frame, ApplicationCacheUpdateOption up
         postListenerTask(ApplicationCacheHost::CHECKING_EVENT, frame->loader().documentLoader());
     }
     
-    ASSERT(!m_manifestHandle);
+    ASSERT(!m_manifestResolver);
     ASSERT(!m_manifestResource);
-    ASSERT(!m_currentHandle);
+    ASSERT(!m_currentResolver);
     ASSERT(!m_currentResource);
     ASSERT(m_completionType == None);
 
-    // FIXME: Handle defer loading
-    m_manifestHandle = createResourceHandle(m_manifestURL, m_newestCache ? m_newestCache->manifestResource() : 0);
+    // FIXME: Resolver defer loading
+    m_manifestResolver = createResourceResolver(m_manifestURL, m_newestCache ? m_newestCache->manifestResource() : 0);
 }
 
 void ApplicationCacheGroup::abort(Frame* frame)
@@ -471,7 +471,7 @@ void ApplicationCacheGroup::abort(Frame* frame)
     cacheUpdateFailed();
 }
 
-PassRefPtr<ResourceHandle> ApplicationCacheGroup::createResourceHandle(const URL& url, ApplicationCacheResource* newestCachedResource)
+PassRefPtr<ResourceResolver> ApplicationCacheGroup::createResourceResolver(const URL& url, ApplicationCacheResource* newestCachedResource)
 {
     ResourceRequest request(url);
     m_frame->loader().applyUserAgent(request);
@@ -488,7 +488,8 @@ PassRefPtr<ResourceHandle> ApplicationCacheGroup::createResourceHandle(const URL
         }
     }
 
-    RefPtr<ResourceHandle> handle = ResourceHandle::create(m_frame->loader().networkingContext(), request, this, false, true);
+    // FIXME: We should use platformStrategies to go through the Networking process if available.
+    RefPtr<ResourceResolver> resolver = ResourceResolver::create(m_frame->loader().networkingContext(), request, this, nullptr, nullptr, false, true);
 #if ENABLE(INSPECTOR)
     // Because willSendRequest only gets called during redirects, we initialize
     // the identifier and the first willSendRequest here.
@@ -496,25 +497,25 @@ PassRefPtr<ResourceHandle> ApplicationCacheGroup::createResourceHandle(const URL
     ResourceResponse redirectResponse = ResourceResponse();
     InspectorInstrumentation::willSendRequest(m_frame, m_currentResourceIdentifier, m_frame->loader().documentLoader(), request, redirectResponse);
 #endif
-    return handle;
+    return resolver;
 }
 
-void ApplicationCacheGroup::didReceiveResponse(ResourceHandle* handle, const ResourceResponse& response)
+void ApplicationCacheGroup::didReceiveResponse(ResourceResolver* resolver, const ResourceResponse& response)
 {
 #if ENABLE(INSPECTOR)
-    DocumentLoader* loader = (handle == m_manifestHandle) ? 0 : m_frame->loader().documentLoader();
+    DocumentLoader* loader = (resolver == m_manifestResolver) ? 0 : m_frame->loader().documentLoader();
     InspectorInstrumentationCookie cookie = InspectorInstrumentation::willReceiveResourceResponse(m_frame, m_currentResourceIdentifier, response);
     InspectorInstrumentation::didReceiveResourceResponse(cookie, m_currentResourceIdentifier, loader, response, 0);
 #endif
 
-    if (handle == m_manifestHandle) {
+    if (resolver == m_manifestResolver) {
         didReceiveManifestResponse(response);
         return;
     }
     
-    ASSERT(handle == m_currentHandle);
+    ASSERT(resolver == m_currentResolver);
 
-    URL url(handle->firstRequest().url());
+    URL url(resolver->firstRequest().url());
     if (url.hasFragmentIdentifier())
         url.removeFragmentIdentifier();
     
@@ -531,9 +532,9 @@ void ApplicationCacheGroup::didReceiveResponse(ResourceHandle* handle, const Res
         ApplicationCacheResource* newestCachedResource = m_newestCache->resourceForURL(url);
         if (newestCachedResource) {
             m_cacheBeingUpdated->addResource(ApplicationCacheResource::create(url, newestCachedResource->response(), type, newestCachedResource->data(), newestCachedResource->path()));
-            m_pendingEntries.remove(m_currentHandle->firstRequest().url());
-            m_currentHandle->cancel();
-            m_currentHandle = 0;
+            m_pendingEntries.remove(m_currentResolver->firstRequest().url());
+            m_currentResolver->cancel();
+            m_currentResolver = 0;
             // Load the next resource, if any.
             startLoadingEntry();
             return;
@@ -541,16 +542,16 @@ void ApplicationCacheGroup::didReceiveResponse(ResourceHandle* handle, const Res
         // The server could return 304 for an unconditional request - in this case, we handle the response as a normal error.
     }
 
-    if (response.httpStatusCode() / 100 != 2 || response.url() != m_currentHandle->firstRequest().url()) {
+    if (response.httpStatusCode() / 100 != 2 || response.url() != m_currentResolver->firstRequest().url()) {
         if ((type & ApplicationCacheResource::Explicit) || (type & ApplicationCacheResource::Fallback)) {
-            m_frame->document()->addConsoleMessage(MessageSource::AppCache, MessageLevel::Error, "Application Cache update failed, because " + m_currentHandle->firstRequest().url().stringCenterEllipsizedToLength() +
+            m_frame->document()->addConsoleMessage(MessageSource::AppCache, MessageLevel::Error, "Application Cache update failed, because " + m_currentResolver->firstRequest().url().stringCenterEllipsizedToLength() +
                 ((response.httpStatusCode() / 100 != 2) ? " could not be fetched." : " was redirected."));
             // Note that cacheUpdateFailed() can cause the cache group to be deleted.
             cacheUpdateFailed();
         } else if (response.httpStatusCode() == 404 || response.httpStatusCode() == 410) {
             // Skip this resource. It is dropped from the cache.
-            m_currentHandle->cancel();
-            m_currentHandle = 0;
+            m_currentResolver->cancel();
+            m_currentResolver = 0;
             m_pendingEntries.remove(url);
             // Load the next resource, if any.
             startLoadingEntry();
@@ -558,12 +559,12 @@ void ApplicationCacheGroup::didReceiveResponse(ResourceHandle* handle, const Res
             // Copy the resource and its metadata from the newest application cache in cache group whose completeness flag is complete, and act
             // as if that was the fetched resource, ignoring the resource obtained from the network.
             ASSERT(m_newestCache);
-            ApplicationCacheResource* newestCachedResource = m_newestCache->resourceForURL(handle->firstRequest().url());
+            ApplicationCacheResource* newestCachedResource = m_newestCache->resourceForURL(resolver->firstRequest().url());
             ASSERT(newestCachedResource);
             m_cacheBeingUpdated->addResource(ApplicationCacheResource::create(url, newestCachedResource->response(), type, newestCachedResource->data(), newestCachedResource->path()));
-            m_pendingEntries.remove(m_currentHandle->firstRequest().url());
-            m_currentHandle->cancel();
-            m_currentHandle = 0;
+            m_pendingEntries.remove(m_currentResolver->firstRequest().url());
+            m_currentResolver->cancel();
+            m_currentResolver = 0;
             // Load the next resource, if any.
             startLoadingEntry();
         }
@@ -573,7 +574,7 @@ void ApplicationCacheGroup::didReceiveResponse(ResourceHandle* handle, const Res
     m_currentResource = ApplicationCacheResource::create(url, response, type);
 }
 
-void ApplicationCacheGroup::didReceiveData(ResourceHandle* handle, const char* data, unsigned length, int encodedDataLength)
+void ApplicationCacheGroup::didReceiveData(ResourceResolver* resolver, const char* data, unsigned length, int encodedDataLength)
 {
     UNUSED_PARAM(encodedDataLength);
 
@@ -581,18 +582,18 @@ void ApplicationCacheGroup::didReceiveData(ResourceHandle* handle, const char* d
     InspectorInstrumentation::didReceiveData(m_frame, m_currentResourceIdentifier, 0, length, 0);
 #endif
 
-    if (handle == m_manifestHandle) {
+    if (resolver == m_manifestResolver) {
         didReceiveManifestData(data, length);
         return;
     }
     
-    ASSERT(handle == m_currentHandle);
+    ASSERT(resolver == m_currentResolver);
     
     ASSERT(m_currentResource);
     m_currentResource->data()->append(data, length);
 }
 
-void ApplicationCacheGroup::didFinishLoading(ResourceHandle* handle, double finishTime)
+void ApplicationCacheGroup::didFinishLoading(ResourceResolver* resolver, double finishTime)
 {
 #if ENABLE(INSPECTOR)
     InspectorInstrumentation::didFinishLoading(m_frame, m_frame->loader().documentLoader(), m_currentResourceIdentifier, finishTime);
@@ -600,20 +601,20 @@ void ApplicationCacheGroup::didFinishLoading(ResourceHandle* handle, double fini
     UNUSED_PARAM(finishTime);
 #endif
 
-    if (handle == m_manifestHandle) {
+    if (resolver == m_manifestResolver) {
         didFinishLoadingManifest();
         return;
     }
 
-    ASSERT(m_currentHandle == handle);
-    ASSERT(m_pendingEntries.contains(handle->firstRequest().url()));
+    ASSERT(m_currentResolver == resolver);
+    ASSERT(m_pendingEntries.contains(resolver->firstRequest().url()));
     
-    m_pendingEntries.remove(handle->firstRequest().url());
+    m_pendingEntries.remove(resolver->firstRequest().url());
     
     ASSERT(m_cacheBeingUpdated);
 
     m_cacheBeingUpdated->addResource(m_currentResource.release());
-    m_currentHandle = 0;
+    m_currentResolver = 0;
 
     // While downloading check to see if we have exceeded the available quota.
     // We can stop immediately if we have already previously failed
@@ -631,7 +632,7 @@ void ApplicationCacheGroup::didFinishLoading(ResourceHandle* handle, double fini
     startLoadingEntry();
 }
 
-void ApplicationCacheGroup::didFail(ResourceHandle* handle, const ResourceError& error)
+void ApplicationCacheGroup::didFail(ResourceResolver* resolver, const ResourceError& error)
 {
 #if ENABLE(INSPECTOR)
     InspectorInstrumentation::didFailLoading(m_frame, m_frame->loader().documentLoader(), m_currentResourceIdentifier, error);
@@ -639,16 +640,16 @@ void ApplicationCacheGroup::didFail(ResourceHandle* handle, const ResourceError&
     UNUSED_PARAM(error);
 #endif
 
-    if (handle == m_manifestHandle) {
+    if (resolver == m_manifestResolver) {
         // A network error is logged elsewhere, no need to log again. Also, it's normal for manifest fetching to fail when working offline.
         cacheUpdateFailed();
         return;
     }
 
-    ASSERT(handle == m_currentHandle);
+    ASSERT(resolver == m_currentResolver);
 
-    unsigned type = m_currentResource ? m_currentResource->type() : m_pendingEntries.get(handle->firstRequest().url());
-    URL url(handle->firstRequest().url());
+    unsigned type = m_currentResource ? m_currentResource->type() : m_pendingEntries.get(resolver->firstRequest().url());
+    URL url(resolver->firstRequest().url());
     if (url.hasFragmentIdentifier())
         url.removeFragmentIdentifier();
 
@@ -675,7 +676,7 @@ void ApplicationCacheGroup::didFail(ResourceHandle* handle, const ResourceError&
 void ApplicationCacheGroup::didReceiveManifestResponse(const ResourceResponse& response)
 {
     ASSERT(!m_manifestResource);
-    ASSERT(m_manifestHandle);
+    ASSERT(m_manifestResolver);
 
     if (response.httpStatusCode() == 404 || response.httpStatusCode() == 410) {
         manifestNotFound();
@@ -691,13 +692,13 @@ void ApplicationCacheGroup::didReceiveManifestResponse(const ResourceResponse& r
         return;
     }
 
-    if (response.url() != m_manifestHandle->firstRequest().url()) {
+    if (response.url() != m_manifestResolver->firstRequest().url()) {
         m_frame->document()->addConsoleMessage(MessageSource::Other, MessageLevel::Error, ASCIILiteral("Application Cache manifest could not be fetched, because a redirection was attempted."));
         cacheUpdateFailed();
         return;
     }
 
-    m_manifestResource = ApplicationCacheResource::create(m_manifestHandle->firstRequest().url(), response, ApplicationCacheResource::Manifest);
+    m_manifestResource = ApplicationCacheResource::create(m_manifestResolver->firstRequest().url(), response, ApplicationCacheResource::Manifest);
 }
 
 void ApplicationCacheGroup::didReceiveManifestData(const char* data, int length)
@@ -717,7 +718,7 @@ void ApplicationCacheGroup::didFinishLoadingManifest()
         return;
     }
 
-    m_manifestHandle = 0;
+    m_manifestResolver = 0;
 
     // Check if the manifest was not modified.
     if (isUpgradeAttempt) {
@@ -734,7 +735,7 @@ void ApplicationCacheGroup::didFinishLoadingManifest()
             return;
         }
     }
-    
+
     Manifest manifest;
     if (!parseManifest(m_manifestURL, m_manifestResource->data()->data(), m_manifestResource->data()->size(), manifest)) {
         // At the time of this writing, lack of "CACHE MANIFEST" signature is the only reason for parseManifest to fail.
@@ -853,7 +854,7 @@ void ApplicationCacheGroup::manifestNotFound()
 
 void ApplicationCacheGroup::checkIfLoadIsComplete()
 {
-    if (m_manifestHandle || !m_pendingEntries.isEmpty() || m_downloadingPendingMasterResourceLoadersCount)
+    if (m_manifestResolver || !m_pendingEntries.isEmpty() || m_downloadingPendingMasterResourceLoadersCount)
         return;
     
     // We're done, all resources have finished downloading (successfully or not).
@@ -1000,9 +1001,9 @@ void ApplicationCacheGroup::startLoadingEntry()
     postListenerTask(ApplicationCacheHost::PROGRESS_EVENT, m_progressTotal, m_progressDone, m_associatedDocumentLoaders);
     m_progressDone++;
 
-    ASSERT(!m_currentHandle);
+    ASSERT(!m_currentResolver);
     
-    m_currentHandle = createResourceHandle(URL(ParsedURLString, it->key), m_newestCache ? m_newestCache->resourceForURL(it->key) : 0);
+    m_currentResolver = createResourceResolver(URL(ParsedURLString, it->key), m_newestCache ? m_newestCache->resourceForURL(it->key) : 0);
 }
 
 void ApplicationCacheGroup::deliverDelayedMainResources()

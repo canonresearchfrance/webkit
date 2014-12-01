@@ -32,7 +32,7 @@
 #ifndef PingLoader_h
 #define PingLoader_h
 
-#include "ResourceHandleClient.h"
+#include "ResourceResolverClient.h"
 #include "Timer.h"
 #include <wtf/Noncopyable.h>
 #include <wtf/RefPtr.h>
@@ -51,7 +51,7 @@ class ResourceResponse;
 // to allow the load to live long enough to ensure the message was actually sent.
 // Therefore, as soon as a callback is received from the ResourceHandle, this class 
 // will cancel the load and delete itself.
-class PingLoader : private ResourceHandleClient {
+class PingLoader : private ResourceResolverClient {
     WTF_MAKE_NONCOPYABLE(PingLoader); WTF_MAKE_FAST_ALLOCATED;
 public:
     static void loadImage(Frame&, const URL&);
@@ -64,14 +64,14 @@ private:
     static void createPingLoader(Frame&, ResourceRequest&);
     PingLoader(Frame&, ResourceRequest&);
 
-    virtual void didReceiveResponse(ResourceHandle*, const ResourceResponse&) override { delete this; }
-    virtual void didReceiveData(ResourceHandle*, const char*, unsigned, int) override { delete this; }
-    virtual void didFinishLoading(ResourceHandle*, double) override { delete this; }
-    virtual void didFail(ResourceHandle*, const ResourceError&) override { delete this; }
-    virtual bool shouldUseCredentialStorage(ResourceHandle*)  override { return m_shouldUseCredentialStorage; }
+    virtual void didReceiveResponse(ResourceResolver*, const ResourceResponse&) override { delete this; }
+    virtual void didReceiveData(ResourceResolver*, const char*, unsigned, int) override { delete this; }
+    virtual void didFinishLoading(ResourceResolver*, double) override { delete this; }
+    virtual void didFail(ResourceResolver*, const ResourceError&) override { delete this; }
+    virtual bool shouldUseCredentialStorage(ResourceResolver*)  override { return m_shouldUseCredentialStorage; }
     void timeoutTimerFired() { delete this; }
 
-    RefPtr<ResourceHandle> m_handle;
+    RefPtr<ResourceResolver> m_resolver;
     Timer m_timeout;
     bool m_shouldUseCredentialStorage;
 };

@@ -28,7 +28,7 @@
 
 #include "DOMApplicationCache.h"
 #include "URL.h"
-#include "ResourceHandleClient.h"
+#include "ResourceResolverClient.h"
 #include <wtf/Noncopyable.h>
 #include <wtf/HashMap.h>
 #include <wtf/HashSet.h>
@@ -41,7 +41,6 @@ class ApplicationCacheResource;
 class Document;
 class DocumentLoader;
 class Frame;
-class ResourceHandle;
 class SecurityOrigin;
 
 enum ApplicationCacheUpdateOption {
@@ -49,7 +48,7 @@ enum ApplicationCacheUpdateOption {
     ApplicationCacheUpdateWithoutBrowsingContext
 };
 
-class ApplicationCacheGroup : ResourceHandleClient {
+class ApplicationCacheGroup : ResourceResolverClient {
     WTF_MAKE_NONCOPYABLE(ApplicationCacheGroup); WTF_MAKE_FAST_ALLOCATED;
 public:
     ApplicationCacheGroup(const URL& manifestURL, bool isCopy = false);    
@@ -102,16 +101,16 @@ private:
 
     void scheduleReachedMaxAppCacheSizeCallback();
 
-    PassRefPtr<ResourceHandle> createResourceHandle(const URL&, ApplicationCacheResource* newestCachedResource);
+    PassRefPtr<ResourceResolver> createResourceResolver(const URL&, ApplicationCacheResource* newestCachedResource);
 
     // For normal resource loading, WebKit client is asked about each resource individually. Since application cache does not belong to any particular document,
     // the existing client callback cannot be used, so assume that any client that enables application cache also wants it to use credential storage.
-    virtual bool shouldUseCredentialStorage(ResourceHandle*) override { return true; }
+    virtual bool shouldUseCredentialStorage(ResourceResolver*) override { return true; }
 
-    virtual void didReceiveResponse(ResourceHandle*, const ResourceResponse&) override;
-    virtual void didReceiveData(ResourceHandle*, const char*, unsigned length, int encodedDataLength) override;
-    virtual void didFinishLoading(ResourceHandle*, double finishTime) override;
-    virtual void didFail(ResourceHandle*, const ResourceError&) override;
+    virtual void didReceiveResponse(ResourceResolver*, const ResourceResponse&) override;
+    virtual void didReceiveData(ResourceResolver*, const char*, unsigned length, int encodedDataLength) override;
+    virtual void didFinishLoading(ResourceResolver*, double finishTime) override;
+    virtual void didFail(ResourceResolver*, const ResourceError&) override;
 
     void didReceiveManifestResponse(const ResourceResponse&);
     void didReceiveManifestData(const char*, int);
@@ -187,7 +186,7 @@ private:
     // the course of action in case of this failure (i.e. call the ChromeClient callback or run the failure steps).
     bool m_calledReachedMaxAppCacheSize;
     
-    RefPtr<ResourceHandle> m_currentHandle;
+    RefPtr<ResourceResolver> m_currentResolver;
     RefPtr<ApplicationCacheResource> m_currentResource;
 
 #if ENABLE(INSPECTOR)
@@ -195,7 +194,7 @@ private:
 #endif
 
     RefPtr<ApplicationCacheResource> m_manifestResource;
-    RefPtr<ResourceHandle> m_manifestHandle;
+    RefPtr<ResourceResolver> m_manifestResolver;
 
     int64_t m_availableSpaceInQuota;
     bool m_originQuotaExceededPreviously;

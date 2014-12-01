@@ -41,7 +41,7 @@
 #include "InspectorInstrumentation.h"
 #include "Page.h"
 #include "ProgressTracker.h"
-#include "ResourceHandle.h"
+#include "ResourceResolver.h"
 #include "ResourceRequest.h"
 #include "ResourceResponse.h"
 #include "SecurityOrigin.h"
@@ -119,12 +119,13 @@ PingLoader::PingLoader(Frame& frame, ResourceRequest& request)
 {
     unsigned long identifier = frame.page()->progress().createUniqueIdentifier();
     // FIXME: Why activeDocumentLoader? I would have expected documentLoader().
-    // Itseems like the PingLoader should be associated with the current
+    // It seems like the PingLoader should be associated with the current
     // Document in the Frame, but the activeDocumentLoader will be associated
     // with the provisional DocumentLoader if there is a provisional
     // DocumentLoader.
     m_shouldUseCredentialStorage = frame.loader().client().shouldUseCredentialStorage(frame.loader().activeDocumentLoader(), identifier);
-    m_handle = ResourceHandle::create(frame.loader().networkingContext(), request, this, false, false);
+    // FIXME: We should use platformStrategies to go through the Networking process if available.
+    m_resolver = ResourceResolver::create(frame.loader().networkingContext(), request, this, nullptr, nullptr, false, false);
 
     InspectorInstrumentation::continueAfterPingLoader(frame, identifier, frame.loader().activeDocumentLoader(), request, ResourceResponse());
 
@@ -135,8 +136,8 @@ PingLoader::PingLoader(Frame& frame, ResourceRequest& request)
 
 PingLoader::~PingLoader()
 {
-    if (m_handle)
-        m_handle->cancel();
+    if (m_resolver)
+        m_resolver->cancel();
 }
 
 }
