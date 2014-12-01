@@ -52,8 +52,6 @@ public:
 
     WEBCORE_EXPORT BlobData* getBlobDataFromURL(const URL&) const;
 
-    PassRefPtr<ResourceHandle> createResourceHandle(const ResourceRequest&, ResourceHandleClient*);
-
 private:
     void appendStorageItems(BlobData*, const BlobDataItemList&, long long offset, long long length);
 

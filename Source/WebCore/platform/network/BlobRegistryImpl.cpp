@@ -39,7 +39,6 @@
 #include "FileSystem.h"
 #include "ResourceError.h"
 #include "ResourceHandle.h"
-#include "ResourceHandleClient.h"
 #include "ResourceRequest.h"
 #include "ResourceResolverAsync.h"
 #include "ResourceResolverClient.h"
@@ -55,147 +54,6 @@ namespace WebCore {
 
 BlobRegistryImpl::~BlobRegistryImpl()
 {
-}
-
-static PassRefPtr<ResourceHandle> createResourceHandle(const ResourceRequest& request, ResourceHandleClient* client)
-{
-    return static_cast<BlobRegistryImpl&>(blobRegistry()).createResourceHandle(request, client);
-}
-
-static void loadResourceSynchronously(NetworkingContext*, const ResourceRequest& request, StoredCredentials, ResourceError& error, ResourceResponse& response, Vector<char>& data)
-{
-    BlobResourceHandle::loadResourceSynchronously(request, error, response, data);
-}
-
-static void registerBlobResourceHandleConstructor()
-{
-    static bool didRegister = false;
-    if (!didRegister) {
-        ResourceHandle::registerBuiltinConstructor("blob", createResourceHandle);
-        ResourceHandle::registerBuiltinSynchronousLoader("blob", loadResourceSynchronously);
-        didRegister = true;
-    }
-}
-
-// FIXME: Remove MigratingBlobResourceHandle and BlobRegistryImpl::createResourceHandle
-// once migration from ResourceHandle to ResourceResolver is done.
-class MigratingBlobResourceHandle: public ResourceHandle, public ResourceResolverClient, public ResourceResolverAsyncClient {
-
-public:
-    MigratingBlobResourceHandle(const ResourceRequest& request, ResourceHandleClient* client)
-        : ResourceHandle(0, request, client, false, false)
-    { }
-
-    ~MigratingBlobResourceHandle() { }
-
-    void setHandle(PassRefPtr<BlobResourceHandle> blobHandle) { m_blobHandle = blobHandle; }
-
-    // ResourceResolverClient API
-    void willSendRequest(ResourceResolver*, ResourceRequest& request, const ResourceResponse& redirectResponse)
-    {
-        if (client())
-            client()->willSendRequest(this, request, redirectResponse);
-    }
-    void didSendData(ResourceResolver*, unsigned long long bytesSent, unsigned long long totalBytesToBeSent)
-    {
-        if (client())
-            client()->didSendData(this, bytesSent, totalBytesToBeSent);
-    }
-
-    void didReceiveResponse(ResourceResolver*, const ResourceResponse& response)
-    {
-        if (client())
-            client()->didReceiveResponse(this, response);
-    }
-
-    void didReceiveData(ResourceResolver*, const char* data, unsigned length, int encodedDataLength)
-    {
-        if (client())
-            client()->didReceiveData(this, data, length, encodedDataLength);
-    }
-
-    void didReceiveBuffer(ResourceResolver*, PassRefPtr<SharedBuffer> buffer, int encodedDataLength)
-    {
-        if (client())
-            client()->didReceiveBuffer(this, buffer, encodedDataLength);
-    }
-
-    void didFinishLoading(ResourceResolver*, double finishTime)
-    {
-        if (client())
-            client()->didFinishLoading(this, finishTime);
-    }
-
-    void didFail(ResourceResolver*, const ResourceError& error)
-    {
-        if (client())
-            client()->didFail(this, error);
-    }
-
-    void wasBlocked(ResourceResolver*)
-    {
-        if (client())
-            client()->wasBlocked(this);
-    }
-
-    void cannotShowURL(ResourceResolver*)
-    {
-        if (client())
-            client()->cannotShowURL(this);
-    }
-
-    void willSendRequestAsync(ResourceResolver*, const ResourceRequest& request, const ResourceResponse& redirectResponse)
-    {
-        if (client())
-            client()->willSendRequestAsync(this, request, redirectResponse);
-    }
-    void didReceiveResponseAsync(ResourceResolver*, const ResourceResponse& response)
-    {
-        if (client())
-            client()->didReceiveResponseAsync(this, response);
-    }
-
-    // ResourceHandle API
-    void setClient(ResourceHandleClient* client)
-    {
-        if (!client)
-            m_blobHandle->clearClient();
-        ResourceHandle::setClient(client);
-    }
-
-    void continueDidReceiveResponse()
-    {
-        if (m_blobHandle)
-            m_blobHandle->continueDidReceiveResponse();
-    }
-
-    void cancel()
-    {
-        if (m_blobHandle)
-            m_blobHandle->cancel();
-    }
-
-private:
-    RefPtr<BlobResourceHandle> m_blobHandle;
-};
-
-PassRefPtr<ResourceHandle> BlobRegistryImpl::createResourceHandle(const ResourceRequest& request, ResourceHandleClient* client)
-{
-    // FIXME: Should probably call didFail() instead of blocking the load without explanation.
-    if (!equalIgnoringCase(request.httpMethod(), "GET"))
-        return nullptr;
-
-    RefPtr<MigratingBlobResourceHandle> migratingHandle(adoptRef(new MigratingBlobResourceHandle(request, client)));
-
-    RefPtr<BlobResourceHandle> handle = BlobResourceHandle::create(request, migratingHandle.get(), client->usesAsyncCallbacks() ? migratingHandle.get() : nullptr);
-
-    if (!handle)
-        return nullptr;
-
-    migratingHandle->setHandle(handle);
-    handle->start();
-
-    return migratingHandle.release();
 }
 
 void BlobRegistryImpl::appendStorageItems(BlobData* blobData, const BlobDataItemList& items, long long offset, long long length)
@@ -230,7 +88,6 @@ void BlobRegistryImpl::appendStorageItems(BlobData* blobData, const BlobDataItem
 void BlobRegistryImpl::registerFileBlobURL(const URL& url, PassRefPtr<BlobDataFileReference> file, const String& contentType)
 {
     ASSERT(isMainThread());
-    registerBlobResourceHandleConstructor();
 
     RefPtr<BlobData> blobData = BlobData::create();
     blobData->setContentType(contentType);
@@ -242,7 +99,6 @@ void BlobRegistryImpl::registerFileBlobURL(const URL& url, PassRefPtr<BlobDataFi
 void BlobRegistryImpl::registerBlobURL(const URL& url, Vector<BlobPart> blobParts, const String& contentType)
 {
     ASSERT(isMainThread());
-    registerBlobResourceHandleConstructor();
 
     RefPtr<BlobData> blobData = BlobData::create();
     blobData->setContentType(contentType);

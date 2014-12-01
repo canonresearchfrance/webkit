@@ -40,36 +40,6 @@ namespace WebCore {
 
 static bool shouldForceContentSniffing;
 
-typedef HashMap<AtomicString, ResourceHandle::BuiltinConstructor> BuiltinResourceHandleConstructorMap;
-static BuiltinResourceHandleConstructorMap& builtinResourceHandleConstructorMap()
-{
-#if PLATFORM(IOS)
-    ASSERT(WebThreadIsLockedOrDisabled());
-#else
-    ASSERT(isMainThread());
-#endif
-    DEPRECATED_DEFINE_STATIC_LOCAL(BuiltinResourceHandleConstructorMap, map, ());
-    return map;
-}
-
-void ResourceHandle::registerBuiltinConstructor(const AtomicString& protocol, ResourceHandle::BuiltinConstructor constructor)
-{
-    builtinResourceHandleConstructorMap().add(protocol, constructor);
-}
-
-typedef HashMap<AtomicString, ResourceHandle::BuiltinSynchronousLoader> BuiltinResourceHandleSynchronousLoaderMap;
-static BuiltinResourceHandleSynchronousLoaderMap& builtinResourceHandleSynchronousLoaderMap()
-{
-    ASSERT(isMainThread());
-    DEPRECATED_DEFINE_STATIC_LOCAL(BuiltinResourceHandleSynchronousLoaderMap, map, ());
-    return map;
-}
-
-void ResourceHandle::registerBuiltinSynchronousLoader(const AtomicString& protocol, ResourceHandle::BuiltinSynchronousLoader loader)
-{
-    builtinResourceHandleSynchronousLoaderMap().add(protocol, loader);
-}
-
 ResourceHandle::ResourceHandle(NetworkingContext* context, const ResourceRequest& request, ResourceHandleClient* client, bool defersLoading, bool shouldContentSniff)
     : d(adoptPtr(new ResourceHandleInternal(this, context, request, client, defersLoading, shouldContentSniff && shouldContentSniffURL(request.url()))))
 {
@@ -86,11 +56,6 @@ ResourceHandle::ResourceHandle(NetworkingContext* context, const ResourceRequest
 
 PassRefPtr<ResourceHandle> ResourceHandle::create(NetworkingContext* context, const ResourceRequest& request, ResourceHandleClient* client, bool defersLoading, bool shouldContentSniff)
 {
-    BuiltinResourceHandleConstructorMap::iterator protocolMapItem = builtinResourceHandleConstructorMap().find(request.url().protocol());
-
-    if (protocolMapItem != builtinResourceHandleConstructorMap().end())
-        return protocolMapItem->value(request, client);
-
     RefPtr<ResourceHandle> newHandle(adoptRef(new ResourceHandle(context, request, client, defersLoading, shouldContentSniff)));
 
     if (newHandle->d->m_scheduledFailureType != NoFailure)
@@ -132,13 +97,6 @@ void ResourceHandle::failureTimerFired()
 
 void ResourceHandle::loadResourceSynchronously(NetworkingContext* context, const ResourceRequest& request, StoredCredentials storedCredentials, ResourceError& error, ResourceResponse& response, Vector<char>& data)
 {
-    BuiltinResourceHandleSynchronousLoaderMap::iterator protocolMapItem = builtinResourceHandleSynchronousLoaderMap().find(request.url().protocol());
-
-    if (protocolMapItem != builtinResourceHandleSynchronousLoaderMap().end()) {
-        protocolMapItem->value(context, request, storedCredentials, error, response, data);
-        return;
-    }
-
     platformLoadResourceSynchronously(context, request, storedCredentials, error, response, data);
 }
 
