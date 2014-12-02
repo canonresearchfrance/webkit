@@ -44,6 +44,7 @@
 #include "ResourceHandleClient.h"
 #include "ResourceHandleInternal.h"
 #include "ResourceResolverAsync.h"
+#include "ResourceResolverClient.h"
 #include "ResourceResponse.h"
 #include "SharedBuffer.h"
 #include "SoupNetworkSession.h"
@@ -76,7 +77,7 @@ namespace WebCore {
 static bool loadingSynchronousRequest = false;
 static const size_t gDefaultReadBufferSize = 8192;
 
-class WebCoreSynchronousLoader : public ResourceHandleClient {
+class WebCoreSynchronousLoader : public ResourceResolverClient {
     WTF_MAKE_NONCOPYABLE(WebCoreSynchronousLoader);
 public:
 
@@ -133,17 +134,17 @@ public:
         return true;
     }
 
-    virtual void didReceiveResponse(ResourceHandle*, const ResourceResponse& response)
+    virtual void didReceiveResponse(ResourceResolver*, const ResourceResponse& response)
     {
         m_response = response;
     }
 
-    virtual void didReceiveData(ResourceHandle*, const char* /* data */, unsigned /* length */, int)
+    virtual void didReceiveData(ResourceResolver*, const char* /* data */, unsigned /* length */, int)
     {
         ASSERT_NOT_REACHED();
     }
 
-    virtual void didReceiveBuffer(ResourceHandle*, PassRefPtr<SharedBuffer> buffer, int /* encodedLength */)
+    virtual void didReceiveBuffer(ResourceResolver*, PassRefPtr<SharedBuffer> buffer, int /* encodedLength */)
     {
         // This pattern is suggested by SharedBuffer.h.
         const char* segment;
@@ -154,7 +155,7 @@ public:
         }
     }
 
-    virtual void didFinishLoading(ResourceHandle*, double)
+    virtual void didFinishLoading(ResourceResolver*, double)
     {
         if (g_main_loop_is_running(m_mainLoop.get()))
             g_main_loop_quit(m_mainLoop.get());
@@ -167,13 +168,13 @@ public:
         didFinishLoading(handle, 0);
     }
 
-    virtual void didReceiveAuthenticationChallenge(ResourceHandle*, const AuthenticationChallenge& challenge)
+    virtual void didReceiveAuthenticationChallenge(ResourceResolver*, const AuthenticationChallenge& challenge)
     {
         // We do not handle authentication for synchronous XMLHttpRequests.
         challenge.authenticationClient()->receivedRequestToContinueWithoutCredential(challenge);
     }
 
-    virtual bool shouldUseCredentialStorage(ResourceHandle*)
+    virtual bool shouldUseCredentialStorage(ResourceResolver*)
     {
         return m_storedCredentials == AllowStoredCredentials;
     }
@@ -1252,12 +1253,13 @@ void ResourceHandle::platformLoadResourceSynchronously(NetworkingContext* contex
         return;                    // we want to avoid accidentally going into an infinite loop of requests.
 
     WebCoreSynchronousLoader syncLoader(error, response, sessionFromContext(context), data, storedCredentials);
-    RefPtr<ResourceHandle> handle = create(context, request, nullptr, nullptr, &syncLoader, false /*defersLoading*/, false /*shouldContentSniff*/);
+    // FIXME: Directly call ResourceHandle::create once migration is finished.
+    RefPtr<ResourceResolver> handle = ResourceResolver::create(context, request, &syncLoader, nullptr, nullptr, false /*defersLoading*/, false /*shouldContentSniff*/);
     if (!handle)
         return;
 
     // If the request has already failed, do not run the main loop, or else we'll block indefinitely.
-    if (handle->d->m_scheduledFailureType != NoFailure)
+    if (!handle->handle() || handle->handle()->d->m_scheduledFailureType != NoFailure)
         return;
 
     syncLoader.run();
