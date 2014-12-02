@@ -231,11 +231,9 @@ public:
     ResourceResolverAsyncClient* asyncClient() const  { return m_asyncClient; }
     bool usesAsyncCallbacks()  const { return m_asyncClient; }
 
-    // Called in response to ResourceHandleClient::willSendRequestAsync().
-    WEBCORE_EXPORT void continueWillSendRequest(const ResourceRequest&);
-
-    // Called in response to ResourceHandleClient::didReceiveResponseAsync().
-    WEBCORE_EXPORT virtual void continueDidReceiveResponse();
+    // ResourceResolverAsync API.
+    void continueWillSendRequest(const ResourceRequest&);
+    void continueDidReceiveResponse();
 
 #if USE(PROTECTION_SPACE_AUTH_CALLBACK)
     // Called in response to ResourceHandleClient::canAuthenticateAgainstProtectionSpaceAsync().

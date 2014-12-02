@@ -39,7 +39,7 @@
 namespace WebCore {
 
 // FIXME: Merge this class with ResourceHandle once ResourceHandle::create is no longer called by other classes than ResourceResolver.
-class ResourceHandleResolver: public ResourceResolverAsync, private ResourceHandleClient, private ResourceResolverAsyncClient {
+class ResourceHandleResolver: public ResourceResolverAsync, private ResourceHandleClient {
 public:
 
     // ResourceHandleClient API forward to ResourceResolver client and async client.
@@ -92,13 +92,6 @@ public:
     {
         if (m_client)
             m_client->cannotShowURL(this);
-    }
-
-    using ResourceResolverAsyncClient::didReceiveResponseAsync;
-    void didReceiveResponseAsync(ResourceHandle*, const ResourceResponse& response)
-    {
-        if (m_asyncClient)
-            m_asyncClient->didReceiveResponseAsync(this, response);
     }
 
     bool shouldUseCredentialStorage(ResourceHandle*) { return m_client->shouldUseCredentialStorage(this); }
@@ -250,7 +243,7 @@ private:
         , m_handleClient(handleClient)
         , m_firstRequest(request)
     {
-        m_handle = ResourceHandle::create(context, request, client, asyncClient	, this, defersLoading, shouldContentSniff);
+        m_handle = ResourceHandle::create(context, request, client, asyncClient, this, defersLoading, shouldContentSniff);
     }
 
     ResourceResolverClient* m_client;

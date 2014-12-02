@@ -642,7 +642,7 @@ static void nextMultipartResponsePartCallback(GObject* /*source*/, GAsyncResult*
     d->m_previousPosition = 0;
 
     if (handle->usesAsyncCallbacks())
-        handle->client()->didReceiveResponseAsync(handle.get(), d->m_response);
+        handle->asyncClient()->didReceiveResponseAsync(handle.get(), d->m_response);
     else {
         handle->client()->didReceiveResponse(handle.get(), d->m_response);
         continueAfterDidReceiveResponse(handle.get());
@@ -706,7 +706,7 @@ static void sendRequestCallback(GObject*, GAsyncResult* result, gpointer data)
         d->m_inputStream = inputStream;
 
     if (handle->usesAsyncCallbacks())
-        handle->client()->didReceiveResponseAsync(handle.get(), d->m_response);
+        handle->asyncClient()->didReceiveResponseAsync(handle.get(), d->m_response);
     else {
         handle->client()->didReceiveResponse(handle.get(), d->m_response);
         continueAfterDidReceiveResponse(handle.get());

@@ -39,11 +39,6 @@ ResourceHandleClient::~ResourceHandleClient()
 {
 }
 
-void ResourceHandleClient::didReceiveResponseAsync(ResourceHandle* handle, const ResourceResponse&)
-{
-    handle->continueDidReceiveResponse();
-}
-
 #if USE(PROTECTION_SPACE_AUTH_CALLBACK)
 void ResourceHandleClient::canAuthenticateAgainstProtectionSpaceAsync(ResourceHandle* handle, const ProtectionSpace&)
 {

@@ -218,7 +218,7 @@ using namespace WebCore;
 #else
         UNUSED_PARAM(connection);
 #endif
-        m_handle->client()->didReceiveResponseAsync(m_handle, resourceResponse);
+        m_handle->asyncClient()->didReceiveResponseAsync(m_handle, resourceResponse);
     });
 
     dispatch_semaphore_wait(m_semaphore, DISPATCH_TIME_FOREVER);
