@@ -219,7 +219,7 @@ void ResourceHandle::createCFURLConnection(bool shouldUseCredentialStorage, bool
     CFRelease(streamProperties);
 
 #if PLATFORM(COCOA)
-    if (client() && client()->usesAsyncCallbacks())
+    if (client() && usesAsyncCallbacks())
         d->m_connectionDelegate = adoptRef(new ResourceHandleCFURLConnectionDelegateWithOperationQueue(this));
     else
         d->m_connectionDelegate = adoptRef(new SynchronousResourceHandleCFURLConnectionDelegate(this));
@@ -298,7 +298,7 @@ void ResourceHandle::willSendRequest(ResourceRequest& request, const ResourceRes
     }
 
     Ref<ResourceHandle> protect(*this);
-    if (client()->usesAsyncCallbacks())
+    if (usesAsyncCallbacks())
         client()->willSendRequestAsync(this, request, redirectResponse);
     else {
         client()->willSendRequest(this, request, redirectResponse);
@@ -316,7 +316,7 @@ bool ResourceHandle::shouldUseCredentialStorage()
 {
     LOG(Network, "CFNet - shouldUseCredentialStorage()");
     if (ResourceHandleClient* client = this->client()) {
-        ASSERT(!client->usesAsyncCallbacks());
+        ASSERT(!usesAsyncCallbacks());
         return client->shouldUseCredentialStorage(this);
     }
     return false;
@@ -398,7 +398,7 @@ void ResourceHandle::didReceiveAuthenticationChallenge(const AuthenticationChall
 bool ResourceHandle::canAuthenticateAgainstProtectionSpace(const ProtectionSpace& protectionSpace)
 {
     if (ResourceHandleClient* client = this->client()) {
-        if (client->usesAsyncCallbacks())
+        if (usesAsyncCallbacks())
             client->canAuthenticateAgainstProtectionSpaceAsync(this, protectionSpace);
         else
             return client->canAuthenticateAgainstProtectionSpace(this, protectionSpace);
@@ -536,7 +536,7 @@ void ResourceHandle::platformLoadResourceSynchronously(NetworkingContext* contex
     OwnPtr<SynchronousLoaderClient> client = SynchronousLoaderClient::create();
     client->setAllowStoredCredentials(storedCredentials == AllowStoredCredentials);
 
-    RefPtr<ResourceHandle> handle = adoptRef(new ResourceHandle(context, request, client.get(), false /*defersLoading*/, true /*shouldContentSniff*/));
+    RefPtr<ResourceHandle> handle = adoptRef(new ResourceHandle(context, request, nullptr, client.get(), false /*defersLoading*/, true /*shouldContentSniff*/));
 
     handle->d->m_storageSession = context->storageSession().platformSession();
 

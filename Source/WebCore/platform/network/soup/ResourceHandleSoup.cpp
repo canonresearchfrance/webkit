@@ -519,7 +519,7 @@ static void doRedirect(ResourceHandle* handle)
 
     cleanupSoupRequestOperation(handle);
 
-    if (d->client()->usesAsyncCallbacks())
+    if (handle->usesAsyncCallbacks())
         d->client()->willSendRequestAsync(handle, newRequest, d->m_response);
     else {
         d->client()->willSendRequest(handle, newRequest, d->m_response);
@@ -640,7 +640,7 @@ static void nextMultipartResponsePartCallback(GObject* /*source*/, GAsyncResult*
 
     d->m_previousPosition = 0;
 
-    if (handle->client()->usesAsyncCallbacks())
+    if (handle->usesAsyncCallbacks())
         handle->client()->didReceiveResponseAsync(handle.get(), d->m_response);
     else {
         handle->client()->didReceiveResponse(handle.get(), d->m_response);
@@ -704,7 +704,7 @@ static void sendRequestCallback(GObject*, GAsyncResult* result, gpointer data)
     else
         d->m_inputStream = inputStream;
 
-    if (d->client()->usesAsyncCallbacks())
+    if (handle->usesAsyncCallbacks())
         handle->client()->didReceiveResponseAsync(handle.get(), d->m_response);
     else {
         handle->client()->didReceiveResponse(handle.get(), d->m_response);
@@ -1251,7 +1251,7 @@ void ResourceHandle::platformLoadResourceSynchronously(NetworkingContext* contex
         return;                    // we want to avoid accidentally going into an infinite loop of requests.
 
     WebCoreSynchronousLoader syncLoader(error, response, sessionFromContext(context), data, storedCredentials);
-    RefPtr<ResourceHandle> handle = create(context, request, &syncLoader, false /*defersLoading*/, false /*shouldContentSniff*/);
+    RefPtr<ResourceHandle> handle = create(context, request, nullptr, &syncLoader, false /*defersLoading*/, false /*shouldContentSniff*/);
     if (!handle)
         return;
 
@@ -1328,14 +1328,14 @@ static void readCallback(GObject*, GAsyncResult* asyncResult, gpointer data)
 void ResourceHandle::continueWillSendRequest(const ResourceRequest& request)
 {
     ASSERT(client());
-    ASSERT(client()->usesAsyncCallbacks());
+    ASSERT(usesAsyncCallbacks());
     continueAfterWillSendRequest(this, request);
 }
 
 void ResourceHandle::continueDidReceiveResponse()
 {
     ASSERT(client());
-    ASSERT(client()->usesAsyncCallbacks());
+    ASSERT(usesAsyncCallbacks());
     continueAfterDidReceiveResponse(this);
 }
 

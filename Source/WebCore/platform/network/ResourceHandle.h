@@ -97,6 +97,7 @@ class ResourceHandleClient;
 class ResourceHandleInternal;
 class ResourceLoadTiming;
 class ResourceRequest;
+class ResourceResolverAsyncClient;
 class ResourceResponse;
 class SharedBuffer;
 class Timer;
@@ -107,7 +108,7 @@ class ResourceHandle : public RefCounted<ResourceHandle>
 #endif
     {
 public:
-    WEBCORE_EXPORT static PassRefPtr<ResourceHandle> create(NetworkingContext*, const ResourceRequest&, ResourceHandleClient*, bool defersLoading, bool shouldContentSniff);
+    static PassRefPtr<ResourceHandle> create(NetworkingContext*, const ResourceRequest&, ResourceResolverAsyncClient*, ResourceHandleClient*, bool defersLoading, bool shouldContentSniff);
     WEBCORE_EXPORT static void loadResourceSynchronously(NetworkingContext*, const ResourceRequest&, StoredCredentials, ResourceError&, ResourceResponse&, Vector<char>& data);
 
     WEBCORE_EXPORT virtual ~ResourceHandle();
@@ -216,6 +217,8 @@ public:
     ResourceHandleClient* client() const;
     WEBCORE_EXPORT void setClient(ResourceHandleClient*);
 
+    bool usesAsyncCallbacks()  const { return m_asyncClient; }
+
     // Called in response to ResourceHandleClient::willSendRequestAsync().
     WEBCORE_EXPORT void continueWillSendRequest(const ResourceRequest&);
 
@@ -256,7 +259,7 @@ public:
 #endif
 
 protected:
-    ResourceHandle(NetworkingContext*, const ResourceRequest&, ResourceHandleClient*, bool defersLoading, bool shouldContentSniff);
+    ResourceHandle(NetworkingContext*, const ResourceRequest&, ResourceResolverAsyncClient*, ResourceHandleClient*, bool defersLoading, bool shouldContentSniff);
 
 private:
     enum FailureType {
@@ -297,6 +300,7 @@ static void getConnectionTimingData(NSDictionary *timingData, ResourceLoadTiming
 
     friend class ResourceHandleInternal;
     OwnPtr<ResourceHandleInternal> d;
+    ResourceResolverAsyncClient* m_asyncClient;
 
 #if USE(QUICK_LOOK)
     std::unique_ptr<QuickLookHandle> m_quickLook;

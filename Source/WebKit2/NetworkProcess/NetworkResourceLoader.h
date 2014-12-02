@@ -106,7 +106,6 @@ public:
     WebCore::SessionID sessionID() const { return m_parameters.sessionID; }
 
     struct SynchronousLoadData;
-    virtual bool usesAsyncCallbacks() override { return true; }
 
 private:
     NetworkResourceLoader(const NetworkResourceLoadParameters&, NetworkConnectionToWebProcess*, PassRefPtr<Messages::NetworkConnectionToWebProcess::PerformSynchronousLoad::DelayedReply>);

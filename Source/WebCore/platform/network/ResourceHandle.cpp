@@ -40,8 +40,9 @@ namespace WebCore {
 
 static bool shouldForceContentSniffing;
 
-ResourceHandle::ResourceHandle(NetworkingContext* context, const ResourceRequest& request, ResourceHandleClient* client, bool defersLoading, bool shouldContentSniff)
-    : d(adoptPtr(new ResourceHandleInternal(this, context, request, client, defersLoading, shouldContentSniff && shouldContentSniffURL(request.url()))))
+ResourceHandle::ResourceHandle(NetworkingContext* context, const ResourceRequest& request, ResourceResolverAsyncClient* asyncClient, ResourceHandleClient* handleClient, bool defersLoading, bool shouldContentSniff)
+    : d(adoptPtr(new ResourceHandleInternal(this, context, request, handleClient, defersLoading, shouldContentSniff && shouldContentSniffURL(request.url()))))
+    , m_asyncClient(asyncClient)
 {
     if (!request.url().isValid()) {
         scheduleFailure(InvalidURLFailure);
@@ -54,9 +55,9 @@ ResourceHandle::ResourceHandle(NetworkingContext* context, const ResourceRequest
     }
 }
 
-PassRefPtr<ResourceHandle> ResourceHandle::create(NetworkingContext* context, const ResourceRequest& request, ResourceHandleClient* client, bool defersLoading, bool shouldContentSniff)
+PassRefPtr<ResourceHandle> ResourceHandle::create(NetworkingContext* context, const ResourceRequest& request, ResourceResolverAsyncClient* asyncClient, ResourceHandleClient* handleClient, bool defersLoading, bool shouldContentSniff)
 {
-    RefPtr<ResourceHandle> newHandle(adoptRef(new ResourceHandle(context, request, client, defersLoading, shouldContentSniff)));
+    RefPtr<ResourceHandle> newHandle(adoptRef(new ResourceHandle(context, request, asyncClient, handleClient, defersLoading, shouldContentSniff)));
 
     if (newHandle->d->m_scheduledFailureType != NoFailure)
         return newHandle.release();

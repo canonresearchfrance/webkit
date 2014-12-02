@@ -33,12 +33,13 @@
 #include "ResourceHandle.h"
 #include "ResourceHandleClient.h"
 #include "ResourceRequest.h"
+#include "ResourceResolverAsync.h"
 #include "ResourceResolverClient.h"
 
 namespace WebCore {
 
 // FIXME: Merge this class with ResourceHandle once ResourceHandle::create is no longer called by other classes than ResourceResolver.
-class ResourceHandleResolver: public ResourceResolverAsync, private ResourceHandleClient {
+class ResourceHandleResolver: public ResourceResolverAsync, private ResourceHandleClient, private ResourceResolverAsyncClient {
 public:
 
     // ResourceHandleClient API forward to ResourceResolver client and async client.
@@ -93,18 +94,19 @@ public:
             m_client->cannotShowURL(this);
     }
 
-    void willSendRequestAsync(ResourceHandle*, const ResourceRequest& request, const ResourceResponse& redirectResponse)
+    using ResourceResolverAsyncClient::willSendRequestAsync;
+    using ResourceResolverAsyncClient::didReceiveResponseAsync;
+
+    void willSendRequestAsync(ResourceHandle*, const ResourceRequest& request, const ResourceResponse& redirectResponse) override
     {
         if (m_asyncClient)
             m_asyncClient->willSendRequestAsync(this, request, redirectResponse);
     }
-    void didReceiveResponseAsync(ResourceHandle*, const ResourceResponse& response)
+    void didReceiveResponseAsync(ResourceHandle*, const ResourceResponse& response) override
     {
         if (m_asyncClient)
             m_asyncClient->didReceiveResponseAsync(this, response);
     }
-
-    bool usesAsyncCallbacks() { return m_asyncClient; }
 
     bool shouldUseCredentialStorage(ResourceHandle*) { return m_client->shouldUseCredentialStorage(this); }
 
@@ -255,7 +257,7 @@ private:
         , m_handleClient(handleClient)
         , m_firstRequest(request)
     {
-        m_handle = ResourceHandle::create(context, request, this, defersLoading, shouldContentSniff);
+        m_handle = ResourceHandle::create(context, request, m_asyncClient ? this : nullptr, this, defersLoading, shouldContentSniff);
     }
 
     ResourceResolverClient* m_client;
