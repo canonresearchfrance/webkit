@@ -30,7 +30,11 @@
 #include "DataReference.h"
 #include "DownloadSoupErrors.h"
 #include <WebCore/NotImplemented.h>
-#include <WebCore/ResourceHandleInternal.h>
+#include <WebCore/ResourceError.h>
+#include <WebCore/ResourceHandle.h>
+#include <WebCore/ResourceResolver.h>
+#include <WebCore/ResourceResolverClient.h>
+#include <WebCore/ResourceResponse.h>
 #include <gio/gio.h>
 #include <wtf/gobject/GMainLoopSource.h>
 #include <wtf/gobject/GRefPtr.h>
@@ -45,7 +49,7 @@ using namespace WebCore;
 
 namespace WebKit {
 
-class DownloadClient : public ResourceHandleClient {
+class DownloadClient : public ResourceResolverClient {
     WTF_MAKE_NONCOPYABLE(DownloadClient);
 public:
     DownloadClient(Download* download)
@@ -75,7 +79,7 @@ public:
         m_download->didFail(error, IPC::DataReference());
     }
 
-    void didReceiveResponse(ResourceHandle*, const ResourceResponse& response)
+    void didReceiveResponse(ResourceResolver*, const ResourceResponse& response)
     {
         m_response = response;
         m_download->didReceiveResponse(response);
@@ -129,7 +133,7 @@ public:
         m_download->didCreateDestination(destinationURI);
     }
 
-    void didReceiveData(ResourceHandle*, const char* data, unsigned length, int /*encodedDataLength*/)
+    void didReceiveData(ResourceResolver*, const char* data, unsigned length, int /*encodedDataLength*/)
     {
         if (m_handleResponseLater.isScheduled()) {
             m_handleResponseLater.cancel();
@@ -146,7 +150,7 @@ public:
         m_download->didReceiveData(bytesWritten);
     }
 
-    void didFinishLoading(ResourceHandle*, double)
+    void didFinishLoading(ResourceResolver*, double)
     {
         m_outputStream = 0;
 
@@ -167,24 +171,24 @@ public:
         m_download->didFinish();
     }
 
-    void didFail(ResourceHandle*, const ResourceError& error)
+    void didFail(ResourceResolver*, const ResourceError& error)
     {
         downloadFailed(platformDownloadNetworkError(error.errorCode(), error.failingURL(), error.localizedDescription()));
     }
 
-    void wasBlocked(ResourceHandle*)
+    void wasBlocked(ResourceResolver*)
     {
         notImplemented();
     }
 
-    void cannotShowURL(ResourceHandle*)
+    void cannotShowURL(ResourceResolver*)
     {
         notImplemented();
     }
 
-    void cancel(ResourceHandle* handle)
+    void cancel(ResourceResolver* resolver)
     {
-        handle->cancel();
+        resolver->cancel();
         deleteFilesIfNeeded();
         m_download->didCancel(IPC::DataReference());
     }
@@ -219,19 +223,23 @@ public:
 void Download::start()
 {
     ASSERT(!m_downloadClient);
-    ASSERT(!m_resourceHandle);
+    ASSERT(!m_resourceResolver);
     m_downloadClient = std::make_unique<DownloadClient>(this);
-    m_resourceHandle = ResourceHandle::create(0, m_request, m_downloadClient.get(), false, false);
+    m_resourceResolver = ResourceResolver::create(0, m_request, m_downloadClient.get(), nullptr, nullptr, false, false);
     didStart();
 }
 
-void Download::startWithHandle(ResourceHandle* resourceHandle, const ResourceResponse& response)
+void Download::startWithResolver(ResourceResolver* resourceResolver, const ResourceResponse& response)
 {
     ASSERT(!m_downloadClient);
-    ASSERT(!m_resourceHandle);
+    ASSERT(!m_resourceResolver);
+    if (!resourceResolver->handle()) {
+        start();
+        return;
+    }
     m_downloadClient = std::make_unique<DownloadClient>(this);
-    resourceHandle->setClient(m_downloadClient.get());
-    m_resourceHandle = resourceHandle;
+    resourceResolver->handle()->setResolverClient(m_downloadClient.get());
+    m_resourceResolver = resourceResolver;
     didStart();
     static_cast<DownloadClient*>(m_downloadClient.get())->handleResponseLater(response);
 }
@@ -243,22 +251,22 @@ void Download::resume(const IPC::DataReference&, const String&, const SandboxExt
 
 void Download::cancel()
 {
-    if (!m_resourceHandle)
+    if (!m_resourceResolver)
         return;
 
     // Cancelling the download will delete it and platformInvalidate() will be called by the destructor.
     // So, we need to set m_resourceHandle to nullptr before actually cancelling the download to make sure
     // it won't be cancelled again by platformInvalidate. See https://bugs.webkit.org/show_bug.cgi?id=127650.
-    RefPtr<ResourceHandle> resourceHandle = m_resourceHandle.release();
-    static_cast<DownloadClient*>(m_downloadClient.get())->cancel(resourceHandle.get());
+    RefPtr<ResourceResolver> resourceResolver = m_resourceResolver.release();
+    static_cast<DownloadClient*>(m_downloadClient.get())->cancel(resourceResolver.get());
 }
 
 void Download::platformInvalidate()
 {
-    if (m_resourceHandle) {
-        m_resourceHandle->setClient(0);
-        m_resourceHandle->cancel();
-        m_resourceHandle = 0;
+    if (m_resourceResolver) {
+        m_resourceResolver->clearClient();
+        m_resourceResolver->cancel();
+        m_resourceResolver = nullptr;
     }
 
     m_downloadClient = nullptr;
@@ -271,7 +279,7 @@ void Download::didDecideDestination(const String& /*destination*/, bool /*allowO
 
 void Download::platformDidFinish()
 {
-    m_resourceHandle = 0;
+    m_resourceResolver = 0;
 }
 
 void Download::receivedCredential(const AuthenticationChallenge&, const Credential&)

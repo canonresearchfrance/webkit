@@ -290,7 +290,7 @@ void WebFrame::convertMainResourceLoadToDownload(DocumentLoader* documentLoader,
         return;
     }
 
-    WebProcess::shared().downloadManager().convertHandleToDownload(policyDownloadID, documentLoader->mainResourceLoader()->handle(), request, response);
+    WebProcess::shared().downloadManager().convertResolverToDownload(policyDownloadID, documentLoader->mainResourceLoader()->resolver(), request, response);
 }
 
 String WebFrame::source() const 

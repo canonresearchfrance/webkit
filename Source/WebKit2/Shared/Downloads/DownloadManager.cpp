@@ -47,11 +47,11 @@ void DownloadManager::startDownload(uint64_t downloadID, const ResourceRequest& 
     m_downloads.add(downloadID, WTF::move(download));
 }
 
-void DownloadManager::convertHandleToDownload(uint64_t downloadID, ResourceHandle* handle, const ResourceRequest& request, const ResourceResponse& response)
+void DownloadManager::convertResolverToDownload(uint64_t downloadID, ResourceResolver* resolver, const ResourceRequest& request, const ResourceResponse& response)
 {
     auto download = std::make_unique<Download>(*this, downloadID, request);
 
-    download->startWithHandle(handle, response);
+    download->startWithResolver(resolver, response);
     ASSERT(!m_downloads.contains(downloadID));
     m_downloads.add(downloadID, WTF::move(download));
 }

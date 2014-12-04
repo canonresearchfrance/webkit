@@ -68,13 +68,18 @@ void Download::start()
     [m_nsURLDownload setDeletesFileUponFailure:NO];
 }
 
-void Download::startWithHandle(ResourceHandle* handle, const ResourceResponse& response)
+void Download::startWithResolver(ResourceResolver* resolver, const ResourceResponse& response)
 {
     ASSERT(!m_nsURLDownload);
     ASSERT(!m_delegate);
 
+    if (!resolver->handle()) {
+        start();
+        return;
+    }
+
     m_delegate = adoptNS([[WKDownloadAsDelegate alloc] initWithDownload:this]);
-    m_nsURLDownload = [NSURLDownload _downloadWithLoadingConnection:handle->connection()
+    m_nsURLDownload = [NSURLDownload _downloadWithLoadingConnection:resolver->handle()->connection()
                                                             request:m_request.nsURLRequest(UpdateHTTPBody)
                                                            response:response.nsURLResponse()
                                                             delegate:m_delegate.get()

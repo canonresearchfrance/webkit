@@ -39,8 +39,8 @@ OBJC_CLASS WKDownloadAsDelegate;
 #endif
 
 #if PLATFORM(GTK) || PLATFORM(EFL)
-#include <WebCore/ResourceHandle.h>
-#include <WebCore/ResourceHandleClient.h>
+#include <WebCore/ResourceResolver.h>
+#include <WebCore/ResourceResolverClient.h>
 #include <memory>
 #endif
 
@@ -56,7 +56,7 @@ namespace WebCore {
     class AuthenticationChallenge;
     class Credential;
     class ResourceError;
-    class ResourceHandle;
+    class ResourceResolver;
     class ResourceResponse;
 }
 
@@ -73,7 +73,7 @@ public:
     ~Download();
 
     void start();
-    void startWithHandle(WebCore::ResourceHandle*, const WebCore::ResourceResponse&);
+    void startWithResolver(WebCore::ResourceResolver*, const WebCore::ResourceResponse&);
     void resume(const IPC::DataReference& resumeData, const String& path, const SandboxExtension::Handle&);
     void cancel();
 
@@ -135,8 +135,8 @@ private:
     RefPtr<DownloadAuthenticationClient> m_authenticationClient;
 #endif
 #if PLATFORM(GTK) || PLATFORM(EFL)
-    std::unique_ptr<WebCore::ResourceHandleClient> m_downloadClient;
-    RefPtr<WebCore::ResourceHandle> m_resourceHandle;
+    std::unique_ptr<WebCore::ResourceResolverClient> m_downloadClient;
+    RefPtr<WebCore::ResourceResolver> m_resourceResolver;
 #endif
 };
 

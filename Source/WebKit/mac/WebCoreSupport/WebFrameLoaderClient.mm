@@ -278,14 +278,14 @@ void WebFrameLoaderClient::convertMainResourceLoadToDownload(DocumentLoader* doc
 {
     WebView *webView = getWebView(m_webFrame.get());
 
-    if (!documentLoader->mainResourceLoader()) {
+    if (!documentLoader->mainResourceLoader() || !documentLoader->mainResourceLoader()->resolver() || !documentLoader->mainResourceLoader()->resolver()->handle() ) {
         // The resource has already been cached, start a new download.
         WebDownload *webDownload = [[WebDownload alloc] initWithRequest:request.nsURLRequest(UpdateHTTPBody) delegate:[webView downloadDelegate]];
         [webDownload autorelease];
         return;
     }
 
-    ResourceHandle* handle = documentLoader->mainResourceLoader()->handle();
+    ResourceHandle* handle = documentLoader->mainResourceLoader()->resolver()->handle();
 
 #if USE(CFNETWORK)
     ASSERT([WebDownload respondsToSelector:@selector(_downloadWithLoadingCFURLConnection:request:response:delegate:proxy:)]);

@@ -181,12 +181,13 @@ void NetworkConnectionToWebProcess::convertMainResourceLoadToDownload(uint64_t m
     }
 
     NetworkResourceLoader* loader = m_networkResourceLoaders.get(mainResourceLoadIdentifier);
-    NetworkProcess::shared().downloadManager().convertHandleToDownload(downloadID, loader->handle(), request, response);
+    NetworkProcess::shared().downloadManager().convertResolverToDownload(downloadID, loader->resolver(), request, response);
 
     // Unblock the URL connection operation queue.
-    loader->handle()->continueDidReceiveResponse();
+    if (loader->resolver()->handle())
+        loader->resolver()->handle()->continueDidReceiveResponse();
     
-    loader->didConvertHandleToDownload();
+    loader->didConvertResolverToDownload();
 }
 
 void NetworkConnectionToWebProcess::cookiesForDOM(SessionID sessionID, const URL& firstParty, const URL& url, String& result)

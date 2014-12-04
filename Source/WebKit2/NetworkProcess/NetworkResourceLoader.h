@@ -78,8 +78,8 @@ public:
     // Changes with redirects.
     WebCore::ResourceRequest& currentRequest() { return m_currentRequest; }
 
-    WebCore::ResourceHandle* handle() const { return m_resolver ? m_resolver->handle() : nullptr; }
-    void didConvertHandleToDownload();
+    WebCore::ResourceResolver* resolver() const { return m_resolver.get(); }
+    void didConvertResolverToDownload();
 
     void start();
     void abort();
@@ -194,7 +194,7 @@ private:
     std::unique_ptr<SynchronousLoadData> m_synchronousLoadData;
     Vector<RefPtr<WebCore::BlobDataFileReference>> m_fileReferences;
 
-    bool m_didConvertHandleToDownload;
+    bool m_didConvertResolverToDownload;
     bool m_didConsumeSandboxExtensions;
     bool m_defersLoading;
 

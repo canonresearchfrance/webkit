@@ -56,7 +56,7 @@
 #include "Page.h"
 #include "PolicyChecker.h"
 #include "ProgressTracker.h"
-#include "ResourceHandle.h"
+#include "ResourceResolver.h"
 #include "SchemeRegistry.h"
 #include "SecurityPolicy.h"
 #include "Settings.h"
@@ -99,14 +99,14 @@ static bool areAllLoadersPageCacheAcceptable(const ResourceLoaderMap& loaders)
     Vector<RefPtr<ResourceLoader>> loadersCopy;
     copyValuesToVector(loaders, loadersCopy);
     for (auto& loader : loadersCopy) {
-        ResourceHandle* handle = loader->handle();
-        if (!handle)
+        ResourceResolver* resolver = loader->resolver();
+        if (!resolver)
             return false;
 
         if (!loader->frameLoader())
             return false;
 
-        CachedResource* cachedResource = memoryCache().resourceForURL(handle->firstRequest().url(), loader->frameLoader()->frame().page()->sessionID());
+        CachedResource* cachedResource = memoryCache().resourceForURL(resolver->firstRequest().url(), loader->frameLoader()->frame().page()->sessionID());
         if (!cachedResource)
             return false;
 

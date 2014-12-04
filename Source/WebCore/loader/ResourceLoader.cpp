@@ -424,8 +424,8 @@ void ResourceLoader::cancel(const ResourceError& error)
     if (m_cancellationStatus == CalledWillCancel) {
         m_cancellationStatus = Cancelled;
 
-        if (handle())
-            handle()->clearAuthentication();
+        if (m_resolver && m_resolver->handle())
+            m_resolver->handle()->clearAuthentication();
 
         m_documentLoader->cancelPendingSubstituteLoad(this);
         if (m_resolver) {
@@ -535,7 +535,7 @@ bool ResourceLoader::isAllowedToAskUserForCredentials() const
 
 void ResourceLoader::didReceiveAuthenticationChallenge(const AuthenticationChallenge& challenge)
 {
-    ASSERT(handle() && handle()->hasAuthenticationChallenge());
+    ASSERT(m_resolver && m_resolver->handle() && m_resolver->handle()->hasAuthenticationChallenge());
 
     // Protect this in this delegate method since the additional processing can do
     // anything including possibly derefing this; one example of this is Radar 3266216.
@@ -551,7 +551,7 @@ void ResourceLoader::didReceiveAuthenticationChallenge(const AuthenticationChall
     // If we can't continue with credentials, we need to cancel the load altogether.
 #if PLATFORM(COCOA) || USE(CFNETWORK) || USE(CURL) || PLATFORM(GTK) || PLATFORM(EFL)
     challenge.authenticationClient()->receivedRequestToContinueWithoutCredential(challenge);
-    ASSERT(!handle() || !handle()->hasAuthenticationChallenge());
+    ASSERT(!m_resolver || !m_resolver->handle() || !m_resolver->handle()->hasAuthenticationChallenge());
 #else
     didFail(blockedError());
 #endif
@@ -593,14 +593,14 @@ void ResourceLoader::receivedCancellation(const AuthenticationChallenge&)
 
 void ResourceLoader::schedule(SchedulePair& pair)
 {
-    if (handle())
-        handle()->schedule(pair);
+    if (m_resolver && m_resolver->handle())
+        m_resolver->handle()->schedule(pair);
 }
 
 void ResourceLoader::unschedule(SchedulePair& pair)
 {
-    if (handle())
-        handle()->unschedule(pair);
+    if (m_resolver && m_resolver->handle())
+        m_resolver->handle()->unschedule(pair);
 }
 
 #endif

@@ -32,8 +32,8 @@
 #include <wtf/Noncopyable.h>
 
 namespace WebCore {
-class ResourceHandle;
 class ResourceRequest;
+class ResourceResolver;
 class ResourceResponse;
 }
 
@@ -65,7 +65,7 @@ public:
     explicit DownloadManager(Client*);
 
     void startDownload(uint64_t downloadID, const WebCore::ResourceRequest&);
-    void convertHandleToDownload(uint64_t downloadID, WebCore::ResourceHandle*, const WebCore::ResourceRequest&, const WebCore::ResourceResponse&);
+    void convertResolverToDownload(uint64_t downloadID, WebCore::ResourceResolver*, const WebCore::ResourceRequest&, const WebCore::ResourceResponse&);
 
     void resumeDownload(uint64_t downloadID, const IPC::DataReference& resumeData, const String& path, const SandboxExtension::Handle&);
 

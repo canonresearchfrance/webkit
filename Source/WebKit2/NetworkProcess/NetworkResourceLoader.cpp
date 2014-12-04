@@ -85,7 +85,7 @@ NetworkResourceLoader::NetworkResourceLoader(const NetworkResourceLoadParameters
     , m_connection(connection)
     , m_bytesReceived(0)
     , m_bufferedDataEncodedDataLength(0)
-    , m_didConvertHandleToDownload(false)
+    , m_didConvertResolverToDownload(false)
     , m_didConsumeSandboxExtensions(false)
     , m_defersLoading(parameters.defersLoading)
     , m_bufferingTimer(*this, &NetworkResourceLoader::bufferingTimerFired)
@@ -177,17 +177,17 @@ void NetworkResourceLoader::cleanup()
     }
 }
 
-void NetworkResourceLoader::didConvertHandleToDownload()
+void NetworkResourceLoader::didConvertResolverToDownload()
 {
     ASSERT(m_resolver);
-    m_didConvertHandleToDownload = true;
+    m_didConvertResolverToDownload = true;
 }
 
 void NetworkResourceLoader::abort()
 {
     ASSERT(RunLoop::isMain());
 
-    if (m_resolver && !m_didConvertHandleToDownload)
+    if (m_resolver && !m_didConvertResolverToDownload)
         m_resolver->cancel();
 
     cleanup();
