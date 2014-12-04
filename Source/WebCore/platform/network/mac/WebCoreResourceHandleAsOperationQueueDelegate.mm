@@ -34,6 +34,7 @@
 #import "ResourceHandle.h"
 #import "ResourceHandleClient.h"
 #import "ResourceRequest.h"
+#import "ResourceResolverClient.h"
 #import "ResourceResponse.h"
 #import "SharedBuffer.h"
 #import "WebCoreURLResponse.h"
@@ -329,7 +330,7 @@ using namespace WebCore;
             return;
         }
 
-        m_handle->client()->willCacheResponseAsync(m_handle, cachedResponse);
+        m_handle->handleClient()->willCacheResponseAsync(m_handle, cachedResponse);
     });
 
     dispatch_semaphore_wait(m_semaphore, DISPATCH_TIME_FOREVER);

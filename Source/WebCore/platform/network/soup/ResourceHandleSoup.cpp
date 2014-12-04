@@ -293,7 +293,7 @@ void ResourceHandle::ensureReadBuffer()
     // we do get a buffer from the client, we want the client to free it, so we create the soup buffer with
     // SOUP_MEMORY_TEMPORARY.
     size_t bufferSize;
-    char* bufferFromClient = client()->getOrCreateReadBuffer(gDefaultReadBufferSize, bufferSize);
+    char* bufferFromClient = handleClient()->getOrCreateReadBuffer(gDefaultReadBufferSize, bufferSize);
     if (bufferFromClient)
         d->m_soupBuffer.reset(soup_buffer_new(SOUP_MEMORY_TEMPORARY, bufferFromClient, bufferSize));
     else
@@ -466,7 +466,7 @@ static void continueAfterWillSendRequest(ResourceHandle* handle, const ResourceR
         applyAuthenticationToRequest(handle, newRequest, true);
 
     if (!createSoupRequestAndMessageForHandle(handle, newRequest, true)) {
-        d->client()->cannotShowURL(handle);
+        handle->client()->cannotShowURL(handle);
         return;
     }
 
@@ -479,7 +479,7 @@ static void doRedirect(ResourceHandle* handle)
     static const int maxRedirects = 20;
 
     if (d->m_redirectCount++ > maxRedirects) {
-        d->client()->didFail(handle, ResourceError::transportError(d->m_soupRequest.get(), SOUP_STATUS_TOO_MANY_REDIRECTS, "Too many redirects"));
+        handle->client()->didFail(handle, ResourceError::transportError(d->m_soupRequest.get(), SOUP_STATUS_TOO_MANY_REDIRECTS, "Too many redirects"));
         cleanupSoupRequestOperation(handle);
         return;
     }
@@ -524,7 +524,7 @@ static void doRedirect(ResourceHandle* handle)
     if (handle->usesAsyncCallbacks())
         handle->asyncClient()->willSendRequestAsync(handle, newRequest, d->m_response);
     else {
-        d->client()->willSendRequest(handle, newRequest, d->m_response);
+        handle->client()->willSendRequest(handle, newRequest, d->m_response);
         continueAfterWillSendRequest(handle, newRequest);
     }
 
@@ -1081,7 +1081,7 @@ void ResourceHandle::continueDidReceiveAuthenticationChallenge(const Credential&
 
     ASSERT(challenge.soupSession());
     ASSERT(challenge.soupMessage());
-    client()->didReceiveAuthenticationChallenge(this, challenge);
+    handleClient()->didReceiveAuthenticationChallenge(this, challenge);
 }
 
 void ResourceHandle::didReceiveAuthenticationChallenge(const AuthenticationChallenge& challenge)
@@ -1192,7 +1192,7 @@ void ResourceHandle::receivedCancellation(const AuthenticationChallenge& challen
     soup_session_unpause_message(challenge.soupSession(), challenge.soupMessage());
 
     if (client())
-        client()->receivedCancellation(this, challenge);
+        handleClient()->receivedCancellation(this, challenge);
 
     clearAuthentication();
 }

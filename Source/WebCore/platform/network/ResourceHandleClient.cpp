@@ -58,9 +58,4 @@ void ResourceHandleClient::willCacheResponseAsync(ResourceHandle* handle, NSCach
 }
 #endif
 
-void ResourceHandleClient::didReceiveBuffer(ResourceHandle* handle, PassRefPtr<SharedBuffer> buffer, int encodedDataLength)
-{
-    didReceiveData(handle, buffer->data(), buffer->size(), encodedDataLength);
-}
-
 }

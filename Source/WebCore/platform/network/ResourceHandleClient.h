@@ -70,21 +70,7 @@ namespace WebCore {
     public:
         WEBCORE_EXPORT ResourceHandleClient();
         WEBCORE_EXPORT virtual ~ResourceHandleClient();
-
-        // Request may be modified.
-        virtual void willSendRequest(ResourceHandle*, ResourceRequest&, const ResourceResponse& /*redirectResponse*/) { }
-        virtual void didSendData(ResourceHandle*, unsigned long long /*bytesSent*/, unsigned long long /*totalBytesToBeSent*/) { }
-
-        virtual void didReceiveResponse(ResourceHandle*, const ResourceResponse&) { }
         
-        virtual void didReceiveData(ResourceHandle*, const char*, unsigned, int /*encodedDataLength*/) { }
-        WEBCORE_EXPORT virtual void didReceiveBuffer(ResourceHandle*, PassRefPtr<SharedBuffer>, int encodedDataLength);
-        
-        virtual void didFinishLoading(ResourceHandle*, double /*finishTime*/) { }
-        virtual void didFail(ResourceHandle*, const ResourceError&) { }
-        virtual void wasBlocked(ResourceHandle*) { }
-        virtual void cannotShowURL(ResourceHandle*) { }
-
 #if USE(PROTECTION_SPACE_AUTH_CALLBACK)
         // Client will pass an updated request using ResourceHandle::continueCanAuthenticateAgainstProtectionSpace() when ready.
         WEBCORE_EXPORT virtual void canAuthenticateAgainstProtectionSpaceAsync(ResourceHandle*, const ProtectionSpace&);
@@ -105,7 +91,6 @@ namespace WebCore {
         virtual char* getOrCreateReadBuffer(size_t /*requestedLength*/, size_t& /*actualLength*/) { return 0; }
 #endif
 
-        virtual bool shouldUseCredentialStorage(ResourceHandle*) { return false; }
         virtual void didReceiveAuthenticationChallenge(ResourceHandle*, const AuthenticationChallenge&) { }
         virtual void didCancelAuthenticationChallenge(ResourceHandle*, const AuthenticationChallenge&) { }
 #if USE(PROTECTION_SPACE_AUTH_CALLBACK)

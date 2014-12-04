@@ -603,8 +603,8 @@ void ResourceHandle::didReceiveAuthenticationChallenge(const AuthenticationChall
     // FIXME: Several concurrent requests can return with the an authentication challenge for the same protection space.
     // We should avoid making additional client calls for the same protection space when already waiting for the user,
     // because typing the same credentials several times is annoying.
-    if (client())
-        client()->didReceiveAuthenticationChallenge(this, d->m_currentWebChallenge);
+    if (handleClient())
+        handleClient()->didReceiveAuthenticationChallenge(this, d->m_currentWebChallenge);
 }
 
 void ResourceHandle::didCancelAuthenticationChallenge(const AuthenticationChallenge& challenge)
@@ -613,21 +613,21 @@ void ResourceHandle::didCancelAuthenticationChallenge(const AuthenticationChalle
     ASSERT(d->m_currentMacChallenge == challenge.nsURLAuthenticationChallenge());
     ASSERT(!d->m_currentWebChallenge.isNull());
 
-    if (client())
-        client()->didCancelAuthenticationChallenge(this, challenge);
+    if (handleClient())
+        handleClient()->didCancelAuthenticationChallenge(this, challenge);
 }
 
 #if USE(PROTECTION_SPACE_AUTH_CALLBACK)
 bool ResourceHandle::canAuthenticateAgainstProtectionSpace(const ProtectionSpace& protectionSpace)
 {
     if (usesAsyncCallbacks()) {
-        if (client())
-            client()->canAuthenticateAgainstProtectionSpaceAsync(this, protectionSpace);
+        if (handleClient())
+            handleClient()->canAuthenticateAgainstProtectionSpaceAsync(this, protectionSpace);
         else
             continueCanAuthenticateAgainstProtectionSpace(false);
         return false; // Ignored by caller.
     } else
-        return client() && client()->canAuthenticateAgainstProtectionSpace(this, protectionSpace);
+        return handleClient() && handleClient()->canAuthenticateAgainstProtectionSpace(this, protectionSpace);
 }
 
 void ResourceHandle::continueCanAuthenticateAgainstProtectionSpace(bool result)
@@ -688,8 +688,8 @@ void ResourceHandle::receivedCancellation(const AuthenticationChallenge& challen
     if (challenge != d->m_currentWebChallenge)
         return;
 
-    if (client())
-        client()->receivedCancellation(this, challenge);
+    if (handleClient())
+        handleClient()->receivedCancellation(this, challenge);
 }
 
 void ResourceHandle::receivedRequestToPerformDefaultHandling(const AuthenticationChallenge& challenge)

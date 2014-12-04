@@ -121,7 +121,7 @@ public:
     ResourceResolverAsync* async() { return this; };
     ResourceHandle* handle() { return this; }
 
-    virtual void clearClient() { setClient(nullptr); m_resolverClient = nullptr; m_asyncClient = nullptr; }
+    virtual void clearClient() { setHandleClient(nullptr); m_resolverClient = nullptr; m_asyncClient = nullptr; }
     virtual bool isClient(ResourceResolverClient* client) const { return m_resolverClient == client; }
     ResourceRequest& firstRequest();
 
@@ -225,9 +225,11 @@ public:
     void clearAuthentication();
 
     // The client may be 0, in which case no callbacks will be made.
-    ResourceHandleClient* client() const;
-    WEBCORE_EXPORT void setClient(ResourceHandleClient*);
+    ResourceResolverClient* client() const  { return m_resolverClient; }
+    void setHandleClient(ResourceHandleClient*);
+    void setResolverClient(ResourceResolverClient* resolverClient) { m_resolverClient = resolverClient; }
 
+    ResourceHandleClient* handleClient() const;
     ResourceResolverAsyncClient* asyncClient() const  { return m_asyncClient; }
     bool usesAsyncCallbacks()  const { return m_asyncClient; }
 

@@ -32,6 +32,7 @@
 #include "NotImplemented.h"
 #include "ResourceHandleClient.h"
 #include "ResourceResolverAsync.h"
+#include "ResourceResolverClient.h"
 #include "Timer.h"
 #include <algorithm>
 #include <wtf/MainThread.h>
@@ -103,12 +104,12 @@ void ResourceHandle::loadResourceSynchronously(NetworkingContext* context, const
     platformLoadResourceSynchronously(context, request, storedCredentials, error, response, data);
 }
 
-ResourceHandleClient* ResourceHandle::client() const
+ResourceHandleClient* ResourceHandle::handleClient() const
 {
     return d->m_client;
 }
 
-void ResourceHandle::setClient(ResourceHandleClient* client)
+void ResourceHandle::setHandleClient(ResourceHandleClient* client)
 {
     d->m_client = client;
 }

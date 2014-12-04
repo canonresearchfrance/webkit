@@ -34,6 +34,7 @@
 #import "ResourceHandle.h"
 #import "ResourceHandleClient.h"
 #import "ResourceRequest.h"
+#import "ResourceResolverClient.h"
 #import "ResourceResponse.h"
 #import "SharedBuffer.h"
 #import "WebCoreURLResponse.h"
@@ -287,7 +288,7 @@ using namespace WebCore;
     if (!m_handle || !m_handle->client())
         return nil;
 
-    return m_handle->client()->willCacheResponse(m_handle, cachedResponse);
+    return m_handle->handleClient()->willCacheResponse(m_handle, cachedResponse);
 }
 
 @end

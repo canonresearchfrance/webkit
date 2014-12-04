@@ -186,18 +186,6 @@ private:
     virtual void cannotShowURL(ResourceResolver*) override;
     virtual bool shouldUseCredentialStorage(ResourceResolver*) override { return shouldUseCredentialStorage(); }
 
-    // FIXME: Remove these ResourceHandleClient declarations.
-    using ResourceHandleClient::willSendRequest;
-    using ResourceHandleClient::didSendData;
-    using ResourceHandleClient::didReceiveResponse;
-    using ResourceHandleClient::didReceiveData;
-    using ResourceHandleClient::didReceiveBuffer;
-    using ResourceHandleClient::didFinishLoading;
-    using ResourceHandleClient::didFail;
-    using ResourceHandleClient::wasBlocked;
-    using ResourceHandleClient::cannotShowURL;
-    using ResourceHandleClient::shouldUseCredentialStorage;
-
     // ResourceHandleClient API.
 #if USE(NETWORK_CFDATA_ARRAY_CALLBACK)
     virtual void didReceiveDataArray(ResourceHandle*, CFArrayRef dataArray) override;

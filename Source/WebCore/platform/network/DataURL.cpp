@@ -29,8 +29,8 @@
 
 #include "HTTPParsers.h"
 #include "ResourceHandle.h"
-#include "ResourceHandleClient.h"
 #include "ResourceRequest.h"
+#include "ResourceResolverClient.h"
 #include "ResourceResponse.h"
 #include "TextEncoding.h"
 #include <wtf/text/Base64.h>

@@ -128,16 +128,6 @@ private:
     virtual void willSendRequestAsync(WebCore::ResourceResolver*, const WebCore::ResourceRequest&, const WebCore::ResourceResponse& redirectResponse) override;
     virtual void didReceiveResponseAsync(WebCore::ResourceResolver* resolver, const WebCore::ResourceResponse& response) override;
 
-    // FIXME: Remove these ResourceHandleClient declarations.
-    using ResourceHandleClient::didSendData;
-    using ResourceHandleClient::didReceiveData;
-    using ResourceHandleClient::didReceiveBuffer;
-    using ResourceHandleClient::didFinishLoading;
-    using ResourceHandleClient::didFail;
-    using ResourceHandleClient::wasBlocked;
-    using ResourceHandleClient::cannotShowURL;
-    using ResourceHandleClient::shouldUseCredentialStorage;
-
     // ResourceHandleClient
     virtual void didReceiveAuthenticationChallenge(WebCore::ResourceHandle*, const WebCore::AuthenticationChallenge&) override;
     virtual void didCancelAuthenticationChallenge(WebCore::ResourceHandle*, const WebCore::AuthenticationChallenge&) override;
