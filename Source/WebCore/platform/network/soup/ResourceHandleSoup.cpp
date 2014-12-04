@@ -43,6 +43,7 @@
 #include "ResourceError.h"
 #include "ResourceHandleClient.h"
 #include "ResourceHandleInternal.h"
+#include "ResourceResolverAsync.h"
 #include "ResourceResponse.h"
 #include "SharedBuffer.h"
 #include "SoupNetworkSession.h"
@@ -520,7 +521,7 @@ static void doRedirect(ResourceHandle* handle)
     cleanupSoupRequestOperation(handle);
 
     if (handle->usesAsyncCallbacks())
-        d->client()->willSendRequestAsync(handle, newRequest, d->m_response);
+        handle->asyncClient()->willSendRequestAsync(handle, newRequest, d->m_response);
     else {
         d->client()->willSendRequest(handle, newRequest, d->m_response);
         continueAfterWillSendRequest(handle, newRequest);
@@ -1251,7 +1252,7 @@ void ResourceHandle::platformLoadResourceSynchronously(NetworkingContext* contex
         return;                    // we want to avoid accidentally going into an infinite loop of requests.
 
     WebCoreSynchronousLoader syncLoader(error, response, sessionFromContext(context), data, storedCredentials);
-    RefPtr<ResourceHandle> handle = create(context, request, nullptr, &syncLoader, false /*defersLoading*/, false /*shouldContentSniff*/);
+    RefPtr<ResourceHandle> handle = create(context, request, nullptr, nullptr, &syncLoader, false /*defersLoading*/, false /*shouldContentSniff*/);
     if (!handle)
         return;
 

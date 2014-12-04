@@ -31,6 +31,7 @@
 #include "NetworkingContext.h"
 #include "NotImplemented.h"
 #include "ResourceHandleClient.h"
+#include "ResourceResolverAsync.h"
 #include "Timer.h"
 #include <algorithm>
 #include <wtf/MainThread.h>
@@ -40,9 +41,10 @@ namespace WebCore {
 
 static bool shouldForceContentSniffing;
 
-ResourceHandle::ResourceHandle(NetworkingContext* context, const ResourceRequest& request, ResourceResolverAsyncClient* asyncClient, ResourceHandleClient* handleClient, bool defersLoading, bool shouldContentSniff)
+ResourceHandle::ResourceHandle(NetworkingContext* context, const ResourceRequest& request, ResourceResolverClient* resolverClient, ResourceResolverAsyncClient* asyncClient, ResourceHandleClient* handleClient, bool defersLoading, bool shouldContentSniff)
     : d(adoptPtr(new ResourceHandleInternal(this, context, request, handleClient, defersLoading, shouldContentSniff && shouldContentSniffURL(request.url()))))
     , m_asyncClient(asyncClient)
+    , m_resolverClient(resolverClient)
 {
     if (!request.url().isValid()) {
         scheduleFailure(InvalidURLFailure);
@@ -55,9 +57,9 @@ ResourceHandle::ResourceHandle(NetworkingContext* context, const ResourceRequest
     }
 }
 
-PassRefPtr<ResourceHandle> ResourceHandle::create(NetworkingContext* context, const ResourceRequest& request, ResourceResolverAsyncClient* asyncClient, ResourceHandleClient* handleClient, bool defersLoading, bool shouldContentSniff)
+PassRefPtr<ResourceHandle> ResourceHandle::create(NetworkingContext* context, const ResourceRequest& request, ResourceResolverClient* resolverClient, ResourceResolverAsyncClient* asyncClient, ResourceHandleClient* handleClient, bool defersLoading, bool shouldContentSniff)
 {
-    RefPtr<ResourceHandle> newHandle(adoptRef(new ResourceHandle(context, request, asyncClient, handleClient, defersLoading, shouldContentSniff)));
+    RefPtr<ResourceHandle> newHandle(adoptRef(new ResourceHandle(context, request, resolverClient, asyncClient, handleClient, defersLoading, shouldContentSniff)));
 
     if (newHandle->d->m_scheduledFailureType != NoFailure)
         return newHandle.release();

@@ -39,11 +39,6 @@ ResourceHandleClient::~ResourceHandleClient()
 {
 }
 
-void ResourceHandleClient::willSendRequestAsync(ResourceHandle* handle, const ResourceRequest& request, const ResourceResponse& /*redirectResponse*/)
-{
-    handle->continueWillSendRequest(request);
-}
-
 void ResourceHandleClient::didReceiveResponseAsync(ResourceHandle* handle, const ResourceResponse&)
 {
     handle->continueDidReceiveResponse();

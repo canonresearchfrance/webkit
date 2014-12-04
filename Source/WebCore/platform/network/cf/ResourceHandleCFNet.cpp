@@ -39,6 +39,7 @@
 #include "NetworkingContext.h"
 #include "ResourceError.h"
 #include "ResourceHandleClient.h"
+#include "ResourceResolverAsync.h"
 #include "ResourceResponse.h"
 #include "SharedBuffer.h"
 #include "SynchronousLoaderClient.h"
@@ -299,7 +300,7 @@ void ResourceHandle::willSendRequest(ResourceRequest& request, const ResourceRes
 
     Ref<ResourceHandle> protect(*this);
     if (usesAsyncCallbacks())
-        client()->willSendRequestAsync(this, request, redirectResponse);
+        asyncClient()->willSendRequestAsync(this, request, redirectResponse);
     else {
         client()->willSendRequest(this, request, redirectResponse);
 
@@ -536,7 +537,7 @@ void ResourceHandle::platformLoadResourceSynchronously(NetworkingContext* contex
     OwnPtr<SynchronousLoaderClient> client = SynchronousLoaderClient::create();
     client->setAllowStoredCredentials(storedCredentials == AllowStoredCredentials);
 
-    RefPtr<ResourceHandle> handle = adoptRef(new ResourceHandle(context, request, nullptr, client.get(), false /*defersLoading*/, true /*shouldContentSniff*/));
+    RefPtr<ResourceHandle> handle = adoptRef(new ResourceHandle(context, request, nullptr, nullptr, client.get(), false /*defersLoading*/, true /*shouldContentSniff*/));
 
     handle->d->m_storageSession = context->storageSession().platformSession();
 

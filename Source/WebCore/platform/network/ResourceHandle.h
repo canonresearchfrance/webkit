@@ -30,6 +30,7 @@
 #include "HTTPHeaderMap.h"
 #include "ResourceHandleTypes.h"
 #include "ResourceLoadPriority.h"
+#include "ResourceResolverAsync.h"
 #include <wtf/OwnPtr.h>
 #include <wtf/RefCounted.h>
 
@@ -102,16 +103,27 @@ class ResourceResponse;
 class SharedBuffer;
 class Timer;
 
-class ResourceHandle : public RefCounted<ResourceHandle>
+class ResourceHandle : public ResourceResolverAsync
 #if PLATFORM(COCOA) || USE(CFNETWORK) || USE(CURL) || USE(SOUP)
     , public AuthenticationClient
 #endif
     {
 public:
-    static PassRefPtr<ResourceHandle> create(NetworkingContext*, const ResourceRequest&, ResourceResolverAsyncClient*, ResourceHandleClient*, bool defersLoading, bool shouldContentSniff);
+    static PassRefPtr<ResourceHandle> create(NetworkingContext*, const ResourceRequest&, ResourceResolverClient*, ResourceResolverAsyncClient*, ResourceHandleClient*, bool defersLoading, bool shouldContentSniff);
     WEBCORE_EXPORT static void loadResourceSynchronously(NetworkingContext*, const ResourceRequest&, StoredCredentials, ResourceError&, ResourceResponse&, Vector<char>& data);
 
     WEBCORE_EXPORT virtual ~ResourceHandle();
+
+    // ResourceResolver API.
+    virtual void cancel();
+    void setDefersLoading(bool);
+
+    ResourceResolverAsync* async() { return this; };
+    ResourceHandle* handle() { return this; }
+
+    virtual void clearClient() { setClient(nullptr); m_resolverClient = nullptr; m_asyncClient = nullptr; }
+    virtual bool isClient(ResourceResolverClient* client) const { return m_resolverClient == client; }
+    ResourceRequest& firstRequest();
 
 #if PLATFORM(COCOA) || USE(CFNETWORK)
     void willSendRequest(ResourceRequest&, const ResourceResponse& redirectResponse);
@@ -211,12 +223,12 @@ public:
 
     bool hasAuthenticationChallenge() const;
     void clearAuthentication();
-    WEBCORE_EXPORT virtual void cancel();
 
     // The client may be 0, in which case no callbacks will be made.
     ResourceHandleClient* client() const;
     WEBCORE_EXPORT void setClient(ResourceHandleClient*);
 
+    ResourceResolverAsyncClient* asyncClient() const  { return m_asyncClient; }
     bool usesAsyncCallbacks()  const { return m_asyncClient; }
 
     // Called in response to ResourceHandleClient::willSendRequestAsync().
@@ -238,17 +250,14 @@ public:
     WEBCORE_EXPORT void continueWillCacheResponse(NSCachedURLResponse *);
 #endif
 
-    WEBCORE_EXPORT void setDefersLoading(bool);
-
-    WEBCORE_EXPORT ResourceRequest& firstRequest();
     const String& lastHTTPMethod() const;
 
     void failureTimerFired();
 
     NetworkingContext* context() const;
 
-    using RefCounted<ResourceHandle>::ref;
-    using RefCounted<ResourceHandle>::deref;
+    using RefCounted<ResourceResolver>::ref;
+    using RefCounted<ResourceResolver>::deref;
 
 #if PLATFORM(COCOA) || USE(CFNETWORK)
     WEBCORE_EXPORT static CFStringRef synchronousLoadRunLoopMode();
@@ -259,7 +268,7 @@ public:
 #endif
 
 protected:
-    ResourceHandle(NetworkingContext*, const ResourceRequest&, ResourceResolverAsyncClient*, ResourceHandleClient*, bool defersLoading, bool shouldContentSniff);
+    ResourceHandle(NetworkingContext*, const ResourceRequest&, ResourceResolverClient*, ResourceResolverAsyncClient*, ResourceHandleClient*, bool defersLoading, bool shouldContentSniff);
 
 private:
     enum FailureType {
@@ -301,6 +310,7 @@ static void getConnectionTimingData(NSDictionary *timingData, ResourceLoadTiming
     friend class ResourceHandleInternal;
     OwnPtr<ResourceHandleInternal> d;
     ResourceResolverAsyncClient* m_asyncClient;
+    ResourceResolverClient* m_resolverClient;
 
 #if USE(QUICK_LOOK)
     std::unique_ptr<QuickLookHandle> m_quickLook;

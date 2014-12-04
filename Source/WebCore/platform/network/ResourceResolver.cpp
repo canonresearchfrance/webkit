@@ -94,15 +94,8 @@ public:
             m_client->cannotShowURL(this);
     }
 
-    using ResourceResolverAsyncClient::willSendRequestAsync;
     using ResourceResolverAsyncClient::didReceiveResponseAsync;
-
-    void willSendRequestAsync(ResourceHandle*, const ResourceRequest& request, const ResourceResponse& redirectResponse) override
-    {
-        if (m_asyncClient)
-            m_asyncClient->willSendRequestAsync(this, request, redirectResponse);
-    }
-    void didReceiveResponseAsync(ResourceHandle*, const ResourceResponse& response) override
+    void didReceiveResponseAsync(ResourceHandle*, const ResourceResponse& response)
     {
         if (m_asyncClient)
             m_asyncClient->didReceiveResponseAsync(this, response);
@@ -257,7 +250,7 @@ private:
         , m_handleClient(handleClient)
         , m_firstRequest(request)
     {
-        m_handle = ResourceHandle::create(context, request, m_asyncClient ? this : nullptr, this, defersLoading, shouldContentSniff);
+        m_handle = ResourceHandle::create(context, request, client, asyncClient	, this, defersLoading, shouldContentSniff);
     }
 
     ResourceResolverClient* m_client;

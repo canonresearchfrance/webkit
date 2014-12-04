@@ -138,7 +138,6 @@ private:
     using ResourceHandleClient::cannotShowURL;
     using ResourceHandleClient::shouldUseCredentialStorage;
 
-    using ResourceHandleClient::willSendRequestAsync;
     using ResourceHandleClient::didReceiveResponseAsync;
 
     // ResourceHandleClient

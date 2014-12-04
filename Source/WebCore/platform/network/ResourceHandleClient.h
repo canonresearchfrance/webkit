@@ -85,8 +85,6 @@ namespace WebCore {
         virtual void wasBlocked(ResourceHandle*) { }
         virtual void cannotShowURL(ResourceHandle*) { }
 
-        // Client will pass an updated request using ResourceHandle::continueWillSendRequest() when ready.
-        WEBCORE_EXPORT virtual void willSendRequestAsync(ResourceHandle*, const ResourceRequest&, const ResourceResponse& redirectResponse);
         // Client will call ResourceHandle::continueDidReceiveResponse() when ready.
         WEBCORE_EXPORT virtual void didReceiveResponseAsync(ResourceHandle*, const ResourceResponse&);
 

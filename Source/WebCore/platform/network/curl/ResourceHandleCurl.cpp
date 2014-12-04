@@ -180,7 +180,7 @@ bool ResourceHandle::shouldUseCredentialStorage()
 void ResourceHandle::platformLoadResourceSynchronously(NetworkingContext* context, const ResourceRequest& request, StoredCredentials storedCredentials, ResourceError& error, ResourceResponse& response, Vector<char>& data)
 {
     WebCoreSynchronousLoader syncLoader;
-    RefPtr<ResourceHandle> handle = adoptRef(new ResourceHandle(context, request, nullptr, &syncLoader, true, false));
+    RefPtr<ResourceHandle> handle = adoptRef(new ResourceHandle(context, request, nullptr, nullptr, &syncLoader, true, false));
 
     ResourceHandleManager* manager = ResourceHandleManager::sharedInstance();
 
