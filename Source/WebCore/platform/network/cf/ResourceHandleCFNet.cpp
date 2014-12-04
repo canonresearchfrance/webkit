@@ -537,7 +537,7 @@ void ResourceHandle::platformLoadResourceSynchronously(NetworkingContext* contex
     OwnPtr<SynchronousLoaderClient> client = SynchronousLoaderClient::create();
     client->setAllowStoredCredentials(storedCredentials == AllowStoredCredentials);
 
-    RefPtr<ResourceHandle> handle = adoptRef(new ResourceHandle(context, request, nullptr, nullptr, client.get(), false /*defersLoading*/, true /*shouldContentSniff*/));
+    RefPtr<ResourceHandle> handle = adoptRef(new ResourceHandle(context, request, client.get(), nullptr, nullptr, false /*defersLoading*/, true /*shouldContentSniff*/));
 
     handle->d->m_storageSession = context->storageSession().platformSession();
 

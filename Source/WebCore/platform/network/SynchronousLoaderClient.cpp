@@ -36,10 +36,10 @@ SynchronousLoaderClient::~SynchronousLoaderClient()
 {
 }
 
-void SynchronousLoaderClient::willSendRequest(ResourceHandle* handle, ResourceRequest& request, const ResourceResponse& /*redirectResponse*/)
+void SynchronousLoaderClient::willSendRequest(ResourceResolver* resolver, ResourceRequest& request, const ResourceResponse& /*redirectResponse*/)
 {
     // FIXME: This needs to be fixed to follow the redirect correctly even for cross-domain requests.
-    if (protocolHostAndPortAreEqual(handle->firstRequest().url(), request.url()))
+    if (protocolHostAndPortAreEqual(resolver->firstRequest().url(), request.url()))
         return;
 
     ASSERT(m_error.isNull());
@@ -48,7 +48,7 @@ void SynchronousLoaderClient::willSendRequest(ResourceHandle* handle, ResourceRe
     request = ResourceRequest();
 }
 
-bool SynchronousLoaderClient::shouldUseCredentialStorage(ResourceHandle*)
+bool SynchronousLoaderClient::shouldUseCredentialStorage(ResourceResolver*)
 {
     // FIXME: We should ask FrameLoaderClient whether using credential storage is globally forbidden.
     return m_allowStoredCredentials;
@@ -62,22 +62,22 @@ bool SynchronousLoaderClient::canAuthenticateAgainstProtectionSpace(ResourceHand
 }
 #endif
 
-void SynchronousLoaderClient::didReceiveResponse(ResourceHandle*, const ResourceResponse& response)
+void SynchronousLoaderClient::didReceiveResponse(ResourceResolver*, const ResourceResponse& response)
 {
     m_response = response;
 }
 
-void SynchronousLoaderClient::didReceiveData(ResourceHandle*, const char* data, unsigned length, int /*encodedDataLength*/)
+void SynchronousLoaderClient::didReceiveData(ResourceResolver*, const char* data, unsigned length, int /*encodedDataLength*/)
 {
     m_data.append(data, length);
 }
 
-void SynchronousLoaderClient::didFinishLoading(ResourceHandle*, double)
+void SynchronousLoaderClient::didFinishLoading(ResourceResolver*, double)
 {
     m_isDone = true;
 }
 
-void SynchronousLoaderClient::didFail(ResourceHandle*, const ResourceError& error)
+void SynchronousLoaderClient::didFail(ResourceResolver*, const ResourceError& error)
 {
     ASSERT(m_error.isNull());
 
