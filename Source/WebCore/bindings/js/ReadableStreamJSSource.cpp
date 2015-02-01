@@ -32,11 +32,16 @@
 
 #if ENABLE(STREAMS_API)
 
+#include "ExceptionCode.h"
 #include "JSDOMPromise.h"
 #include "JSReadableStream.h"
+#include "ReadableStream.h"
 #include "ScriptExecutionContext.h"
 #include <runtime/Error.h>
+#include <runtime/JSArrayBuffer.h>
 #include <runtime/JSCJSValueInlines.h>
+#include <runtime/JSPromise.h>
+#include <runtime/JSPromiseDeferred.h>
 #include <runtime/JSString.h>
 #include <runtime/StructureInlines.h>
 #include <wtf/MainThread.h>
@@ -275,6 +280,32 @@ void ReadableStreamJSSource::setStream(ExecState* exec, JSReadableStream* readab
     setInternalSlotToObject(exec, m_errorFunction.get(), readableStreamSlotName(), m_readableStream);
 }
 
+static EncodedJSValue JSC_HOST_CALL startResultFulfilled(ExecState* exec)
+{
+    JSReadableStream* jsReadableStream = getJSReadableStream(exec);
+    jsReadableStream->impl().start();
+    return JSValue::encode(jsUndefined());
+}
+
+static JSFunction* createStartResultFulfilledFunction(ExecState* exec)
+{
+    return JSFunction::create(exec->vm(), exec->callee()->globalObject(), 1, ASCIILiteral("CreateStartResultFulfilledFunction"), startResultFulfilled);
+}
+
+static EncodedJSValue JSC_HOST_CALL startResultRejected(ExecState* exec)
+{
+    JSReadableStream* jsReadableStream = getJSReadableStream(exec);
+    JSValue error = exec->argument(0);
+    static_cast<ReadableStreamJSSource&>(jsReadableStream->impl().source()).storeError(exec, error);
+    jsReadableStream->impl().changeStateToErrored();
+    return JSValue::encode(jsUndefined());
+}
+
+static JSFunction* createStartResultRejectedFunction(ExecState* exec)
+{
+    return JSFunction::create(exec->vm(), exec->callee()->globalObject(), 1, ASCIILiteral("CreateStartResultRejectedFunction"), startResultRejected);
+}
+
 void ReadableStreamJSSource::startReadableStreamAsync()
 {
     m_readableStream->impl().scriptExecutionContext()->postTask([this](ScriptExecutionContext&) {
@@ -305,7 +336,7 @@ void ReadableStreamJSSource::start(JSC::ExecState* exec)
     arguments.append(m_closeFunction.get());
     arguments.append(m_errorFunction.get());
 
-    callFunction(exec, startFunction, m_source.get(), arguments);
+    JSValue result = callFunction(exec, startFunction, m_source.get(), arguments);
 
     // Throw except if m_errorFunction was called.
     if (m_error && !m_readableStream->impl().isErrored()) {
@@ -313,8 +344,18 @@ void ReadableStreamJSSource::start(JSC::ExecState* exec)
         return;
     }
 
-    // FIXME: Implement handling promise as result of calling start function.
-    startReadableStreamAsync();
+    JSPromise* promise = jsDynamicCast<JSPromise*>(result);
+    if (!promise) {
+        startReadableStreamAsync();
+        return;
+    }
+
+    JSValue startResultFulfilledFunction = createStartResultFulfilledFunction(exec);
+    setInternalSlotToObject(exec, startResultFulfilledFunction, readableStreamSlotName(), m_readableStream);
+    JSValue startResultRejectedFunction = createStartResultRejectedFunction(exec);
+    setInternalSlotToObject(exec, startResultRejectedFunction, readableStreamSlotName(), m_readableStream);
+    if (!resolvePromise(exec, promise, startResultFulfilledFunction, startResultRejectedFunction))
+        throwVMError(exec, exec->exception());
 }
 
 JSC::JSValue ReadableJSValueStream::read()

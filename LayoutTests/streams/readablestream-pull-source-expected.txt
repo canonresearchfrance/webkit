@@ -1,3 +1,7 @@
 
+PASS ReadableStream adapting a sync pull source 
+PASS ReadableStream adapting an async pull source 
 PASS ReadableStream is able to pull data repeatedly if it's available synchronously 
+PASS ReadableStream ready does not error when no more data is available 
+PASS ReadableStream should be able to get data sequentially from an asynchronous stream 
 

@@ -4,6 +4,30 @@
 <script src="../resources/testharnessreport.js"></script>
 <script>
 
+t1 = async_test('ReadableStream adapting a sync pull source');
+t1.step(function()
+{
+    var rs = sequentialReadableStream(10);
+    readableStreamToArray(rs).then(t1.step_func(function(chunks) {
+        assert_equals(rs.state, 'closed', 'stream should be closed');
+        assert_equals(rs.source.closed, true, 'source should be closed');
+        assert_array_equals(chunks, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 'got the expected 10 chunks');
+        t1.done();
+    }));
+});
+
+t2 = async_test('ReadableStream adapting an async pull source');
+t2.step(function()
+{
+    var rs = sequentialReadableStream(10, { async: true });
+    readableStreamToArray(rs).then(t2.step_func(function(chunks) {
+        assert_equals(rs.state, 'closed', 'stream should be closed');
+        assert_equals(rs.source.closed, true, 'source should be closed');
+        assert_array_equals(chunks, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 'got the expected 10 chunks');
+        t2.done();
+    }));
+});
+
 t3 = async_test('ReadableStream is able to pull data repeatedly if it\'s available synchronously');
 t3.step(function() {
     var i = 0;
@@ -24,6 +48,70 @@ t3.step(function() {
         assert_array_equals(data, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
         t3.done();
     }));
+});
+
+t4 = async_test('ReadableStream ready does not error when no more data is available')
+t4.step(function()
+{
+    // https://github.com/whatwg/streams/issues/80
+    var rs = sequentialReadableStream(5, { async: true });
+    var result = [];
+
+    pump = t4.step_func(function() {
+        while (rs.state === 'readable') {
+            result.push(rs.read());
+        }
+        if (rs.state === 'closed') {
+            assert_array_equals(result, [1, 2, 3, 4, 5], 'got the expected 5 chunks');
+            t4.done();
+        } else {
+            try {
+                rs.ready.then(pump);
+            } catch (e) {
+                assert_unreeached('should not throw: ' + e);
+            }
+        }
+    });
+    pump();
+});
+
+t5 = async_test('ReadableStream should be able to get data sequentially from an asynchronous stream');
+t5.step(function()
+{
+    // https://github.com/whatwg/streams/issues/80
+    var rs = sequentialReadableStream(3, { async: true });
+    var result = [];
+    var EOF = Object.create(null);
+    try {
+        getNext().then(t5.step_func(function(v) {
+            assert_equals(v, 1, 'first chunk should be 1');
+            return getNext().then(function(v) {
+                assert_equals(v, 2, 'second chunk should be 2');
+                return getNext().then(function(v) {
+                        assert_equals(v, 3, 'third chunk should be 3');
+                        return getNext().then(function(v) {
+                                assert_equals(v, -1, 'fourth result should be EOF');
+                                t5.done();
+                        });
+                });
+            });
+        }));
+    } catch(e) {
+         assert_unreached(e);
+    }
+
+    function getNext() {
+        if (rs.state === 'closed') {
+            return Promise.resolve(-1);
+        }
+        return rs.ready.then(function() {
+            if (rs.state === 'readable') {
+                return rs.read();
+            } else if (rs.state === 'closed') {
+                return -1;
+            }
+        });
+    }
 });
 
 </script>

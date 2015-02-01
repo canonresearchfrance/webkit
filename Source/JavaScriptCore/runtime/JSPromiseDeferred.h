@@ -1,5 +1,7 @@
 /*
  * Copyright (C) 2013 Apple Inc. All rights reserved.
+ * Copyright (C) 2015 Canon Inc.
+ * Copyright (C) 2015 Igalia S.L.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,6 +34,8 @@
 #include "Structure.h"
 
 namespace JSC {
+
+class JSPromise;
 
 class JSPromiseDeferred : public JSCell {
 public:
@@ -70,6 +74,7 @@ enum ThenableStatus {
 
 JSValue createJSPromiseDeferredFromConstructor(ExecState*, JSValue constructor);
 ThenableStatus updateDeferredFromPotentialThenable(ExecState*, JSValue, JSPromiseDeferred*);
+JS_EXPORT_PRIVATE bool resolvePromise(ExecState*, JSPromise*, JSValue /* fullfilFunction */, JSValue /*rejectFunction*/);
 
 void performDeferredResolve(ExecState*, JSPromiseDeferred*, JSValue argument);
 void performDeferredReject(ExecState*, JSPromiseDeferred*, JSValue argument);

@@ -13,4 +13,6 @@ PASS Calling ReadableStream close several times should not resolve several times
 PASS ReadableStream error should fulfill ready and closed promises 
 PASS Calling ReadableStream error after close should have no effect 
 PASS Calling ReadableStream close after error should have no effect 
+PASS ReadableStream start should be able to return a promise 
+PASS ReadableStream start should be able to return a promise and reject it 
 

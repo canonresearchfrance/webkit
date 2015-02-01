@@ -1,5 +1,7 @@
 /*
  * Copyright (C) 2013 Apple Inc. All rights reserved.
+ * Copyright (C) 2015 Canon Inc.
+ * Copyright (C) 2015 Igalia S.L.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -195,6 +197,35 @@ ThenableStatus updateDeferredFromPotentialThenable(ExecState* exec, JSValue x, J
     }
 
     return WasAThenable;
+}
+
+bool resolvePromise(ExecState* exec, JSPromise* promise, JSValue fullfilFunction, JSValue rejectFunction)
+{
+    JSValue C = promise->constructor();
+    JSValue deferredValue = createJSPromiseDeferredFromConstructor(exec, C);
+    JSPromiseDeferred* deferred = jsCast<JSPromiseDeferred*>(deferredValue);
+    ThenableStatus updateResult = updateDeferredFromPotentialThenable(exec, promise, deferred);
+    if (exec->hadException() || updateResult == NotAThenable)
+        return false;
+
+    JSObject* deferredPromise = deferred->promise();
+
+    JSValue thenValue = deferredPromise->get(exec, exec->vm().propertyNames->then);
+    if (exec->hadException())
+        return false;
+
+    CallData callData;
+    CallType callType = getCallData(thenValue, callData);
+    if (callType == CallTypeNone)
+        return false;
+
+    MarkedArgumentBuffer arguments;
+    arguments.append(fullfilFunction);
+    arguments.append(rejectFunction);
+
+    call(exec, thenValue, callType, callData, deferredPromise, arguments);
+
+    return !exec->hadException();
 }
 
 void performDeferredResolve(ExecState* exec, JSPromiseDeferred* deferred, JSValue argument)
