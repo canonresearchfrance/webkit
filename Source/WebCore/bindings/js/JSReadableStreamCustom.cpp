@@ -60,7 +60,7 @@ JSValue JSReadableStream::read(ExecState* exec)
     }
 
     // Whenever transitioning to State::Waiting, we need to create a new ready promise.
-    JSValue value = impl().read();
+    JSValue value = impl().read(exec, globalObject());
     if (impl().isWaiting())
         clearReadyPromise(exec, this);
     return value;

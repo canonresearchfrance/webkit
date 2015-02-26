@@ -303,6 +303,25 @@ bool ReadableStream::enqueueing(unsigned chunkSize)
     return shouldApplyBackpressure();
 }
 
+JSC::JSValue ReadableArrayBufferStream::read(JSC::ExecState* exec, JSDOMGlobalObject* globalObject)
+{
+    RefPtr<SharedBuffer> buffer = m_queue.takeLast();
+    dequeueing(1);
+    return toJS(exec, globalObject, buffer->createArrayBuffer());
+}
+
+void ReadableArrayBufferStream::enqueue(PassRefPtr<SharedBuffer> buffer)
+{
+    m_queue.insert(0, buffer);
+    enqueueing(1);
+}
+
+void ReadableArrayBufferStream::changeStateToErrored()
+{
+    m_queue.shrink(0);
+    ReadableStream::changeStateToErrored();
+}
+
 }
 
 #endif

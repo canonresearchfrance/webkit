@@ -43,6 +43,7 @@
 
 namespace WebCore {
 
+class JSDOMGlobalObject;
 class ScriptExecutionContext;
 
 // ReadableStream implements the core of the streams API ReadableStream functionality.
@@ -61,7 +62,7 @@ public:
     virtual ~ReadableStream();
 
     // JS API implementation.
-    virtual JSC::JSValue read() = 0;
+    virtual JSC::JSValue read(JSC::ExecState*, JSDOMGlobalObject*) = 0;
     String state() const;
 
     typedef std::function<void()> SuccessCallback;
@@ -121,6 +122,17 @@ private:
     bool m_isPulling { false };
     bool m_isPullScheduled { false };
     bool m_isStarted { false };
+};
+
+class ReadableArrayBufferStream: public ReadableStream
+{
+public: 
+    ReadableArrayBufferStream(ScriptExecutionContext& scriptExecutionContext, Ref<ReadableStreamSource>&& source) : ReadableStream(scriptExecutionContext, WTF::move(source)) { }
+    JSC::JSValue read(JSC::ExecState*, JSDOMGlobalObject*);
+    void enqueue(PassRefPtr<SharedBuffer>);
+    void changeStateToErrored();
+private:
+    Vector<RefPtr<SharedBuffer>> m_queue;
 };
 
 }

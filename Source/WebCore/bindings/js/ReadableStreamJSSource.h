@@ -100,7 +100,7 @@ JSC::JSValue getInternalSlotFromObject(JSC::ExecState*, JSC::JSValue, JSC::Priva
 
 class ReadableJSValueStream: public ReadableStream {
 public:
-    JSC::JSValue read() override;
+    JSC::JSValue read(JSC::ExecState*, JSDOMGlobalObject*) override;
     bool enqueue(JSC::ExecState*, JSC::JSValue, unsigned);
     void changeStateToErrored() override;
 

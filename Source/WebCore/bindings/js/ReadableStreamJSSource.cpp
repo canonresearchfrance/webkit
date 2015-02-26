@@ -430,7 +430,7 @@ void ReadableStreamJSSource::start(JSC::ExecState* exec)
         throwVMError(exec, exec->exception());
 }
 
-JSC::JSValue ReadableJSValueStream::read()
+JSC::JSValue ReadableJSValueStream::read(JSC::ExecState*, JSDOMGlobalObject*)
 {
     dequeueing(m_sizeQueue.takeLast());
     return m_chunkQueue.takeLast().get();
