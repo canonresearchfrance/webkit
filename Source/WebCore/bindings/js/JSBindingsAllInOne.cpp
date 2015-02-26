@@ -113,7 +113,6 @@
 #include "JSPopStateEventCustom.cpp"
 #if ENABLE(STREAMS_API)
 #include "JSReadableStreamCustom.cpp"
-#include "ReadableStreamJSSource.cpp"
 #endif
 #include "JSRequestAnimationFrameCallbackCustom.cpp"
 #include "JSSQLResultSetRowListCustom.cpp"
@@ -141,7 +140,10 @@
 #include "JSXMLHttpRequestCustom.cpp"
 #include "JSXPathResultCustom.cpp"
 #include "JSXSLTProcessorCustom.cpp"
-#include "ScheduledAction.cpp"
+#if ENABLE(STREAMS_API)
+#include "ReadableStreamJSSource.cpp"
+#endif
+##include "ScheduledAction.cpp"
 #include "ScriptCachedFrameData.cpp"
 #include "ScriptController.cpp"
 #include "ScriptState.cpp"
