@@ -1,0 +1,4 @@
+
+PASS ReadableStream ready returns the same value when called on a new, empty stream. 
+PASS ReadableStream ready returns the same value when called on a readable stream. 
+

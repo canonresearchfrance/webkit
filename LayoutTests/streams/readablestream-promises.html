@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<script src='../resources/testharness.js'></script>
+<script src='../resources/testharnessreport.js'></script>
+<script>
+test(function() {
+    const rs = new ReadableStream();
+    assert_equals(rs.ready, rs.ready, 'rs.ready should not change between gets');
+}, 'ReadableStream ready returns the same value when called on a new, empty stream.');
+
+test(function() {
+    const rs = new ReadableStream({
+        start: function(enqueue) {
+            enqueue('a');
+        }
+    });
+
+    assert_equals(rs.ready, rs.ready, 'rs.ready should not change between gets');
+}, 'ReadableStream ready returns the same value when called on a readable stream.');
+</script>

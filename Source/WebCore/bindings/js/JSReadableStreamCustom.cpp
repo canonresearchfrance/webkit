@@ -42,6 +42,12 @@ using namespace JSC;
 
 namespace WebCore {
 
+static JSC::PrivateName& readyPromiseSlotName();
+static inline void clearReadyPromise(ExecState* exec, const JSReadableStream* stream)
+{
+    setInternalSlotToObject(exec, stream, readyPromiseSlotName(), jsUndefined());
+}
+
 JSValue JSReadableStream::read(ExecState* exec)
 {
     if (!impl().isReadable()) {
@@ -52,13 +58,18 @@ JSValue JSReadableStream::read(ExecState* exec)
         setDOMException(exec, TypeError);
         return jsUndefined();
     }
-    return impl().read();
+
+    // Whenever transitioning to State::Waiting, we need to create a new ready promise.
+    JSValue value = impl().read();
+    if (impl().isWaiting())
+        clearReadyPromise(exec, this);
+    return value;
 }
 
 static JSPromiseDeferred* getOrCreatePromiseDeferredFromObject(ExecState* exec, JSValue thisObject, JSGlobalObject* globalObject, PrivateName &name)
 {
     JSValue slot = getInternalSlotFromObject(exec, thisObject, name);
-    JSPromiseDeferred* promiseDeferred = slot ? jsDynamicCast<JSPromiseDeferred*>(slot) : nullptr;
+    JSPromiseDeferred* promiseDeferred = slot && !slot.isUndefined()? jsDynamicCast<JSPromiseDeferred*>(slot) : nullptr;
 
     if (!promiseDeferred) {
         promiseDeferred = JSPromiseDeferred::create(exec, globalObject);
@@ -80,6 +91,7 @@ JSValue JSReadableStream::ready(ExecState* exec) const
     auto successCallback = [wrapper]() mutable {
         wrapper.resolve(jsUndefined());
     };
+
     impl().ready(WTF::move(successCallback));
 
     return wrapper.promise();

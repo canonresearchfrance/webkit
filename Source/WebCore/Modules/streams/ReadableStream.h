@@ -72,6 +72,7 @@ public:
 
     bool isErrored() { return m_state == State::Errored; }
     bool isReadable() { return m_state == State::Readable; }
+    bool isWaiting() { return m_state == State::Waiting; }
 
     // API used from the JS binding.
     void start();
