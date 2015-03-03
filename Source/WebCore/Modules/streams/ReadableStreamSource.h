@@ -43,7 +43,8 @@ class ReadableStreamSource: public RefCounted<ReadableStreamSource> {
 public:
     virtual ~ReadableStreamSource() { }
 
-    virtual void pull() { }
+    // Return true if pull finished (sync case) and false in async case
+    virtual bool pull() { return true; }
 
     virtual bool shouldApplyBackpressure(unsigned /*queueSize*/)
     {

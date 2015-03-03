@@ -82,6 +82,7 @@ public:
 
     ReadableStreamSource& source() { return m_source.get(); }
     bool canEnqueue(String&);
+    void finishPulling();
 protected:
     ReadableStream(ScriptExecutionContext&, Ref<ReadableStreamSource>&&);
 
@@ -112,6 +113,7 @@ private:
 
     bool m_isDraining { false };
     bool m_isPulling { false };
+    bool m_isPullScheduled { false };
     bool m_isStarted { false };
 };
 

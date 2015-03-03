@@ -66,6 +66,28 @@ test2.step(function() {
     });
 });
 
+test3 = async_test('ReadableStream pull rejection makes stream errored.');
+test3.step(function() {
+    const theError = new Error('pull failure');
+    const rs = new ReadableStream({
+        pull: function() {
+            return Promise.reject(theError);
+        }
+    });
+
+    assert_equals(rs.state, 'waiting'); // Stream starts out waiting.
+
+    rs.closed.then(
+        function() {
+            assert_unreached('.closed should not fulfill');
+        },
+        function(e) {
+            assert_equals(e, theError, '.closed should reject with the error');
+            test3.done();
+        }
+    );
+});
+
 test(function() {
     const rs = new ReadableStream({
         start: function(enqueue, close) {

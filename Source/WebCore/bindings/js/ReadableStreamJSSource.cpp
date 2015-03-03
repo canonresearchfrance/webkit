@@ -386,10 +386,39 @@ bool ReadableJSValueStream::enqueue(ExecState* exec, JSValue value, unsigned siz
     return enqueueing(size);
 }
 
-void ReadableStreamJSSource::pull()
+static EncodedJSValue JSC_HOST_CALL pullResultFulfilled(ExecState* exec)
+{
+    JSReadableStream* jsReadableStream = getJSReadableStream(exec);
+    jsReadableStream->impl().finishPulling();
+    return JSValue::encode(jsUndefined());
+}
+
+static JSFunction* createPullResultFulfilledFunction(ExecState* exec)
+{
+    return JSFunction::create(exec->vm(), exec->callee()->globalObject(), 0, ASCIILiteral("CreatePullResultFulfilledFunction"), pullResultFulfilled);
+}
+
+static EncodedJSValue JSC_HOST_CALL pullResultRejected(ExecState* exec)
+{
+    JSReadableStream* jsReadableStream = getJSReadableStream(exec);
+    JSValue error = exec->argument(0);
+    if (error.isUndefined() && exec->hadException())
+        error = exec->exception();
+    ReadableStreamJSSource& source = static_cast<ReadableStreamJSSource&>(jsReadableStream->impl().source());
+    source.storeError(exec, error);
+    jsReadableStream->impl().changeStateToErrored();
+    return JSValue::encode(jsUndefined());
+}
+
+static JSFunction* createPullResultRejectedFunction(ExecState* exec)
+{
+    return JSFunction::create(exec->vm(), exec->callee()->globalObject(), 1, ASCIILiteral("CreatePullResultRejectedFunction"), pullResultRejected);
+}
+
+bool ReadableStreamJSSource::pull()
 {
     if (!m_source)
-        return;
+        return true;
 
     ExecState* exec = m_readableStream->globalObject()->globalExec();
     JSLockHolder lock(exec);
@@ -399,7 +428,7 @@ void ReadableStreamJSSource::pull()
             setInternalError(exec, ASCIILiteral("ReadableStream constructor object pull property should be a function."));
             m_readableStream->impl().changeStateToErrored();
         }
-        return;
+        return true;
     }
 
     MarkedArgumentBuffer arguments;
@@ -407,10 +436,27 @@ void ReadableStreamJSSource::pull()
     arguments.append(m_closeFunction.get());
     arguments.append(m_errorFunction.get());
 
-    callFunction(exec, pullFunction, m_readableStream, arguments);
+    JSValue result = callFunction(exec, pullFunction, m_readableStream, arguments);
 
-    if (m_error)
+    if (m_error) {
         m_readableStream->impl().changeStateToErrored();
+        return true;
+    }
+
+    JSPromise* promise = jsDynamicCast<JSPromise*>(result);
+    if (!promise)
+        return true;
+
+    JSValue pullResultFulfilledFunction = createPullResultFulfilledFunction(exec);
+    setInternalSlotToObject(exec, pullResultFulfilledFunction, readableStreamSlotName(), m_readableStream);
+    JSValue pullResultRejectedFunction = createPullResultRejectedFunction(exec);
+    setInternalSlotToObject(exec, pullResultRejectedFunction, readableStreamSlotName(), m_readableStream);
+    if (!resolvePromise(exec, promise, pullResultFulfilledFunction, pullResultRejectedFunction)) {
+        storeError(exec, exec->exception());
+        m_readableStream->impl().changeStateToErrored();
+        return true;
+    }
+    return false;
 }
 
 } // namespace WebCore

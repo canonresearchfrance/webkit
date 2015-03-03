@@ -67,7 +67,7 @@ public:
     virtual bool isJS() const override { return true; }
     virtual const String& errorDescription() const override;
     virtual bool shouldApplyBackpressure(unsigned) override;
-    virtual void pull() override;
+    virtual bool pull() override;
 
 private:
     void setInternalError(JSC::ExecState*, const String&);

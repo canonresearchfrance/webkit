@@ -78,4 +78,62 @@ test3.step(function() {
     });
 });
 
+test4 = async_test('ReadableStream does not call pull until previous pull\'s promise fulfills.');
+test4.step(function() {
+    var resolve;
+    var returnedPromise;
+    var timesCalled = 0;
+    const rs = new ReadableStream({
+        pull: function(enqueue) {
+            ++timesCalled;
+            enqueue(timesCalled);
+            returnedPromise = new Promise(test4.step_func(function(r) { resolve = r; }));
+            return returnedPromise;
+        }
+    });
+
+    assert_equals(rs.state, 'waiting'); // Stream starts out waiting.
+
+    rs.ready.then(test4.step_func(function() {
+        assert_equals(rs.state, 'readable'); // Stream becomes readable (even before promise fulfills).
+        assert_equals(timesCalled, 1); // Pull is not yet called a second time.
+        assert_equals(rs.read(), 1); // read() returns enqueued value.
+
+        setTimeout(test4.step_func(function() {
+            assert_equals(timesCalled, 1); // After 30 ms, pull has still only been called once.
+
+            resolve();
+
+            returnedPromise.then(test4.step_func(function() {
+                setTimeout(test4.step_func(function() {
+                    assert_equals(timesCalled, 2); // After the promise is fulfilled, pull is called a second time.
+                    assert_equals(rs.read(), 2); // read() returns the second enqueued value.
+                    test4.done();
+                }), 100);
+            }));
+        }), 30);
+    }));
+});
+
+test5 = async_test('ReadableStream pull rejection makes stream errored.');
+test5.step(function() {
+    const theError = new Error('pull failure');
+    const rs = new ReadableStream({
+        pull: function() {
+            return Promise.reject(theError);
+        }
+    });
+
+    assert_equals(rs.state, 'waiting'); // Stream starts out waiting.
+
+    rs.closed.then(
+        function() {
+            assert_unreached('.closed should not fulfill');
+        },
+        function(e) {
+            assert_equals(e, theError, '.closed should reject with the error');
+            test5.done();
+        }
+    );
+});
 </script>

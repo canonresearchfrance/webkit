@@ -2,6 +2,7 @@
 PASS ReadableStream is able to enqueue lots of data in a single pull, making it available synchronously. 
 PASS Default ReadableStream returns `false` for all but the first `enqueue` call 
 PASS ReadableStream continues returning `true` from `enqueue` if the data is read out of it in time. 
+PASS ReadableStream pull rejection makes stream errored. 
 PASS ReadableStream enqueue fails when the stream is draining. 
 PASS ReadableStream enqueue fails when the stream is closed 
 PASS ReadableStream enqueue fails when the stream is errored 

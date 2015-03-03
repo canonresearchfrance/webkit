@@ -168,13 +168,23 @@ void ReadableStream::callReadableStreamPull()
     if (shouldApplyBackpressure())
         return;
 
-    // FIXME: Implement async pulling.
-    if (m_isPulling)
+    if (m_isPulling) {
+        m_isPullScheduled = true;
         return;
+    }
 
     m_isPulling = true;
-    m_source->pull();
+    if (m_source->pull())
+        finishPulling();
+}
+
+void ReadableStream::finishPulling()
+{
     m_isPulling = false;
+    if (m_isPullScheduled) {
+        m_isPullScheduled = false;
+        callReadableStreamPull();
+    }
 }
 
 const char* ReadableStream::activeDOMObjectName() const
