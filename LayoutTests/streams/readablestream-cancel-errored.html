@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<script src="../resources/js-test-pre.js"></script>
+<script>
+
+if (window.testRunner) {
+    testRunner.dumpAsText()
+    testRunner.waitUntilDone()
+}
+window.jsTestIsAsync = true;
+
+description('ReadableStream rs.cancel() on an errored stream returns a promise rejected with the error.')
+
+var passedError = new Error('aaaugh!!');
+var recordedError = undefined;
+
+rs = new ReadableStream({
+    start: function(enqueue, close, error) {
+        error(passedError);
+    }
+});
+
+shouldBeEqualToString('rs.state', 'errored'); // State should be errored.
+var cancelPromise = rs.cancel(undefined);
+cancelPromise.then(function() {
+    testFailed('cancelPromise is fulfilled');
+    finishJSTest();
+}).catch(function(r) {
+    recordedError = r;
+    shouldBe('recordedError', 'passedError'); // cancelPromise must be rejected with passedError
+    finishJSTest();
+});
+
+</script>
+<script src="../resources/js-test-post.js"></script>

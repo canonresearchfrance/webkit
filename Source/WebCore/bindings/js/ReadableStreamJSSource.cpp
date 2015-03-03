@@ -129,6 +129,11 @@ void ReadableStreamJSSource::setInternalError(JSC::ExecState* exec, const String
     m_error.set(exec->vm(), createTypeError(exec, message));
 }
 
+void ReadableStreamJSSource::willCancel(JSC::ExecState* exec, JSValue cancelReason)
+{
+    m_cancelReason.set(exec->vm(), cancelReason);
+}
+
 void ReadableStreamJSSource::storeError(JSC::ExecState* exec, JSValue error)
 {
     m_error.set(exec->vm(), error);
@@ -278,6 +283,73 @@ void ReadableStreamJSSource::setStream(ExecState* exec, JSReadableStream* readab
     setInternalSlotToObject(exec, m_enqueueFunction.get(), readableStreamSlotName(), m_readableStream);
     setInternalSlotToObject(exec, m_closeFunction.get(), readableStreamSlotName(), m_readableStream);
     setInternalSlotToObject(exec, m_errorFunction.get(), readableStreamSlotName(), m_readableStream);
+}
+
+static EncodedJSValue JSC_HOST_CALL cancelResultFulfilled(ExecState* exec)
+{
+    getJSReadableStream(exec)->impl().notifyCancelSucceeded();
+    return JSValue::encode(jsUndefined());
+}
+
+static JSFunction* createCancelResultFulfilledFunction(ExecState* exec)
+{
+    return JSFunction::create(exec->vm(), exec->callee()->globalObject(), 1, ASCIILiteral("CancelResultFulfilledFunction"), cancelResultFulfilled);
+}
+
+static EncodedJSValue JSC_HOST_CALL cancelResultRejected(ExecState* exec)
+{
+    JSReadableStream* jsReadableStream = getJSReadableStream(exec);
+    JSValue error = exec->argument(0);
+    if (error.isUndefined() && exec->hadException())
+        error = exec->exception();
+    static_cast<ReadableStreamJSSource&>(jsReadableStream->impl().source()).storeError(exec, error);
+    jsReadableStream->impl().notifyCancelFailed();
+    return JSValue::encode(jsUndefined());
+}
+
+static JSFunction* createCancelResultRejectedFunction(ExecState* exec)
+{
+    return JSFunction::create(exec->vm(), exec->callee()->globalObject(), 1, ASCIILiteral("CancelResultRejectedFunction"), cancelResultRejected);
+}
+
+bool ReadableStreamJSSource::cancel(const String&)
+{
+    if (!m_source)
+        return true;
+
+    ExecState* exec = m_readableStream->globalObject()->globalExec();
+    JSLockHolder lock(exec);
+    JSValue cancelFunction = getPropertyFromObject(exec, m_source.get(), "cancel");
+    if (!cancelFunction.isFunction()) {
+        if (!cancelFunction.isUndefined())
+            setInternalError(exec, ASCIILiteral("ReadableStream constructor object cancel property should be a function."));
+        return true;
+    }
+
+    MarkedArgumentBuffer arguments;
+    arguments.append(m_cancelReason.get());
+
+    JSValue result = callFunction(exec, cancelFunction, m_readableStream, arguments);
+
+    if (m_error) {
+        m_readableStream->impl().notifyCancelFailed();
+        return false;
+    }
+
+    JSPromise* promise = jsDynamicCast<JSPromise*>(result);
+    if (!promise)
+        return true;
+
+    JSValue cancelResultFulfilledFunction = createCancelResultFulfilledFunction(exec);
+    setInternalSlotToObject(exec, cancelResultFulfilledFunction, readableStreamSlotName(), m_readableStream);
+    JSValue cancelResultRejectedFunction = createCancelResultRejectedFunction(exec);
+    setInternalSlotToObject(exec, cancelResultRejectedFunction, readableStreamSlotName(), m_readableStream);
+
+    if (!resolvePromise(exec, promise, cancelResultFulfilledFunction, cancelResultRejectedFunction)) {
+        setInternalError(exec, ASCIILiteral("Cancel promise resolution failed."));
+        m_readableStream->impl().notifyCancelFailed();
+    }
+    return false;
 }
 
 static EncodedJSValue JSC_HOST_CALL startResultFulfilled(ExecState* exec)

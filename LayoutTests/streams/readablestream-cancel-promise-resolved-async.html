@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<script src="../resources/js-test-pre.js"></script>
+<script>
+
+if (window.testRunner) {
+    testRunner.dumpAsText()
+    testRunner.waitUntilDone()
+}
+window.jsTestIsAsync = true;
+
+description('ReadableStream onCancel returns a promise that will be resolved asynchronously.')
+
+var resolveSourceCancelPromise = undefined;
+
+var rs = new ReadableStream({
+    cancel: function() {
+        return new Promise(function(resolve, reject) {
+            resolveSourceCancelPromise = resolve;
+        });
+    }
+});
+
+hasResolvedSourceCancelPromise = false;
+recordedValue = null;
+
+var cancelPromise = rs.cancel();
+cancelPromise.then(
+    function(value) {
+        shouldBeTrue('hasResolvedSourceCancelPromise'); // cancelPromise must not be resolved before the promise returned by onCancel is resolved.
+        recordedValue = value;
+        shouldBeUndefined('recordedValue'); // cancelPromise must be fulfilled with undefined.
+        finishJSTest();
+    }
+).catch(
+    function(r) {
+        testFailed('cancelPromise is rejected');
+        finishJSTest();
+    }
+);
+
+setTimeout(function() {
+    hasResolvedSourceCancelPromise = true;
+    resolveSourceCancelPromise('Hello');
+}, 0);
+
+</script>
+<script src="../resources/js-test-post.js"></script>

@@ -1,0 +1,11 @@
+ReadableStream cancel should fullfil promise when cancel callback went fine after returning a promise.
+
+On success, you will see a series of "PASS" messages, followed by "TEST COMPLETE".
+
+
+PASS got cancel reason: test
+PASS received cancel fulfillment
+PASS successfullyParsed is true
+
+TEST COMPLETE
+

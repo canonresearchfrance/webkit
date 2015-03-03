@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<script src="../resources/js-test-pre.js"></script>
+<script>
+
+if (window.testRunner) {
+    testRunner.dumpAsText()
+    testRunner.waitUntilDone()
+}
+window.jsTestIsAsync = true;
+
+description('ReadableStream the fulfillment value of the promise rs.cancel() returns must be undefined.')
+
+recordedValue = undefined;
+
+rs = new ReadableStream({
+    cancel: function(reason) {
+        return "Hello";
+    }
+});
+
+var cancelPromise = rs.cancel(undefined);
+cancelPromise.then(function(value) {
+    recordedValue = value;
+    shouldBeUndefined('recordedValue'); // Fulfillment value of cancelPromise must be undefined
+    finishJSTest();
+}).catch(function(r) {
+    testFailed('cancelPromise is rejected');
+    finishJSTest();
+});
+
+</script>
+<script src="../resources/js-test-post.js"></script>

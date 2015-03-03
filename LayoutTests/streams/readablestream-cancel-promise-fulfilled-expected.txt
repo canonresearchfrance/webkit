@@ -1,0 +1,10 @@
+ReadableStream the fulfillment value of the promise rs.cancel() returns must be undefined.
+
+On success, you will see a series of "PASS" messages, followed by "TEST COMPLETE".
+
+
+PASS recordedValue is undefined.
+PASS successfullyParsed is true
+
+TEST COMPLETE
+

@@ -1,4 +1,6 @@
 
 PASS ReadableStream ready returns the same value when called on a new, empty stream. 
 PASS ReadableStream ready returns the same value when called on a readable stream. 
+PASS ReadableStream cancel() and closed on a closed stream should return the same promise. 
+PASS ReadableStream cancel() and closed on an errored stream should return the same promise. 
 

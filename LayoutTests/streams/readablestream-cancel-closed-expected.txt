@@ -1,0 +1,11 @@
+ReadableStream rs.cancel() on a closed stream returns a promise resolved with undefined.
+
+On success, you will see a series of "PASS" messages, followed by "TEST COMPLETE".
+
+
+PASS rs.state is "closed"
+PASS undefined is undefined.
+PASS successfullyParsed is true
+
+TEST COMPLETE
+

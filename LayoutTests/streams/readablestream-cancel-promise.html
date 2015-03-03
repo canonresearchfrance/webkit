@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<script src="../resources/js-test-pre.js"></script>
+<script>
+
+if (window.testRunner) {
+    testRunner.dumpAsText()
+    testRunner.waitUntilDone()
+}
+window.jsTestIsAsync = true;
+
+description('ReadableStream cancel should fullfil promise when cancel callback went fine after returning a promise.')
+
+var potato = new ReadableStream({ cancel: function(error) {
+    testPassed('got cancel reason: ' + error)
+    return new Promise(function(resolve, reject) {
+        setTimeout(function() { resolve() }, 50)
+    })
+    }})
+
+potato.cancel("test").then(
+    function() {
+    testPassed("received cancel fulfillment")
+    finishJSTest()
+}, function(e) {
+    testFailed("FAILED: received " + e)
+    finishJSTest()
+})
+
+</script>
+<script src="../resources/js-test-post.js"></script>

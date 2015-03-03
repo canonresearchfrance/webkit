@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<script src="../resources/js-test-pre.js"></script>
+<script src="resources/streams-utils.js"></script>
+<script>
+
+if (window.testRunner) {
+    testRunner.dumpAsText()
+    testRunner.waitUntilDone()
+}
+window.jsTestIsAsync = true;
+
+description('ReadableStream cancel should fullfil promise when cancel callback went fine.')
+
+randomSource = new RandomPushSource();
+
+cancelationFinished = false;
+chunkLengthRight = true;
+
+rs = new ReadableStream({
+    start: function(enqueue, close, error) {
+        randomSource.ondata = enqueue;
+        randomSource.onend = close;
+        randomSource.onerror = error;
+    },
+
+    pull: function() {
+        randomSource.readStart();
+    },
+
+    cancel: function() {
+        randomSource.readStop();
+        randomSource.onend();
+
+        return new Promise(function(resolve) {
+            setTimeout(function() {
+                cancelationFinished = true;
+                resolve();
+            }, 50)
+        });
+    }
+});
+
+readableStreamToArray(rs).then(
+    function(chunks) {
+        storage = chunks;
+        shouldBeEqualToString('rs.state', 'closed'); // Stream should be closed.
+        shouldBeFalse('cancelationFinished'); // It did not wait for the cancellation process to finish before closing.
+        shouldBeGreaterThan('storage.length', '0'); // Should have gotten some data written through the pipe.
+        for (var i = 0; i < storage.length && chunkLengthRight; i++) {
+            if (storage[i].length != 128) // Each chunk has 128 bytes.
+                chunkLengthRight = false;
+        }
+        shouldBeTrue('chunkLengthRight');
+        finishJSTest();
+    },
+    function() {
+        testFailed('The stream should be successfully read to the end');
+        finishJSTest();
+    }
+);
+
+var wasWaiting = false;
+var wasReadable = false;
+var times = 0;
+
+var timeoutFunction = function() {
+    if (rs.state === "waiting")
+        wasWaiting = true;
+    if (rs.state === "readable")
+        wasReadable = true;
+
+    // There is a race condition here. Sometimes the stream can be readable at this point and we cancel the stream
+    // before readableStreamToArray could read anything. This workaround seems to mitigate the problem.
+    if ((!wasWaiting || !wasReadable) && times++ < 6) {
+        setTimeout(timeoutFunction, 50);
+        return;
+    }
+
+    rs.cancel().then(function() {
+        shouldBeTrue('cancelationFinished'); // It returns a promise that is fulfilled when the cancellation finishes.
+        finishJSTest();
+    },
+    function() {
+        testFailed('Stream cancellation should not fail');
+        finishJSTest();
+    });
+};
+
+setTimeout(timeoutFunction, 50);
+
+</script>
+<script src="../resources/js-test-post.js"></script>

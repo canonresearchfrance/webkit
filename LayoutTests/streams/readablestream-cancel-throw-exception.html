@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<script src="../resources/js-test-pre.js"></script>
+<script>
+
+if (window.testRunner) {
+    testRunner.dumpAsText()
+    testRunner.waitUntilDone()
+}
+window.jsTestIsAsync = true;
+
+description('ReadableStream cancel should reject promise when cancel callback raises an exception.')
+
+var potato = new ReadableStream({ cancel: function(error) { throw new Error(error) } })
+
+potato.cancel("test").then(
+        function() {
+        testFailed("FAILED: cancel should failed")
+        finishJSTest()
+    }, function(e) {
+        testPassed("received cancel rejection: " + e)
+        finishJSTest()
+    })
+
+</script>
+<script src="../resources/js-test-post.js"></script>

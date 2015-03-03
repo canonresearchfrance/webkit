@@ -69,16 +69,20 @@ public:
 
     void closed(SuccessCallback, ErrorCallback);
     void ready(SuccessCallback);
+    void cancel(const String&, SuccessCallback, ErrorCallback);
 
     bool isErrored() { return m_state == State::Errored; }
     bool isReadable() { return m_state == State::Readable; }
     bool isWaiting() { return m_state == State::Waiting; }
+    bool isClosed() { return m_state == State::Closed; }
 
     // API used from the JS binding.
     void start();
 
     void changeStateToClosed();
     virtual void changeStateToErrored();
+    void notifyCancelSucceeded();
+    void notifyCancelFailed();
 
     ReadableStreamSource& source() { return m_source.get(); }
     bool canEnqueue(String&);
@@ -108,6 +112,8 @@ private:
     ErrorCallback m_closedErrorCallback;
 
     SuccessCallback m_readyCallback;
+    SuccessCallback m_cancelledSuccessCallback;
+    ErrorCallback m_cancelledErrorCallback;
 
     unsigned m_totalQueueSize { 0 };
 

@@ -61,6 +61,7 @@ public:
     unsigned chunkSize(JSC::ExecState*, JSC::JSValue);
     void enqueue(JSC::JSValue);
     JSC::JSValue read();
+    void willCancel(JSC::ExecState*, JSC::JSValue);
 
     // ReadableStreamSource API.
     virtual bool isErrored() override { return !!m_error; }
@@ -68,6 +69,7 @@ public:
     virtual const String& errorDescription() const override;
     virtual bool shouldApplyBackpressure(unsigned) override;
     virtual bool pull() override;
+    virtual bool cancel(const String&) override;
 
 private:
     void setInternalError(JSC::ExecState*, const String&);
@@ -90,6 +92,7 @@ private:
     // FIXME: Decide whether creating the error function on the fly when calling the start source function.
     JSC::Strong<JSC::JSFunction> m_errorFunction;
 
+    JSC::Strong<JSC::Unknown> m_cancelReason;
 };
 
 void setInternalSlotToObject(JSC::ExecState*, JSC::JSValue, JSC::PrivateName&, JSC::JSValue);

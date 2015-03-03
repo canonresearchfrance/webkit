@@ -1,0 +1,11 @@
+ReadableStream onCancel returns a promise that will be rejected asynchronously.
+
+On success, you will see a series of "PASS" messages, followed by "TEST COMPLETE".
+
+
+PASS hasRejectedSourceCancelPromise is true
+PASS recordedError is errorInCancel
+PASS successfullyParsed is true
+
+TEST COMPLETE
+

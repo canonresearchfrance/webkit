@@ -1,0 +1,11 @@
+ReadableStream rs.cancel() on an errored stream returns a promise rejected with the error.
+
+On success, you will see a series of "PASS" messages, followed by "TEST COMPLETE".
+
+
+PASS rs.state is "errored"
+PASS recordedError is passedError
+PASS successfullyParsed is true
+
+TEST COMPLETE
+

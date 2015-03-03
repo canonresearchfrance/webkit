@@ -148,6 +148,52 @@ void ReadableStream::ready(SuccessCallback callback)
     m_readyCallback = WTF::move(callback);
 }
 
+void ReadableStream::notifyCancelSucceeded()
+{
+    if (!m_cancelledSuccessCallback)
+        return;
+    SuccessCallback cancelledSuccessCallback = WTF::move(m_cancelledSuccessCallback);
+    cancelledSuccessCallback();
+    unsetPendingActivity(this);
+}
+
+void ReadableStream::notifyCancelFailed()
+{
+    if (!m_cancelledErrorCallback)
+        return;
+    ErrorCallback cancelledErrorCallback = WTF::move(m_cancelledErrorCallback);
+    cancelledErrorCallback();
+    unsetPendingActivity(this);
+}
+
+void ReadableStream::cancel(const String& reason, SuccessCallback successCallback, ErrorCallback errorCallback)
+{
+    if (m_state == State::Closed) {
+        successCallback();
+        return;
+    }
+    else if (m_state == State::Errored) {
+        errorCallback();
+        return;
+    }
+    else if (m_state == State::Waiting)
+        resolveReadyCallback();
+
+    m_state = State::Closed;
+    resolveClosedCallback();
+
+    m_totalQueueSize = 0;
+
+    m_cancelledSuccessCallback = WTF::move(successCallback);
+    m_cancelledErrorCallback = WTF::move(errorCallback);
+    if (!m_source->cancel(reason)) {
+        // The underlying source is responsible to call one of the notifyCancel methods.
+        setPendingActivity(this);
+        return;
+    }
+    notifyCancelSucceeded();
+}
+
 void ReadableStream::start()
 {
     setPendingActivity(this);

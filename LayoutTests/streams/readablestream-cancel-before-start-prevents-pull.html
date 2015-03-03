@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<script src="../resources/js-test-pre.js"></script>
+<script>
+
+if (window.testRunner) {
+    testRunner.dumpAsText()
+    testRunner.waitUntilDone()
+}
+window.jsTestIsAsync = true;
+
+description('ReadableStream cancelation before start finishes prevents pull() from being called.')
+
+var rs = new ReadableStream({
+    pull: function() {
+        testFailed('unexpected pull call');
+        finishJSTest();
+    }
+});
+
+rs.cancel();
+
+setTimeout(function() {
+    testPassed('pull was never called');
+    finishJSTest();
+}, 0);
+
+</script>
+<script src="../resources/js-test-post.js"></script>

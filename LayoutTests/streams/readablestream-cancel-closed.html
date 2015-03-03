@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<script src="../resources/js-test-pre.js"></script>
+<script>
+
+if (window.testRunner) {
+    testRunner.dumpAsText()
+    testRunner.waitUntilDone()
+}
+window.jsTestIsAsync = true;
+
+description('ReadableStream rs.cancel() on a closed stream returns a promise resolved with undefined.')
+
+rs = new ReadableStream({
+    start: function(enqueue, close) {
+        close();
+    }
+});
+
+shouldBeEqualToString('rs.state', 'closed'); // State should be closed.
+
+var cancelPromise = rs.cancel(undefined);
+cancelPromise.then(function(value) {
+    shouldBeUndefined(value) // Fulfillment value of cancelPromise must be undefined.
+    finishJSTest();
+}).catch(function(r) {
+    testFailed('cancelPromise is rejected');
+    finishJSTest();
+});
+
+</script>
+<script src="../resources/js-test-post.js"></script>

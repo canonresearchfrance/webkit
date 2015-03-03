@@ -122,8 +122,27 @@ JSValue JSReadableStream::closed(ExecState* exec) const
 
 JSValue JSReadableStream::cancel(ExecState* exec)
 {
-    JSValue error = createError(exec, ASCIILiteral("cancel is not implemented"));
-    return exec->vm().throwException(exec, error);
+    if (impl().isClosed() || impl().isErrored())
+        return closed(exec);
+
+    DeferredWrapper wrapper(exec, globalObject());
+    auto successCallback = [wrapper]() mutable {
+        wrapper.resolve(jsUndefined());
+    };
+    auto failureCallback = [this, wrapper]() mutable {
+        if (impl().source().isJS()) {
+            JSValue jsError = static_cast<ReadableStreamJSSource&>(impl().source()).error();
+            wrapper.reject(jsError);
+        } else
+            wrapper.reject(impl().source().errorDescription());
+    };
+
+    JSValue reason = exec->argument(0);
+    if (impl().source().isJS())
+        static_cast<ReadableStreamJSSource&>(impl().source()).willCancel(exec, reason);
+    impl().cancel(reason.toString(exec)->value(exec), WTF::move(successCallback), WTF::move(failureCallback));
+
+    return wrapper.promise();
 }
 
 JSValue JSReadableStream::pipeTo(ExecState* exec)

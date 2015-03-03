@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<script src="../resources/js-test-pre.js"></script>
+<script>
+
+if (window.testRunner) {
+    testRunner.dumpAsText()
+    testRunner.waitUntilDone()
+}
+window.jsTestIsAsync = true;
+
+description('ReadableStream cancel should provide the presented reason.')
+
+recordedReason = undefined;
+
+var rs = new ReadableStream({
+    cancel: function(reason) {
+        recordedReason = reason;
+    }
+});
+
+passedReason = new Error('Sorry, it just wasn\'t meant to be.');
+rs.cancel(passedReason);
+
+shouldBe('recordedReason', 'passedReason');
+finishJSTest();
+
+</script>
+<script src="../resources/js-test-post.js"></script>

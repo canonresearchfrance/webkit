@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<script src="../resources/js-test-pre.js"></script>
+<script src="resources/streams-utils.js"></script>
+<script>
+
+if (window.testRunner) {
+    testRunner.dumpAsText()
+    testRunner.waitUntilDone()
+}
+window.jsTestIsAsync = true;
+
+description('ReadableStream cancellation puts the stream in a closed state (after waiting for chunks).')
+
+rs = sequentialReadableStream(5);
+
+rs.ready.then(
+    function() {
+        testPassed('ready promise vended before the cancellation should fulfill');
+        rs.closed.then(
+            function() {
+                testPassed('closed promise vended before the cancellation should fulfill');
+            },
+            function() {
+                testFailed('closed promise vended before the cancellation should not be rejected');
+                finishJSTest();
+            }
+        );
+
+        rs.ready.then(
+            function() {
+                testPassed('ready promise vended before the cancellation should fulfill');
+            },
+            function() {
+                testFailed('ready promise vended before the cancellation should not be rejected');
+                finishJSTest();
+            }
+        );
+
+        rs.cancel();
+
+        shouldBeEqualToString('rs.state', 'closed'); // State should be closed.
+
+        rs.closed.then(
+            function() {
+                testPassed('closed promise vended after the cancellation should fulfill');
+            },
+            function() {
+                testFailed('closed promise vended after the cancellation should not be rejected');
+                finishJSTest();
+            }
+        );
+        rs.ready.then(
+            function() {
+                testPassed('ready promise vended after the cancellation should fulfill');
+                finishJSTest();
+            },
+            function() {
+                testFailed('ready promise vended after the cancellation should not be rejected');
+                finishJSTest();
+            }
+        );
+    },
+    function(r) {
+        testFailed('closed promise vended before the cancellation should not be rejected: ' + r);
+        finishJSTest();
+    }
+);
+
+</script>
+<script src="../resources/js-test-post.js"></script>

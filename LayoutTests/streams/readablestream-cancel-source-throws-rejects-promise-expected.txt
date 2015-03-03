@@ -1,0 +1,10 @@
+ReadableStream if source's cancel throws, the promise returned by rs.cancel() rejects.
+
+On success, you will see a series of "PASS" messages, followed by "TEST COMPLETE".
+
+
+PASS recordedError is errorInCancel
+PASS successfullyParsed is true
+
+TEST COMPLETE
+

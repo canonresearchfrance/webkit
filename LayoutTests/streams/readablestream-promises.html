@@ -16,4 +16,24 @@ test(function() {
 
     assert_equals(rs.ready, rs.ready, 'rs.ready should not change between gets');
 }, 'ReadableStream ready returns the same value when called on a readable stream.');
+
+test(function() {
+    const rs = new ReadableStream({
+        start: function(enqueue, close) {
+            close();
+        }
+    });
+
+    assert_equals(rs.cancel(), rs.closed, 'the promises returned should be the same');
+}, 'ReadableStream cancel() and closed on a closed stream should return the same promise.');
+
+test(function() {
+    const rs = new ReadableStream({
+        start: function(enqueue, close, error) {
+            error(new Error('boo!'));
+        }
+    });
+
+    assert_equals(rs.cancel(), rs.closed, 'the promises returned should be the same');
+}, 'ReadableStream cancel() and closed on an errored stream should return the same promise.');
 </script>

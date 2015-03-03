@@ -1,0 +1,10 @@
+ReadableStream cancel should provide the presented reason.
+
+On success, you will see a series of "PASS" messages, followed by "TEST COMPLETE".
+
+
+PASS recordedReason is passedReason
+PASS successfullyParsed is true
+
+TEST COMPLETE
+

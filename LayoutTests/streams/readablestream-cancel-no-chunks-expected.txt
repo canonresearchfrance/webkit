@@ -1,0 +1,14 @@
+ReadableStream cancel should fulfill promise when cancel before queueing chunk.
+
+On success, you will see a series of "PASS" messages, followed by "TEST COMPLETE".
+
+
+PASS rs.state is "closed"
+PASS ready promise vended before the cancellation should fulfill
+PASS closed promise vended before the cancellation should fulfill
+PASS closed promise vended after the cancellation should fulfill
+PASS ready promise vended after the cancellation should fulfill
+PASS successfullyParsed is true
+
+TEST COMPLETE
+

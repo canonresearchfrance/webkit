@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<script src="../resources/js-test-pre.js"></script>
+<script>
+
+if (window.testRunner) {
+    testRunner.dumpAsText()
+    testRunner.waitUntilDone()
+}
+window.jsTestIsAsync = true;
+
+description('ReadableStream if source\'s cancel throws, the promise returned by rs.cancel() rejects.')
+
+errorInCancel = new Error('Sorry, it just wasn\'t meant to be.');
+recordedError = undefined;
+
+rs = new ReadableStream({
+    cancel: function(reason) {
+        throw errorInCancel;
+    }
+});
+
+var cancelPromise = rs.cancel(undefined);
+cancelPromise.then(
+    function() {
+        testFailed('cancelPromise is fulfilled unexpectedly');
+        finishJSTest();
+    },
+    function(r) {
+        recordedError = r;
+        shouldBe('recordedError', 'errorInCancel'); // Rejection reason of cancelPromise must be errorInCancel.
+        finishJSTest();
+    }
+);
+
+</script>
+<script src="../resources/js-test-post.js"></script>
