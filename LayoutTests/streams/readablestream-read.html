@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<script src="../resources/testharness.js"></script>
+<script src="../resources/testharnessreport.js"></script>
+<script>
+test(function()
+{
+    var rs = new ReadableStream();
+    assert_equals(rs.state, 'waiting');
+    assert_throws(new TypeError(), function() { rs.read(); });
+}, 'ReadableStream reading a waiting stream throws a TypeError');
+
+test(function()
+{
+    var rs = new ReadableStream({
+        start: function(enqueue, close) {
+            close();
+        }
+    });
+    assert_equals(rs.state, 'closed');
+    assert_throws(new TypeError(), function() { rs.read(); });
+}, 'ReadableStream reading a closed stream throws a TypeError');
+
+test(function() {
+    var passedError = new Error('aaaugh!!');
+    var rs = new ReadableStream({
+        start: function(enqueue, close, error) {
+            error(passedError);
+        }
+    });
+    assert_equals(rs.state, 'errored');
+    assert_throws(passedError, function() {
+        rs.read();
+    });
+}, 'ReadableStream reading an errored stream throws the stored error');
+
+</script>
+

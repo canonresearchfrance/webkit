@@ -44,8 +44,15 @@ namespace WebCore {
 
 JSValue JSReadableStream::read(ExecState* exec)
 {
-    JSValue error = createError(exec, ASCIILiteral("read is not implemented"));
-    return exec->vm().throwException(exec, error);
+    if (!impl().isReadable()) {
+        if (impl().isErrored()) {
+            JSValue error = impl().source().isJS() ? static_cast<ReadableStreamJSSource&>(impl().source()).error() : createTypeError(exec, impl().source().errorDescription()); 
+            return exec->vm().throwException(exec, error);
+        }
+        setDOMException(exec, TypeError);
+        return jsUndefined();
+    }
+    return impl().read();
 }
 
 static JSPromiseDeferred* getOrCreatePromiseDeferredFromObject(ExecState* exec, JSValue thisObject, JSGlobalObject* globalObject, PrivateName &name)
@@ -129,7 +136,7 @@ EncodedJSValue JSC_HOST_CALL constructJSReadableStream(ExecState* exec)
     if (source->isErrored())
         return throwVMError(exec, source->error());
 
-    RefPtr<ReadableStream> readableStream = ReadableStream::create(*scriptExecutionContext, Ref<ReadableStreamSource>(source.get()));
+    RefPtr<ReadableStream> readableStream = ReadableJSValueStream::create(*scriptExecutionContext, source.get());
 
     VM& vm = exec->vm();
     JSGlobalObject* globalObject = exec->callee()->globalObject();

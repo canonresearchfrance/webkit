@@ -35,7 +35,9 @@
 #include "ActiveDOMObject.h"
 #include "ReadableStreamSource.h"
 #include "ScriptWrappable.h"
+#include "SharedBuffer.h"
 #include <functional>
+#include <runtime/JSCJSValue.h>
 #include <wtf/Ref.h>
 
 namespace WebCore {
@@ -55,10 +57,10 @@ public:
         Errored
     };
 
-    static Ref<ReadableStream> create(ScriptExecutionContext&, Ref<ReadableStreamSource>&&);
     virtual ~ReadableStream();
 
     // JS API implementation.
+    virtual JSC::JSValue read() = 0;
     String state() const;
 
     typedef std::function<void()> SuccessCallback;
@@ -68,6 +70,7 @@ public:
     void ready(SuccessCallback);
 
     bool isErrored() { return m_state == State::Errored; }
+    bool isReadable() { return m_state == State::Readable; }
 
     // API used from the JS binding.
     void start();
@@ -76,9 +79,10 @@ public:
     virtual void changeStateToErrored();
 
     ReadableStreamSource& source() { return m_source.get(); }
+protected:
+    ReadableStream(ScriptExecutionContext&, Ref<ReadableStreamSource>&&);
 
 private:
-    ReadableStream(ScriptExecutionContext&, Ref<ReadableStreamSource>&&);
     void resolveClosedCallback();
     void resolveReadyCallback();
     void rejectClosedCallback();

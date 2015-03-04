@@ -32,6 +32,7 @@
 
 #if ENABLE(STREAMS_API)
 
+#include "ReadableStream.h"
 #include "ReadableStreamSource.h"
 #include <heap/Strong.h>
 #include <heap/StrongInlines.h>
@@ -43,6 +44,7 @@
 namespace WebCore {
 
 class JSReadableStream;
+class ReadableJSValueStream;
 
 class ReadableStreamJSSource: public ReadableStreamSource {
 public:
@@ -84,6 +86,13 @@ private:
 
 void setInternalSlotToObject(JSC::ExecState*, JSC::JSValue, JSC::PrivateName&, JSC::JSValue);
 JSC::JSValue getInternalSlotFromObject(JSC::ExecState*, JSC::JSValue, JSC::PrivateName&);
+
+class ReadableJSValueStream: public ReadableStream {
+public:
+    JSC::JSValue read();
+    static Ref<ReadableJSValueStream> create(ScriptExecutionContext&, Ref<ReadableStreamJSSource>&&);
+    ReadableJSValueStream(ScriptExecutionContext& scriptExecutionContext, Ref<ReadableStreamJSSource>&& source) : ReadableStream(scriptExecutionContext, Ref<ReadableStreamSource>(source.get())) { }
+};
 
 } // namespace WebCore
 

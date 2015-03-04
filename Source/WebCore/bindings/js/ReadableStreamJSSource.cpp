@@ -231,6 +231,20 @@ void ReadableStreamJSSource::start(JSC::ExecState* exec)
     startReadableStreamAsync();
 }
 
+JSC::JSValue ReadableJSValueStream::read()
+{
+    notImplemented();
+    return jsUndefined();
+}
+
+Ref<ReadableJSValueStream> ReadableJSValueStream::create(ScriptExecutionContext& scriptExecutionContext, Ref<ReadableStreamJSSource>&& source)
+{
+    auto readableStream = adoptRef(*new ReadableJSValueStream(scriptExecutionContext, WTF::move(source)));
+    readableStream.get().suspendIfNeeded();
+
+    return readableStream;
+}
+
 } // namespace WebCore
 
 #endif
