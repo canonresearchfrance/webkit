@@ -1,0 +1,13 @@
+ReadableStream pull throws an error.
+
+On success, you will see a series of "PASS" messages, followed by "TEST COMPLETE".
+
+
+PASS rs.state is "errored"
+PASS recordedReady is undefined.
+PASS rs.state is "errored"
+PASS recordedClosed is error
+PASS successfullyParsed is true
+
+TEST COMPLETE
+

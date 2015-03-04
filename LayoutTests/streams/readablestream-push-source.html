@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<script src="resources/streams-utils.js"></script>
+<script src="../resources/testharness.js"></script>
+<script src="../resources/testharnessreport.js"></script>
+<script>
+t = async_test('ReadableStream adapting a push source');
+t.step(function()
+{
+    var pullChecked = false;
+    var randomSource = new RandomPushSource(8);
+
+    var rs = new ReadableStream({
+
+        start: function(enqueue, close, error) {
+            assert_equals(typeof enqueue,  'function', 'enqueue is a function in start');
+            assert_equals(typeof close, 'function', 'close is a function in start');
+            assert_equals(typeof error, 'function', 'error is a function in start');
+
+            randomSource.ondata = function(chunk) {
+                if (!enqueue(chunk)) {
+                    randomSource.readStop();
+                }
+            };
+
+            randomSource.onend = close;
+            randomSource.onerror = error;
+        },
+
+        pull: function(enqueue, close, error) {
+            if (!pullChecked) {
+                pullChecked = true;
+                assert_equals(typeof enqueue, 'function', 'enqueue is a function in pull');
+                assert_equals(typeof close, 'function', 'close is a function in pull');
+                assert_equals(typeof error, 'function', 'error is a function in pull');
+            }
+
+            randomSource.readStart();
+        }
+
+    });
+
+    readableStreamToArray(rs).then(function(chunks) {
+        assert_equals(rs.state, 'closed', 'should be closed');
+        assert_equals(chunks.length, 8, 'got the expected 8 chunks');
+        for (var i = 0; i < chunks.length; i++) {
+            assert_equals(chunks[i].length, 128, 'each chunk has 128 bytes');
+        }
+        t.done();
+    });
+});
+</script>

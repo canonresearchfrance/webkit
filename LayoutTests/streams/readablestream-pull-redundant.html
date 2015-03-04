@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<script src="../resources/js-test-pre.js"></script>
+<script>
+
+if (window.testRunner) {
+    testRunner.dumpAsText()
+    testRunner.waitUntilDone()
+}
+window.jsTestIsAsync = true;
+
+description('ReadableStream avoid redundant pull call.')
+
+pullCount = 0;
+var rs = new ReadableStream({
+    pull: function() {
+        pullCount++;
+    },
+
+    cancel: function() {
+        testFailed('cancel should not be called');
+        finishJSTest();
+    }
+});
+
+rs.ready;
+rs.ready;
+rs.ready;
+
+// Use setTimeout to ensure we run after any promises.
+setTimeout(function() {
+    shouldBe('pullCount', '1'); // pull should not be called more than once.
+    finishJSTest();
+}, 50);
+
+</script>
+<script src="../resources/js-test-post.js"></script>

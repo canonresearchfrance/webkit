@@ -151,7 +151,30 @@ void ReadableStream::ready(SuccessCallback callback)
 void ReadableStream::start()
 {
     setPendingActivity(this);
-    // FIXME: Implement pulling data
+    m_isStarted = true;
+    callReadableStreamPull();
+}
+
+bool ReadableStream::canPull()
+{
+    return !m_isDraining && m_isStarted && m_state != State::Closed && m_state != State::Errored;
+}
+
+void ReadableStream::callReadableStreamPull()
+{
+    if (!canPull())
+        return;
+
+    if (shouldApplyBackpressure())
+        return;
+
+    // FIXME: Implement async pulling.
+    if (m_isPulling)
+        return;
+
+    m_isPulling = true;
+    m_source->pull();
+    m_isPulling = false;
 }
 
 const char* ReadableStream::activeDOMObjectName() const
@@ -180,7 +203,7 @@ void ReadableStream::dequeueing(unsigned size)
             m_state = State::Waiting;
     }
 
-    // FIXME: Implement pulling data.
+    callReadableStreamPull();
 }
 
 bool ReadableStream::shouldApplyBackpressure()

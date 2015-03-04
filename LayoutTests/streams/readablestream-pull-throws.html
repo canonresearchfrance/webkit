@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<script src="../resources/js-test-pre.js"></script>
+<script>
+
+if (window.testRunner) {
+    testRunner.dumpAsText()
+    testRunner.waitUntilDone()
+}
+window.jsTestIsAsync = true;
+
+description('ReadableStream pull throws an error.')
+
+error = new Error('aaaugh!!');
+rs = new ReadableStream({
+    pull: function() {
+        throw error;
+    }
+});
+
+rs.closed.then(function() {
+    testFailed('the stream should not close successfully');
+    finishJSTest();
+});
+
+recordedReady = null;
+rs.ready.then(function(v) {
+    shouldBeEqualToString('rs.state', 'errored'); // state is "errored" after waiting.
+    recordedReady = v;
+    shouldBeUndefined('recordedReady'); // ready fulfills with undefined.
+});
+
+recordedClosed = undefined;
+rs.closed.catch(function(caught) {
+    shouldBeEqualToString('rs.state', 'errored'); // state is "errored" in closed catch.
+    recordedClosed = caught;
+    shouldBe('recordedClosed', 'error'); // error was passed through as rejection reason of closed property.
+    finishJSTest();
+});
+
+</script>
+<script src="../resources/js-test-post.js"></script>

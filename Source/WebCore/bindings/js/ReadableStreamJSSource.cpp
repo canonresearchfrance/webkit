@@ -345,6 +345,33 @@ bool ReadableJSValueStream::enqueue(ExecState* exec, JSValue value, unsigned siz
     return enqueueing(size);
 }
 
+void ReadableStreamJSSource::pull()
+{
+    if (!m_source)
+        return;
+
+    ExecState* exec = m_readableStream->globalObject()->globalExec();
+    JSLockHolder lock(exec);
+    JSValue pullFunction = getPropertyFromObject(exec, m_source.get(), "pull");
+    if (!pullFunction.isFunction()) {
+        if (!pullFunction.isUndefined()) {
+            setInternalError(exec, ASCIILiteral("ReadableStream constructor object pull property should be a function."));
+            m_readableStream->impl().changeStateToErrored();
+        }
+        return;
+    }
+
+    MarkedArgumentBuffer arguments;
+    arguments.append(m_enqueueFunction.get());
+    arguments.append(m_closeFunction.get());
+    arguments.append(m_errorFunction.get());
+
+    callFunction(exec, pullFunction, m_readableStream, arguments);
+
+    if (m_error)
+        m_readableStream->impl().changeStateToErrored();
+}
+
 } // namespace WebCore
 
 #endif

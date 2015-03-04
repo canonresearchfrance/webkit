@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<script src='../resources/testharness.js'></script>
+<script src='../resources/testharnessreport.js'></script>
+<script src='resources/streams-utils.js'></script>
+<script>
+
+test0 = async_test('ReadableStream constructor should get a function as pull argument');
+test0.step(function() {
+     var rs =  new ReadableStream({ pull : 'potato'});
+     setTimeout(test0.step_func(function() {
+          assert_equals(rs.state, 'errored');
+          test0.done();
+      }), 50);
+});
+
+test1 = async_test('ReadableStream pull should be able to close a stream.');
+test1.step(function() {
+    var rs = new ReadableStream({
+        pull: function(enqueue, close, error) {
+            close()
+        }
+    });
+
+    rs.ready.then(test1.step_func(function() {
+        assert_equals(rs.state, 'closed');
+        test1.done();
+    }));
+});
+
+test2 = async_test('ReadableStream pull should be able to queue different objects.');
+test2.step(function() {
+    var objects = [
+    { potato: 'Give me more!'},
+    'test',
+    1
+    ];
+    var rs = new ReadableStream({
+        pull: function(enqueue, close, error) {
+            enqueue(objects[0]);
+            enqueue(objects[1]);
+            enqueue(objects[2]);
+            close()
+        }
+    });
+
+    rs.closed.then(test2.step_func(function() {
+        assert_equals(rs.state, 'closed');
+        test2.done();
+    }));
+    rs.ready.then(test2.step_func(function() {
+        assert_equals(rs.read(), objects[0]);
+        assert_equals(rs.read(), objects[1]);
+        assert_equals(rs.read(), objects[2]);
+    }));
+});
+
+test3 = async_test('ReadableStream is able to enqueue lots of data in a single pull, making it available synchronously.');
+test3.step(function() {
+    var i = 0;
+    const rs = new ReadableStream({
+        pull: function(enqueue, close) {
+            while (++i <= 10) {
+                enqueue(i);
+            }
+
+            close();
+        }
+    });
+
+    rs.ready.then(function() {
+        const data = [];
+        while (rs.state === 'readable') {
+            data.push(rs.read());
+        }
+
+        assert_array_equals(data, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 'got the expected 10 chunks');
+        test3.done();
+    });
+});
+
+</script>

@@ -1,0 +1,3 @@
+
+PASS ReadableStream is able to pull data repeatedly if it's available synchronously 
+

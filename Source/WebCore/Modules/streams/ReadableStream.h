@@ -93,6 +93,8 @@ private:
     void resolveReadyCallback();
     void rejectClosedCallback();
     bool shouldApplyBackpressure();
+    void callReadableStreamPull();
+    bool canPull();
 
     // ActiveDOMObject API.
     const char* activeDOMObjectName() const override;
@@ -109,6 +111,8 @@ private:
     unsigned m_totalQueueSize { 0 };
 
     bool m_isDraining { false };
+    bool m_isPulling { false };
+    bool m_isStarted { false };
 };
 
 }

@@ -1,0 +1,6 @@
+
+PASS ReadableStream constructor should get a function as pull argument 
+PASS ReadableStream pull should be able to close a stream. 
+PASS ReadableStream pull should be able to queue different objects. 
+PASS ReadableStream is able to enqueue lots of data in a single pull, making it available synchronously. 
+
