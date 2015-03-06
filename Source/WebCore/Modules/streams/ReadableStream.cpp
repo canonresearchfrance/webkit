@@ -32,7 +32,8 @@
 
 #if ENABLE(STREAMS_API)
 
-#include "NotImplemented.h"
+#include "ScriptExecutionContext.h"
+#include <wtf/MainThread.h>
 #include <wtf/RefCountedLeakCounter.h>
 
 namespace WebCore {
@@ -80,23 +81,51 @@ String ReadableStream::state() const
     return String();
 }
 
-void ReadableStream::closed(SuccessCallback)
+void ReadableStream::resolveClosedCallback()
 {
-    notImplemented();    
+    ASSERT(m_state == State::Closed);
+    if (!m_closedSuccessCallback)
+        return;
+
+    SuccessCallback closedSuccessCallback = WTF::move(m_closedSuccessCallback);
+    closedSuccessCallback();
+}
+
+void ReadableStream::closed(SuccessCallback successCallback)
+{
+    if (m_state == State::Closed) {
+        successCallback();
+        return;
+    }
+    m_closedSuccessCallback = WTF::move(successCallback);
 }
 
 void ReadableStream::changeStateToClosed()
 {
     if (m_state == State::Waiting) {
         m_state = State::Closed;
-        // FIXME: Implement ready and closed promise resolution.
+        resolveReadyCallback();
+        resolveClosedCallback();
     }
     // FIXME: Handle State::Readable when enqueue is supported.
 }
 
-void ReadableStream::ready(SuccessCallback)
+void ReadableStream::resolveReadyCallback()
 {
-    notImplemented();
+    ASSERT(m_state != State::Waiting);
+    if (!m_readyCallback)
+        return;
+    SuccessCallback readyCallback = WTF::move(m_readyCallback);
+    readyCallback();
+}
+
+void ReadableStream::ready(SuccessCallback callback)
+{
+    if (m_state != State::Waiting) {
+        callback();
+        return;
+    }
+    m_readyCallback = WTF::move(callback);
 }
 
 void ReadableStream::start()

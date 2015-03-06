@@ -5,4 +5,9 @@ PASS ReadableStream constructor should get a function as start argument
 PASS ReadableStream start should be able to close the stream 
 PASS Calling ReadableStream close function should transition synchronously to closed state 
 PASS Calling ReadableStream close function several times should have no effect 
+PASS ReadableStream close should fulfill ready promise and then closed promise 
+PASS ReadableStream close should fulfill ready asynchronously 
+PASS ReadableStream close should fulfill closed promise asynchronously 
+PASS A closed ReadableStream should fulfill immediatly ready and closed promises 
+PASS Calling ReadableStream close several times should not resolve several times closed or ready promises 
 

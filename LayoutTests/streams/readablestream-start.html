@@ -81,5 +81,128 @@ test(function()
     assert_equals(rs.state, 'closed');
 }, 'Calling ReadableStream close function several times should have no effect');
 
+test1 = async_test('ReadableStream close should fulfill ready promise and then closed promise');
+test1.step(function()
+{
+    var rs = new ReadableStream(
+    { start:
+        function(enqueue, close, error) {
+            setTimeout(close,0);
+        }
+    });
+    assert_equals(rs.state, 'waiting');
+
+    var readyDone = false;
+    rs.ready.then(test1.step_func(function(v) {
+        readyDone = true;
+        assert_equals(typeof v, 'undefined');
+        assert_equals(rs.state, 'closed');
+    }));
+
+    rs.closed.then(test1.step_func(function(v) {
+        assert_equals(readyDone, true);
+        assert_equals(typeof v, 'undefined');
+        assert_equals(rs.state, 'closed');
+        test1.done();
+    }));
+});
+
+test2 = async_test('ReadableStream close should fulfill ready asynchronously');
+test2.step(function()
+{
+    var closeFunction;
+    var rs = new ReadableStream(
+    { start:
+        function(enqueue, close, error) {
+            closeFunction = close;
+        }
+    });
+
+    var readyDoneAsserted = false;
+    var readyDone = false;
+    closeFunction();
+    assert_equals(rs.state, 'closed');
+    rs.ready.then(test2.step_func(function() {
+        readyDone = true;
+        assert_true(readyDoneAsserted);
+        test2.done();
+    }));
+    readyDoneAsserted = true;
+    assert_false(readyDone);
+});
+
+test3 = async_test('ReadableStream close should fulfill closed promise asynchronously');
+test3.step(function()
+{
+    var closeFunction;
+    var rs = new ReadableStream(
+    { start:
+        function(enqueue, close, error) {
+            closeFunction = close;
+        }
+    });
+
+    var closedDone = false;
+    closeFunction();
+    assert_equals(rs.state, 'closed');
+    rs.closed.then(test3.step_func(function() {
+        closedDone = true;
+        assert_true(closedDoneAsserted);
+        test3.done();
+    }));
+    closedDoneAsserted = true;
+    assert_false(closedDone);
+});
+
+test4 = async_test('A closed ReadableStream should fulfill immediatly ready and closed promises');
+test4.step(function()
+{
+    var rs = new ReadableStream(
+    { start:
+        function(enqueue, close, error) {
+            close();
+        }
+    });
+
+    var closedDone = false;
+    rs.closed.then(test4.step_func(function() {
+        closedDone = true;
+    }));
+
+    rs.ready.then(test4.step_func(function() {
+        assert_true(closedDone);
+        test4.done();
+    }));
+    assert_false(closedDone);
+
+});
+
+test5 = async_test('Calling ReadableStream close several times should not resolve several times closed or ready promises');
+test5.step(function()
+{
+    var closeFunction;
+    var rs = new ReadableStream(
+    { start:
+        function(enqueue, close, error) {
+            closeFunction = close;
+        }
+    });
+
+    var counter = 0;
+    rs.closed.then(test5.step_func(function() {
+        counter++;
+    }));
+    rs.ready.then(test5.step_func(function() {
+        counter++;
+        assert_equals(counter, 1);
+    }));
+    closeFunction();
+    closeFunction();
+
+    setTimeout(test5.step_func(function() {
+        test5.done();
+    }), 50);
+});
+
 
 </script>

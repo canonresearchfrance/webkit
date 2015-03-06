@@ -72,6 +72,8 @@ public:
 
 private:
     ReadableStream(ScriptExecutionContext&, Ref<ReadableStreamSource>&&);
+    void resolveClosedCallback();
+    void resolveReadyCallback();
 
     // ActiveDOMObject API.
     const char* activeDOMObjectName() const override;
@@ -79,6 +81,10 @@ private:
 
     State m_state;
     Ref<ReadableStreamSource> m_source;
+
+    // FIXME: Add closed error callback.
+    SuccessCallback m_closedSuccessCallback;
+    SuccessCallback m_readyCallback;
 };
 
 }
