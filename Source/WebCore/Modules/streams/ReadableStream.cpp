@@ -87,17 +87,33 @@ void ReadableStream::resolveClosedCallback()
     if (!m_closedSuccessCallback)
         return;
 
+    m_closedErrorCallback = nullptr;
     SuccessCallback closedSuccessCallback = WTF::move(m_closedSuccessCallback);
     closedSuccessCallback();
 }
 
-void ReadableStream::closed(SuccessCallback successCallback)
+void ReadableStream::rejectClosedCallback()
+{
+    ASSERT(m_state == State::Errored);
+    if (!m_closedErrorCallback)
+        return;
+    m_closedSuccessCallback = nullptr;
+    ErrorCallback closedErrorCallback = WTF::move(m_closedErrorCallback);
+    closedErrorCallback();
+}
+
+void ReadableStream::closed(SuccessCallback successCallback, ErrorCallback errorCallback)
 {
     if (m_state == State::Closed) {
         successCallback();
         return;
     }
+    else if (m_state == State::Errored) {
+        errorCallback();
+        return;
+    }
     m_closedSuccessCallback = WTF::move(successCallback);
+    m_closedErrorCallback = WTF::move(errorCallback);
 }
 
 void ReadableStream::changeStateToClosed()
@@ -108,6 +124,15 @@ void ReadableStream::changeStateToClosed()
         resolveClosedCallback();
     }
     // FIXME: Handle State::Readable when enqueue is supported.
+}
+
+void ReadableStream::changeStateToErrored()
+{
+    if (m_state == State::Errored || m_state == State::Closed)
+        return;
+    m_state = State::Errored;
+    resolveReadyCallback();
+    rejectClosedCallback();
 }
 
 void ReadableStream::resolveReadyCallback()

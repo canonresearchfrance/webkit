@@ -10,4 +10,7 @@ PASS ReadableStream close should fulfill ready asynchronously
 PASS ReadableStream close should fulfill closed promise asynchronously 
 PASS A closed ReadableStream should fulfill immediatly ready and closed promises 
 PASS Calling ReadableStream close several times should not resolve several times closed or ready promises 
+PASS ReadableStream error should fulfill ready and closed promises 
+PASS Calling ReadableStream error after close should have no effect 
+PASS Calling ReadableStream close after error should have no effect 
 

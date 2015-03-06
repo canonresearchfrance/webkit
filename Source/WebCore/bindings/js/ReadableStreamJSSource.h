@@ -52,10 +52,13 @@ public:
     void setStream(JSC::ExecState*, JSReadableStream*);
 
     JSC::JSValue error() { return m_error.get(); }
+    void storeError(JSC::ExecState*, JSC::JSValue);
     void start(JSC::ExecState*);
 
     // ReadableStreamSource API.
-    virtual bool isErrored() { return !!m_error; }
+    virtual bool isErrored() override { return !!m_error; }
+    virtual bool isJS() const override { return true; }
+    virtual const String& errorDescription() const override;
 
 private:
     void setInternalError(JSC::ExecState*, const String&);
@@ -66,6 +69,7 @@ private:
 
     // m_error may be an error generated from ReadableStreamJSSource or from JS callbacks.
     JSC::Strong<JSC::Unknown> m_error;
+    String m_errorDescription;
     JSReadableStream* m_readableStream { nullptr };
 
     // Object passed to constructor.

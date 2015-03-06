@@ -174,7 +174,6 @@ test4.step(function()
         test4.done();
     }));
     assert_false(closedDone);
-
 });
 
 test5 = async_test('Calling ReadableStream close several times should not resolve several times closed or ready promises');
@@ -204,5 +203,99 @@ test5.step(function()
     }), 50);
 });
 
+test6 = async_test('ReadableStream error should fulfill ready and closed promises');
+test6.step(function()
+{
+    var passedError = new Error('aaugh!!');
+    var rs = new ReadableStream(
+    { start:
+        function(enqueue, close, error) {
+            assert_array_equals(Object.getOwnPropertyNames(error), ['name', 'length']);
+            error(passedError);
+        }
+    });
+
+    var readyDone = false;
+    rs.ready.then(test6.step_func(function(v) {
+        readyDone = true;
+        assert_equals(typeof v, 'undefined');
+        assert_equals(rs.state, 'errored');
+    }));
+
+    rs.closed.then(test6.step_func(function(v) {
+        assert_unreached('closed promise should be rejected');
+    }), test5.step_func(function(error) {
+        assert_equals(readyDone, true);
+        assert_equals(error, passedError);
+        assert_equals(rs.state, 'errored');
+        test6.done();
+    }));
+});
+
+test7 = async_test('Calling ReadableStream error after close should have no effect');
+test7.step(function()
+{
+    var closeFunction;
+    var errorFunction;
+    var rs = new ReadableStream(
+    { start:
+        function(enqueue, close, error) {
+            closeFunction = close;
+            errorFunction = error;
+        }
+    });
+
+    var counter = 0;
+    rs.closed.then(test7.step_func(function() {
+        counter++;
+    }));
+    rs.ready.then(test7.step_func(function() {
+        counter++;
+        assert_equals(counter, 1);
+    }));
+
+    assert_equals(rs.state, 'waiting');
+    closeFunction();
+    assert_equals(rs.state, 'closed');
+    errorFunction();
+    assert_equals(rs.state, 'closed');
+
+    setTimeout(test7.step_func(function() {
+        test7.done();
+    }), 50);
+});
+
+test8 = async_test('Calling ReadableStream close after error should have no effect');
+test8.step(function()
+{
+    var closeFunction;
+    var errorFunction;
+    var rs = new ReadableStream(
+    { start:
+        function(enqueue, close, error) {
+            closeFunction = close;
+            errorFunction = error;
+        }
+    });
+
+    var counter = 0;
+    rs.closed.then(test8.step_func(function() {
+        counter++;
+    }));
+    rs.ready.then(test8.step_func(function() {
+        counter++;
+        assert_equals(counter, 1);
+    }));
+
+    assert_equals(rs.state, 'waiting');
+    errorFunction();
+    assert_equals(rs.state, 'errored');
+    closeFunction();
+    assert_equals(rs.state, 'errored');
+
+    setTimeout(test8.step_func(function() {
+        test8.done();
+    }), 50);
+});
 
 </script>

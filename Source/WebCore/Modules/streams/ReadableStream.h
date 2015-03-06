@@ -62,18 +62,26 @@ public:
     String state() const;
 
     typedef std::function<void()> SuccessCallback;
-    void closed(SuccessCallback);
+    typedef std::function<void()> ErrorCallback;
+
+    void closed(SuccessCallback, ErrorCallback);
     void ready(SuccessCallback);
+
+    bool isErrored() { return m_state == State::Errored; }
 
     // API used from the JS binding.
     void start();
 
     void changeStateToClosed();
+    virtual void changeStateToErrored();
+
+    ReadableStreamSource& source() { return m_source.get(); }
 
 private:
     ReadableStream(ScriptExecutionContext&, Ref<ReadableStreamSource>&&);
     void resolveClosedCallback();
     void resolveReadyCallback();
+    void rejectClosedCallback();
 
     // ActiveDOMObject API.
     const char* activeDOMObjectName() const override;
@@ -82,8 +90,9 @@ private:
     State m_state;
     Ref<ReadableStreamSource> m_source;
 
-    // FIXME: Add closed error callback.
     SuccessCallback m_closedSuccessCallback;
+    ErrorCallback m_closedErrorCallback;
+
     SuccessCallback m_readyCallback;
 };
 

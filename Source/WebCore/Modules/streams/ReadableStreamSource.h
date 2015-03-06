@@ -57,6 +57,11 @@ public:
     }
 
     virtual bool isErrored() { return false; }
+
+    virtual const String& errorDescription() const = 0;
+
+    virtual bool isJS() const { return false; }
+
 };
 
 }

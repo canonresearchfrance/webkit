@@ -125,6 +125,20 @@ void ReadableStreamJSSource::setInternalError(JSC::ExecState* exec, const String
     m_error.set(exec->vm(), createTypeError(exec, message));
 }
 
+void ReadableStreamJSSource::storeError(JSC::ExecState* exec, JSValue error)
+{
+    m_error.set(exec->vm(), error);
+}
+
+const String& ReadableStreamJSSource::errorDescription() const
+{
+    if (!m_errorDescription && m_error) {
+        ExecState* exec = m_readableStream->globalObject()->globalExec();
+        const_cast<ReadableStreamJSSource*>(this)->m_errorDescription = m_error.get().toString(exec)->value(exec);
+    }
+    return m_errorDescription;
+}
+
 static EncodedJSValue JSC_HOST_CALL enqueueReadableStreamFunction(ExecState*)
 {
     notImplemented();
@@ -148,9 +162,12 @@ static inline JSFunction* createReadableStreamCloseFunction(ExecState* exec)
     return JSFunction::create(exec->vm(), exec->callee()->globalObject(), 0, ASCIILiteral("CreateReadableStreamCloseFunction"), closeReadableStreamFunction);
 }
 
-static EncodedJSValue JSC_HOST_CALL errorReadableStreamFunction(ExecState*)
+static EncodedJSValue JSC_HOST_CALL errorReadableStreamFunction(ExecState* exec)
 {
-    notImplemented();
+    JSValue error = exec->argumentCount() ? exec->argument(0) : createError(exec, ASCIILiteral("Error function called."));
+    JSReadableStream* jsReadableStream = getJSReadableStream(exec);
+    static_cast<ReadableStreamJSSource&>(jsReadableStream->impl().source()).storeError(exec, error);
+    jsReadableStream->impl().changeStateToErrored();
     return JSValue::encode(jsUndefined());
 }
 
@@ -202,7 +219,8 @@ void ReadableStreamJSSource::start(JSC::ExecState* exec)
 
     callFunction(exec, startFunction, m_source.get(), arguments);
 
-    if (m_error) {
+    // Throw except if m_errorFunction was called.
+    if (m_error && !m_readableStream->impl().isErrored()) {
         throwVMError(exec, m_error.get());
         return;
     }

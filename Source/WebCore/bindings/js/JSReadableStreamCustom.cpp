@@ -91,7 +91,12 @@ JSValue JSReadableStream::closed(ExecState* exec) const
     auto successCallback = [wrapper]() mutable {
         wrapper.resolve(jsUndefined());
     };
-    impl().closed(WTF::move(successCallback));
+    auto failureCallback = [this, wrapper]() mutable {
+        JSValue error = impl().source().isJS() ? static_cast<ReadableStreamJSSource&>(impl().source()).error() : createError(globalObject()->globalExec(), impl().source().errorDescription());
+        wrapper.reject(error);
+    };
+
+    impl().closed(WTF::move(successCallback), WTF::move(failureCallback));
 
     return wrapper.promise();
 }
