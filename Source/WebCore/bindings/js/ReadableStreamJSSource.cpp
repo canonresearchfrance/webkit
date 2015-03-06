@@ -34,7 +34,6 @@
 
 #include "JSDOMPromise.h"
 #include "JSReadableStream.h"
-#include "NotImplemented.h"
 #include "ScriptExecutionContext.h"
 #include <runtime/Error.h>
 #include <runtime/JSCJSValueInlines.h>
@@ -139,16 +138,70 @@ const String& ReadableStreamJSSource::errorDescription() const
     return m_errorDescription;
 }
 
-unsigned ReadableStreamJSSource::chunkSize(ExecState*, JSValue)
+unsigned ReadableStreamJSSource::chunkSize(ExecState* exec, JSValue chunk)
 {
-    notImplemented();
-    return 1;
+    if (!m_source)
+        return 1;
+
+    JSLockHolder lock(exec);
+    JSValue strategy = getPropertyFromObject(exec, m_source.get(), "strategy");
+    if (!strategy.isObject()) {
+        if (!strategy.isUndefined()) {
+            setInternalError(exec, ASCIILiteral("ReadableStream constructor strategy should be an object."));
+            return 0;
+        }
+        return 1;
+    }
+
+    JSValue sizeFunction = strategy.getObject()->get(exec, Identifier(exec, "size"));
+    if (!sizeFunction.isFunction()) {
+        setInternalError(exec, ASCIILiteral("No chunk size JS callback"));
+        return 0;
+    }
+
+    MarkedArgumentBuffer arguments;
+    arguments.append(chunk);
+    JSValue sizeValue = callFunction(exec, sizeFunction, strategy, arguments);
+
+    if (m_error)
+        return 0;
+
+    double value = sizeValue.toNumber(exec);
+    if (value < 0 || std::isnan(value) || std::isinf(value)) {
+        storeError(exec, createRangeError(exec, ASCIILiteral("Incorrect value.")));
+        return 0;
+    }
+    return value;
 }
 
 bool ReadableStreamJSSource::shouldApplyBackpressure(unsigned queueSize)
 {
-    notImplemented();
-    return queueSize > 1;
+    if (!m_source)
+        return queueSize > 1;
+
+    ExecState* exec = m_readableStream->globalObject()->globalExec();
+    JSLockHolder lock(exec);
+    JSValue strategy = getPropertyFromObject(exec, m_source.get(), "strategy");
+    if (!strategy.isObject()) {
+        if (!strategy.isUndefined())
+            setInternalError(exec, ASCIILiteral("ReadableStream constructor strategy should be an object."));
+        return queueSize > 1;
+    }
+
+    JSValue shouldApplyBackpressureFunction = getPropertyFromObject(exec, strategy.getObject(), "shouldApplyBackpressure");
+    if (!shouldApplyBackpressureFunction.isFunction()) {
+        setInternalError(exec, ASCIILiteral("No back pressure JS callback."));
+        return true;
+    }
+
+    MarkedArgumentBuffer arguments;
+    arguments.append(jsNumber(queueSize));
+    JSValue shouldApplyBackpressure = callFunction(exec, shouldApplyBackpressureFunction, strategy, arguments);
+
+    if (m_error)
+        return false;
+
+    return shouldApplyBackpressure.toBoolean(exec);
 }
 
 static EncodedJSValue JSC_HOST_CALL enqueueReadableStreamFunction(ExecState* exec)

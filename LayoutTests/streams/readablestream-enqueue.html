@@ -16,6 +16,53 @@ test(function() {
     });
 }, 'Default ReadableStream returns `false` for all but the first `enqueue` call');
 
+test2 = async_test('ReadableStream continues returning `true` from `enqueue` if the data is read out of it in time.');
+test2.step(function() {
+    const rs = new ReadableStream({
+        start: function(enqueue) {
+            // Delay a bit so that the stream is successfully constructed and thus the `rs` variable references something.
+            setTimeout(test2.step_func(function() {
+                assert_equals(enqueue('foo'), true);
+                assert_equals(rs.state, 'readable');
+                assert_equals(rs.read(), 'foo');
+                assert_equals(rs.state, 'waiting');
+
+                assert_equals(enqueue('bar'), true);
+                assert_equals(rs.state, 'readable');
+                assert_equals(rs.read(), 'bar');
+                assert_equals(rs.state, 'waiting');
+
+                assert_equals(enqueue('baz'), true);
+                assert_equals(rs.state, 'readable');
+                assert_equals(rs.read(), 'baz');
+                assert_equals(rs.state, 'waiting');
+                test2.done();
+            }), 0);
+        },
+        strategy: new CountQueuingStrategy(4)
+    });
+});
+
+test(function() {
+    const rs = new ReadableStream({
+        start: function(enqueue, close) {
+            assert_equals(enqueue('a'), true);
+            close();
+
+            assert_throws(
+                new TypeError(),
+                function() {
+                    enqueue('b');
+                });
+        },
+        strategy: new CountQueuingStrategy(10)
+    });
+
+    assert_equals(rs.state, 'readable');
+    assert_equals(rs.read(), 'a');
+    assert_equals(rs.state, 'closed');
+}, 'ReadableStream enqueue fails when the stream is draining.');
+
 test(function() {
     var rs = new ReadableStream({
         start: function(enqueue, close) {
@@ -47,5 +94,38 @@ test(function() {
 
     assert_equals(rs.state, 'errored');
 }, 'ReadableStream enqueue fails when the stream is errored');
+
+test(function() {
+    new ReadableStream({
+        start: function(enqueue) {
+            assert_throws(new TypeError(), function() {enqueue('hi')});
+        },
+        strategy: {
+            shouldApplyBackpressure: function(queueSize) {
+                throw new TypeError("test");
+            }
+        }
+    });
+    new ReadableStream({
+        start: function(enqueue) {
+            assert_throws(new TypeError(), function() {enqueue('hi')});
+        },
+        strategy: {
+            size: function(chunk) {
+                throw new TypeError("test");
+            }
+        }
+    });
+    new ReadableStream({
+        start: function(enqueue) {
+            assert_throws(new TypeError(), function() {enqueue('hi')});
+        },
+        strategy: {
+            size: function(chunk) {
+                return "potato";
+            }
+        }
+    });
+}, 'Enqueue should throw in case of bad size or shouldApplyBackpressure functions');
 
 </script>

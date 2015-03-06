@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<script src="../resources/testharness.js"></script>
+<script src="../resources/testharnessreport.js"></script>
+<script src='resources/streams-utils.js'></script>
+<script>
+
+function createReadableStream(highWaterMark) {
+    rs = new ReadableStream({
+        start: function(enqueue_) { enqueue = enqueue_; },
+        strategy: new CountQueuingStrategy(highWaterMark)
+    });
+    rs.enqueue = enqueue;
+    return rs;
+}
+
+test(function() {
+    rs = createReadableStream(0);
+
+    assert_false(rs.enqueue('a')); // 'After 0 reads, 1st enqueue should return false (queue now contains 1 chunk)');
+    assert_false(rs.enqueue('b')); // 'After 0 reads, 2nd enqueue should return false (queue now contains 2 chunks)');
+    assert_false(rs.enqueue('c')); // 'After 0 reads, 3rd enqueue should return false (queue now contains 3 chunks)');
+    assert_false(rs.enqueue('d')); // 'After 0 reads, 4th enqueue should return false (queue now contains 4 chunks)');
+
+    assert_equals(rs.read(), 'a'); // '1st read gives back the 1st chunk enqueued (queue now contains 3 chunks)');
+    assert_equals(rs.read(), 'b'); // '2nd read gives back the 2nd chunk enqueued (queue now contains 2 chunks)');
+    assert_equals(rs.read(), 'c'); // '3rd read gives back the 2nd chunk enqueued (queue now contains 1 chunk)');
+
+    assert_false(rs.enqueue('e')); // 'After 3 reads, 5th enqueue should return false (queue now contains 2 chunks)');
+
+    assert_equals(rs.read(), 'd'); // '4th read gives back the 3rd chunk enqueued (queue now contains 1 chunks)');
+    assert_equals(rs.read(), 'e'); // '5th read gives back the 4th chunk enqueued (queue now contains 0 chunks)');
+
+    assert_false(rs.enqueue('f')); // 'After 5 reads, 6th enqueue should return false (queue now contains 1 chunk)');
+    assert_false(rs.enqueue('g')); // 'After 5 reads, 7th enqueue should return false (queue now contains 2 chunks)');
+}, 'ReadableStream with a count queueing strategy of zero.');
+
+test(function() {
+    createReadableStream(1);
+
+    assert_true(rs.enqueue('a')); // 'After 0 reads, 1st enqueue should return true (queue now contains 1 chunk)');
+    assert_false(rs.enqueue('b')); // 'After 0 reads, 2nd enqueue should return false (queue now contains 2 chunks)');
+    assert_false(rs.enqueue('c')); // 'After 0 reads, 3rd enqueue should return false (queue now contains 3 chunks)');
+    assert_false(rs.enqueue('d')); // 'After 0 reads, 4th enqueue should return false (queue now contains 4 chunks)');
+
+    assert_equals(rs.read(), 'a'); // '1st read gives back the 1st chunk enqueued (queue now contains 3 chunks)');
+    assert_equals(rs.read(), 'b'); // '2nd read gives back the 2nd chunk enqueued (queue now contains 2 chunks)');
+    assert_equals(rs.read(), 'c'); // '3rd read gives back the 2nd chunk enqueued (queue now contains 1 chunk)');
+
+    assert_false(rs.enqueue('e')); // 'After 3 reads, 5th enqueue should return false (queue now contains 2 chunks)');
+
+    assert_equals(rs.read(), 'd'); // '4th read gives back the 3rd chunk enqueued (queue now contains 1 chunks)');
+    assert_equals(rs.read(), 'e'); // '5th read gives back the 4th chunk enqueued (queue now contains 0 chunks)');
+
+    assert_true(rs.enqueue('f')); // 'After 5 reads, 6th enqueue should return true (queue now contains 1 chunk)');
+    assert_false(rs.enqueue('g')); // 'After 5 reads, 7th enqueue should return false (queue now contains 2 chunks)');
+}, 'ReadableStream with a count queueing strategy of one.');
+
+test(function () {
+    createReadableStream(4);
+
+    assert_true(rs.enqueue('a')); // 'After 0 reads, 1st enqueue should return true (queue now contains 1 chunk)');
+    assert_true(rs.enqueue('b')); // 'After 0 reads, 2nd enqueue should return true (queue now contains 2 chunks)');
+    assert_true(rs.enqueue('c')); // 'After 0 reads, 3rd enqueue should return true (queue now contains 3 chunks)');
+    assert_true(rs.enqueue('d')); // 'After 0 reads, 4th enqueue should return true (queue now contains 4 chunks)');
+    assert_false(rs.enqueue('e')); // 'After 0 reads, 5th enqueue should return false (queue now contains 5 chunks)');
+    assert_false(rs.enqueue('f')); // 'After 0 reads, 6th enqueue should return false (queue now contains 6 chunks)');
+
+    assert_equals(rs.read(), 'a'); // '1st read gives back the 1st chunk enqueued (queue now contains 5 chunks)');
+    assert_equals(rs.read(), 'b'); // '2nd read gives back the 2nd chunk enqueued (queue now contains 4 chunks)');
+
+    assert_false(rs.enqueue('g')); // 'After 2 reads, 7th enqueue should return false (queue now contains 5 chunks)');
+
+    assert_equals(rs.read(), 'c'); // '3rd read gives back the 3rd chunk enqueued (queue now contains 4 chunks)');
+    assert_equals(rs.read(), 'd'); // '4th read gives back the 4th chunk enqueued (queue now contains 3 chunks)');
+    assert_equals(rs.read(), 'e'); // '5th read gives back the 5th chunk enqueued (queue now contains 2 chunks)');
+    assert_equals(rs.read(), 'f'); // '6th read gives back the 6th chunk enqueued (queue now contains 1 chunk)');
+
+    assert_true(rs.enqueue('h')); // 'After 6 reads, 8th enqueue should return true (queue now contains 2 chunks)');
+    assert_true(rs.enqueue('i')); // 'After 6 reads, 9th enqueue should return true (queue now contains 3 chunks)');
+    assert_true(rs.enqueue('j')); // 'After 6 reads, 10th enqueue should return true (queue now contains 4 chunks)');
+    assert_false(rs.enqueue('k')); // 'After 6 reads, 11th enqueue should return false (queue now contains 5 chunks)');
+}, 'ReadableStream with a count queueing strategy of four.');
+
+</script>
