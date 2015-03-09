@@ -122,6 +122,7 @@ void ReadableStream::changeStateToClosed()
         m_state = State::Closed;
         resolveReadyCallback();
         resolveClosedCallback();
+        unsetPendingActivity(this);
     }
     // FIXME: Handle State::Readable when enqueue is supported.
 }
@@ -133,6 +134,7 @@ void ReadableStream::changeStateToErrored()
     m_state = State::Errored;
     resolveReadyCallback();
     rejectClosedCallback();
+    unsetPendingActivity(this);
 }
 
 void ReadableStream::resolveReadyCallback()
@@ -155,6 +157,7 @@ void ReadableStream::ready(SuccessCallback callback)
 
 void ReadableStream::start()
 {
+    setPendingActivity(this);
     // FIXME: Implement pulling data
 }
 

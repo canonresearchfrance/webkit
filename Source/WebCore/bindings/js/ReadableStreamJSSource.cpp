@@ -192,12 +192,14 @@ void ReadableStreamJSSource::setStream(ExecState* exec, JSReadableStream* readab
 void ReadableStreamJSSource::startReadableStreamAsync()
 {
     m_readableStream->impl().scriptExecutionContext()->postTask([this](ScriptExecutionContext&) {
+        m_readableStream->impl().unsetPendingActivity(&m_readableStream->impl());
         m_readableStream->impl().start();
     });
 }
 
 void ReadableStreamJSSource::start(JSC::ExecState* exec)
 {
+    m_readableStream->impl().setPendingActivity(&m_readableStream->impl());
     if (!m_source) {
         startReadableStreamAsync();
         return;

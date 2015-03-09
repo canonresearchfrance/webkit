@@ -30,6 +30,7 @@
 enum ReadableStreamStateType { "readable", "waiting", "closed", "errored" };
 
 [
+    ActiveDOMObject,
     CustomConstructor(any properties),
     Conditional=STREAMS_API
 ] interface ReadableStream {
