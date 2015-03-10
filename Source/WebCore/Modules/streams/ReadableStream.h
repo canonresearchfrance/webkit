@@ -65,6 +65,11 @@ public:
     void closed(SuccessCallback);
     void ready(SuccessCallback);
 
+    // API used from the JS binding.
+    void start();
+
+    void changeStateToClosed();
+
 private:
     ReadableStream(ScriptExecutionContext&, Ref<ReadableStreamSource>&&);
 

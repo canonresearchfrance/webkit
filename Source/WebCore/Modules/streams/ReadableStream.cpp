@@ -77,17 +77,31 @@ String ReadableStream::state() const
         return ASCIILiteral("errored");
     }
     ASSERT_NOT_REACHED();
-    return ASCIILiteral("");
+    return String();
 }
 
 void ReadableStream::closed(SuccessCallback)
 {
-    notImplemented();
+    notImplemented();    
+}
+
+void ReadableStream::changeStateToClosed()
+{
+    if (m_state == State::Waiting) {
+        m_state = State::Closed;
+        // FIXME: Implement ready and closed promise resolution.
+    }
+    // FIXME: Handle State::Readable when enqueue is supported.
 }
 
 void ReadableStream::ready(SuccessCallback)
 {
     notImplemented();
+}
+
+void ReadableStream::start()
+{
+    // FIXME: Implement pulling data
 }
 
 const char* ReadableStream::activeDOMObjectName() const

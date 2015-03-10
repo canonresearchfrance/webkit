@@ -46,6 +46,10 @@ test(function() {
 }, 'ReadableStream can be constructed with no arguments');
 
 test(function() {
+    new ReadableStream({ });
+}, 'ReadableStream can be constructed with an empty object as argument');
+
+test(function() {
     rs = new ReadableStream();
     assert_equals(typeof rs.read, 'function', 'has a read method');
     assert_equals(typeof rs.cancel, 'function', 'has an cancel method');

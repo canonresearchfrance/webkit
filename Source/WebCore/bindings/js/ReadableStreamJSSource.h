@@ -36,6 +36,7 @@
 #include <heap/Strong.h>
 #include <heap/StrongInlines.h>
 #include <runtime/JSCJSValue.h>
+#include <runtime/JSFunction.h>
 #include <runtime/PrivateName.h>
 #include <wtf/Ref.h>
 
@@ -48,8 +49,10 @@ public:
     static Ref<ReadableStreamJSSource> create(JSC::ExecState*);
     ~ReadableStreamJSSource() { }
 
+    void setStream(JSC::ExecState*, JSReadableStream*);
+
     JSC::JSValue error() { return m_error.get(); }
-    bool start() { return true; }
+    void start(JSC::ExecState*);
 
     // ReadableStreamSource API.
     virtual bool isErrored() { return !!m_error; }
@@ -58,8 +61,21 @@ private:
     void setInternalError(JSC::ExecState*, const String&);
 
     ReadableStreamJSSource(JSC::ExecState*);
+    JSC::JSValue callFunction(JSC::ExecState*, JSC::JSValue, JSC::JSValue, const JSC::ArgList&);
+    void startReadableStreamAsync();
+
     // m_error may be an error generated from ReadableStreamJSSource or from JS callbacks.
     JSC::Strong<JSC::Unknown> m_error;
+    JSReadableStream* m_readableStream { nullptr };
+
+    // Object passed to constructor.
+    JSC::Strong<JSC::JSObject> m_source;
+
+    // Functions passed as parameters when calling the functions passed in the constructor.
+    JSC::Strong<JSC::JSFunction> m_enqueueFunction;
+    JSC::Strong<JSC::JSFunction> m_closeFunction;
+    // FIXME: Decide whether creating the error function on the fly when calling the start source function.
+    JSC::Strong<JSC::JSFunction> m_errorFunction;
 };
 
 void setInternalSlotToObject(JSC::ExecState*, JSC::JSValue, JSC::PrivateName&, JSC::JSValue);

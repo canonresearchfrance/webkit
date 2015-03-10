@@ -28,16 +28,20 @@
  */
 
 #include "config.h"
+#include "ReadableStreamJSSource.h"
 
 #if ENABLE(STREAMS_API)
-#include "ReadableStreamJSSource.h"
 
 #include "JSDOMPromise.h"
 #include "JSReadableStream.h"
+#include "NotImplemented.h"
+#include "ScriptExecutionContext.h"
 #include <runtime/Error.h>
 #include <runtime/JSCJSValueInlines.h>
 #include <runtime/JSString.h>
 #include <runtime/StructureInlines.h>
+#include <wtf/MainThread.h>
+#include <wtf/NeverDestroyed.h>
 
 using namespace JSC;
 
@@ -61,6 +65,43 @@ JSValue getInternalSlotFromObject(ExecState* exec, JSValue objectValue, PrivateN
     return propertySlot.getValue(exec, propertyName);
 }
 
+// This slot name is used to store the JSReadableStream in created JS functions (enqueue, close...).
+// This allows retrieving the corresponding JSReadableStream when executing the JS function.
+static JSC::PrivateName& readableStreamSlotName()
+{
+    static NeverDestroyed<JSC::PrivateName> readableStreamSlotName("readableStream");
+    return readableStreamSlotName;
+}
+
+static JSReadableStream* getJSReadableStream(ExecState* exec)
+{
+    JSReadableStream* jsReadableStream = jsDynamicCast<JSReadableStream*>(getInternalSlotFromObject(exec, exec->callee(), readableStreamSlotName()));
+    ASSERT(jsReadableStream);
+    return jsReadableStream;
+}
+
+static inline JSValue getPropertyFromObject(ExecState* exec, JSObject* object, const char* identifier)
+{
+    return object->get(exec, Identifier(exec, identifier));
+}
+
+JSValue ReadableStreamJSSource::callFunction(ExecState* exec, JSValue jsFunction, JSValue thisValue, const ArgList& arguments)
+{
+    CallData callData;
+    CallType callType = getCallData(jsFunction, callData);
+
+    JSValue exception;
+    JSValue value = call(exec, jsFunction, callType, callData, thisValue, arguments, &exception);
+
+    if (callType == CallTypeNone)
+        setInternalError(exec, ASCIILiteral("Abrupt call."));
+
+    if (exception)
+        m_error.set(exec->vm(), exception);
+
+    return value;
+}
+
 Ref<ReadableStreamJSSource> ReadableStreamJSSource::create(JSC::ExecState* exec)
 {
     return adoptRef(*new ReadableStreamJSSource(exec));
@@ -76,13 +117,98 @@ ReadableStreamJSSource::ReadableStreamJSSource(JSC::ExecState* exec)
         return;
     }
 
-    // FIXME: Implement parameters support
-    setInternalError(exec, ASCIILiteral("ReadableStream constructor does not support parameter yet."));
+    m_source.set(exec->vm(), exec->argument(0).getObject());
 }
 
 void ReadableStreamJSSource::setInternalError(JSC::ExecState* exec, const String& message)
 {
     m_error.set(exec->vm(), createTypeError(exec, message));
+}
+
+static EncodedJSValue JSC_HOST_CALL enqueueReadableStreamFunction(ExecState*)
+{
+    notImplemented();
+    return JSValue::encode(jsUndefined());
+}
+
+static inline JSFunction* createReadableStreamEnqueueFunction(ExecState* exec)
+{
+    return JSFunction::create(exec->vm(), exec->callee()->globalObject(), 1, ASCIILiteral("CreateReadableStreamEnqueueFunction"), enqueueReadableStreamFunction);
+}
+
+static EncodedJSValue JSC_HOST_CALL closeReadableStreamFunction(ExecState* exec)
+{
+    JSReadableStream* jsReadableStream = getJSReadableStream(exec);
+    jsReadableStream->impl().changeStateToClosed();
+    return JSValue::encode(jsUndefined());
+}
+
+static inline JSFunction* createReadableStreamCloseFunction(ExecState* exec)
+{
+    return JSFunction::create(exec->vm(), exec->callee()->globalObject(), 0, ASCIILiteral("CreateReadableStreamCloseFunction"), closeReadableStreamFunction);
+}
+
+static EncodedJSValue JSC_HOST_CALL errorReadableStreamFunction(ExecState*)
+{
+    notImplemented();
+    return JSValue::encode(jsUndefined());
+}
+
+static inline JSFunction* createReadableStreamErrorFunction(ExecState* exec)
+{
+    return JSFunction::create(exec->vm(), exec->callee()->globalObject(), 1, ASCIILiteral("CreateReadableStreamErrorFunction"), errorReadableStreamFunction);
+}
+
+void ReadableStreamJSSource::setStream(ExecState* exec, JSReadableStream* readableStream)
+{
+    m_readableStream = readableStream;
+
+    m_enqueueFunction.set(exec->vm(), createReadableStreamEnqueueFunction(exec));
+    m_closeFunction.set(exec->vm(), createReadableStreamCloseFunction(exec));
+    m_errorFunction.set(exec->vm(), createReadableStreamErrorFunction(exec));
+
+    setInternalSlotToObject(exec, m_enqueueFunction.get(), readableStreamSlotName(), m_readableStream);
+    setInternalSlotToObject(exec, m_closeFunction.get(), readableStreamSlotName(), m_readableStream);
+    setInternalSlotToObject(exec, m_errorFunction.get(), readableStreamSlotName(), m_readableStream);
+}
+
+void ReadableStreamJSSource::startReadableStreamAsync()
+{
+    m_readableStream->impl().scriptExecutionContext()->postTask([this](ScriptExecutionContext&) {
+        m_readableStream->impl().start();
+    });
+}
+
+void ReadableStreamJSSource::start(JSC::ExecState* exec)
+{
+    if (!m_source) {
+        startReadableStreamAsync();
+        return;
+    }
+    JSLockHolder lock(exec);
+    JSValue startFunction = getPropertyFromObject(exec, m_source.get(), "start");
+    if (!startFunction.isFunction()) {
+        if (!startFunction.isUndefined())
+            throwVMError(exec, createTypeError(exec, ASCIILiteral("ReadableStream constructor object start property should be a function.")));
+        else
+            startReadableStreamAsync();
+        return;
+    }
+
+    MarkedArgumentBuffer arguments;
+    arguments.append(m_enqueueFunction.get());
+    arguments.append(m_closeFunction.get());
+    arguments.append(m_errorFunction.get());
+
+    callFunction(exec, startFunction, m_source.get(), arguments);
+
+    if (m_error) {
+        throwVMError(exec, m_error.get());
+        return;
+    }
+
+    // FIXME: Implement handling promise as result of calling start function.
+    startReadableStreamAsync();
 }
 
 } // namespace WebCore
