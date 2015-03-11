@@ -39,6 +39,7 @@
 #include <functional>
 #include <runtime/JSCJSValue.h>
 #include <wtf/Ref.h>
+#include <wtf/Vector.h>
 
 namespace WebCore {
 
@@ -79,13 +80,18 @@ public:
     virtual void changeStateToErrored();
 
     ReadableStreamSource& source() { return m_source.get(); }
+    bool canEnqueue(String&);
 protected:
     ReadableStream(ScriptExecutionContext&, Ref<ReadableStreamSource>&&);
+
+    bool enqueueing(unsigned);
+    void dequeueing(unsigned);
 
 private:
     void resolveClosedCallback();
     void resolveReadyCallback();
     void rejectClosedCallback();
+    bool shouldApplyBackpressure();
 
     // ActiveDOMObject API.
     const char* activeDOMObjectName() const override;
@@ -98,6 +104,10 @@ private:
     ErrorCallback m_closedErrorCallback;
 
     SuccessCallback m_readyCallback;
+
+    unsigned m_totalQueueSize { 0 };
+
+    bool m_isDraining { false };
 };
 
 }

@@ -40,6 +40,7 @@
 #include <runtime/JSFunction.h>
 #include <runtime/PrivateName.h>
 #include <wtf/Ref.h>
+#include <wtf/Vector.h>
 
 namespace WebCore {
 
@@ -57,10 +58,15 @@ public:
     void storeError(JSC::ExecState*, JSC::JSValue);
     void start(JSC::ExecState*);
 
+    unsigned chunkSize(JSC::ExecState*, JSC::JSValue);
+    void enqueue(JSC::JSValue);
+    JSC::JSValue read();
+
     // ReadableStreamSource API.
     virtual bool isErrored() override { return !!m_error; }
     virtual bool isJS() const override { return true; }
     virtual const String& errorDescription() const override;
+    virtual bool shouldApplyBackpressure(unsigned) override;
 
 private:
     void setInternalError(JSC::ExecState*, const String&);
@@ -82,6 +88,7 @@ private:
     JSC::Strong<JSC::JSFunction> m_closeFunction;
     // FIXME: Decide whether creating the error function on the fly when calling the start source function.
     JSC::Strong<JSC::JSFunction> m_errorFunction;
+
 };
 
 void setInternalSlotToObject(JSC::ExecState*, JSC::JSValue, JSC::PrivateName&, JSC::JSValue);
@@ -89,9 +96,15 @@ JSC::JSValue getInternalSlotFromObject(JSC::ExecState*, JSC::JSValue, JSC::Priva
 
 class ReadableJSValueStream: public ReadableStream {
 public:
-    JSC::JSValue read();
+    JSC::JSValue read() override;
+    bool enqueue(JSC::ExecState*, JSC::JSValue, unsigned);
+    void changeStateToErrored() override;
+
     static Ref<ReadableJSValueStream> create(ScriptExecutionContext&, Ref<ReadableStreamJSSource>&&);
     ReadableJSValueStream(ScriptExecutionContext& scriptExecutionContext, Ref<ReadableStreamJSSource>&& source) : ReadableStream(scriptExecutionContext, Ref<ReadableStreamSource>(source.get())) { }
+private:
+    Vector<unsigned> m_sizeQueue;
+    Vector<JSC::Strong<JSC::Unknown>> m_chunkQueue;
 };
 
 } // namespace WebCore

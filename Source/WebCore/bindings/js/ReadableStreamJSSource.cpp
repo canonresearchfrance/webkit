@@ -139,10 +139,43 @@ const String& ReadableStreamJSSource::errorDescription() const
     return m_errorDescription;
 }
 
-static EncodedJSValue JSC_HOST_CALL enqueueReadableStreamFunction(ExecState*)
+unsigned ReadableStreamJSSource::chunkSize(ExecState*, JSValue)
 {
     notImplemented();
-    return JSValue::encode(jsUndefined());
+    return 1;
+}
+
+bool ReadableStreamJSSource::shouldApplyBackpressure(unsigned queueSize)
+{
+    notImplemented();
+    return queueSize > 1;
+}
+
+static EncodedJSValue JSC_HOST_CALL enqueueReadableStreamFunction(ExecState* exec)
+{
+    JSReadableStream* jsReadableStream = getJSReadableStream(exec);
+    ReadableStreamJSSource& source = static_cast<ReadableStreamJSSource&>(jsReadableStream->impl().source());
+
+    String errorDescription;
+    if (!jsReadableStream->impl().canEnqueue(errorDescription)) {
+        if (source.isErrored()) 
+            return throwVMError(exec, source.error());
+        return throwVMError(exec, createTypeError(exec, errorDescription));
+    }
+
+    JSValue chunk = exec->argument(0);
+    unsigned chunkSize = source.chunkSize(exec, chunk);
+    if (source.isErrored()) {
+        jsReadableStream->impl().changeStateToErrored();
+        return throwVMError(exec, source.error());
+    }
+
+    bool shouldApplyBackpressure = static_cast<ReadableJSValueStream&>(jsReadableStream->impl()).enqueue(exec, chunk, chunkSize);
+    if (source.isErrored()) {
+        jsReadableStream->impl().changeStateToErrored();
+        return throwVMError(exec, source.error());
+    }
+    return JSValue::encode(jsBoolean(!shouldApplyBackpressure));
 }
 
 static inline JSFunction* createReadableStreamEnqueueFunction(ExecState* exec)
@@ -233,8 +266,8 @@ void ReadableStreamJSSource::start(JSC::ExecState* exec)
 
 JSC::JSValue ReadableJSValueStream::read()
 {
-    notImplemented();
-    return jsUndefined();
+    dequeueing(m_sizeQueue.takeLast());
+    return m_chunkQueue.takeLast().get();
 }
 
 Ref<ReadableJSValueStream> ReadableJSValueStream::create(ScriptExecutionContext& scriptExecutionContext, Ref<ReadableStreamJSSource>&& source)
@@ -243,6 +276,20 @@ Ref<ReadableJSValueStream> ReadableJSValueStream::create(ScriptExecutionContext&
     readableStream.get().suspendIfNeeded();
 
     return readableStream;
+}
+
+void ReadableJSValueStream::changeStateToErrored()
+{
+    m_sizeQueue.shrink(0);
+    m_chunkQueue.shrink(0);
+    ReadableStream::changeStateToErrored();
+}
+
+bool ReadableJSValueStream::enqueue(ExecState* exec, JSValue value, unsigned size)
+{
+    m_chunkQueue.insert(0, JSC::Strong<JSC::Unknown>(exec->vm(), value));
+    m_sizeQueue.insert(0, size);
+    return enqueueing(size);
 }
 
 } // namespace WebCore

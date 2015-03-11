@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<script src='../resources/testharness.js'></script>
+<script src='../resources/testharnessreport.js'></script>
+<script src='resources/streams-utils.js'></script>
+<script>
+
+test(function() {
+    new ReadableStream({
+        start: function(enqueue) {
+            assert_equals(enqueue('hi'), true);
+            assert_equals(enqueue('hey'), false);
+            assert_equals(enqueue('whee'), false);
+            assert_equals(enqueue('yo'), false);
+            assert_equals(enqueue('sup'), false);
+        }
+    });
+}, 'Default ReadableStream returns `false` for all but the first `enqueue` call');
+
+test(function() {
+    var rs = new ReadableStream({
+        start: function(enqueue, close) {
+            close();
+
+            assert_throws(
+                new TypeError(),
+                function() {
+                    enqueue('a');
+                });
+        }
+    });
+
+    assert_equals(rs.state, 'closed');
+}, 'ReadableStream enqueue fails when the stream is closed');
+
+test(function() {
+    var rs = new ReadableStream({
+        start: function(enqueue, close, error) {
+            error(new TypeError('woups'));
+
+            assert_throws(
+                new TypeError(),
+                function() {
+                    enqueue('a');
+                });
+        }
+    });
+
+    assert_equals(rs.state, 'errored');
+}, 'ReadableStream enqueue fails when the stream is errored');
+
+</script>

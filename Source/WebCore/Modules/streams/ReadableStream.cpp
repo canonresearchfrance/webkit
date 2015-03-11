@@ -115,14 +115,15 @@ void ReadableStream::changeStateToClosed()
         resolveReadyCallback();
         resolveClosedCallback();
         unsetPendingActivity(this);
-    }
-    // FIXME: Handle State::Readable when enqueue is supported.
+    } else if (m_state == State::Readable)
+        m_isDraining = true;
 }
 
 void ReadableStream::changeStateToErrored()
 {
     if (m_state == State::Errored || m_state == State::Closed)
         return;
+    m_totalQueueSize = 0;
     m_state = State::Errored;
     resolveReadyCallback();
     rejectClosedCallback();
@@ -162,6 +163,65 @@ bool ReadableStream::canSuspend() const
 {
     // FIXME: We should try and do better here.
     return false;
+}
+
+void ReadableStream::dequeueing(unsigned size)
+{
+    ASSERT(m_state == State::Readable);
+    ASSERT(m_totalQueueSize > 0);
+
+    m_totalQueueSize = m_totalQueueSize - size;
+
+    if (!m_totalQueueSize) {
+        if (m_isDraining) {
+            m_state = State::Closed;
+            resolveClosedCallback();
+        } else
+            m_state = State::Waiting;
+    }
+
+    // FIXME: Implement pulling data.
+}
+
+bool ReadableStream::shouldApplyBackpressure()
+{
+    bool shouldApplyBackpressureAsBool = m_source->shouldApplyBackpressure(m_totalQueueSize);
+
+    // In case of rethrow, stop pulling and exit, hence returning true here.
+    if (m_source->isErrored())
+        return true;
+
+    return shouldApplyBackpressureAsBool;
+}
+
+bool ReadableStream::canEnqueue(String &error)
+{
+    if (m_state == State::Errored) {
+        error = m_source->errorDescription();
+        return false;
+    }
+
+    if (m_state == State::Closed) {
+        error = ASCIILiteral("tried to enqueue data in a closed stream");
+        return false;
+    }
+
+    if (m_isDraining) {
+        error = ASCIILiteral("tried to enqueue data in a draining stream");
+        return false;
+    }
+    return true;
+}
+
+bool ReadableStream::enqueueing(unsigned chunkSize)
+{
+    m_state = State::Readable;
+
+    m_totalQueueSize += chunkSize;
+
+    resolveReadyCallback();
+
+    return shouldApplyBackpressure();
 }
 
 }
