@@ -39,16 +39,16 @@ namespace WebCore {
 
 DEFINE_DEBUG_ONLY_GLOBAL(WTF::RefCountedLeakCounter, readableStreamReaderCounter, ("ReadableStreamReader"));
 
-Ref<ReadableStreamReader> ReadableStreamReader::create(ScriptExecutionContext& scriptExecutionContext, ReadableStream* stream)
+Ref<ReadableStreamReader> ReadableStreamReader::create(ReadableStream* stream)
 {
-    auto readableStreamReader = adoptRef(*new ReadableStreamReader(scriptExecutionContext, stream));
+    auto readableStreamReader = adoptRef(*new ReadableStreamReader(stream));
     readableStreamReader.get().suspendIfNeeded();
 
     return readableStreamReader;
 }
 
-ReadableStreamReader::ReadableStreamReader(ScriptExecutionContext& scriptExecutionContext, ReadableStream* stream)
-    : ActiveDOMObject(&scriptExecutionContext)
+ReadableStreamReader::ReadableStreamReader(ReadableStream* stream)
+    : ActiveDOMObject(stream->scriptExecutionContext())
     , m_stream(stream)
     , m_state(stream->internalState())
 {

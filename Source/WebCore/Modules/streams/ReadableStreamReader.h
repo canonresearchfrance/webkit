@@ -45,7 +45,7 @@ class ScriptExecutionContext;
 
 class ReadableStreamReader : public ActiveDOMObject, public ScriptWrappable, public RefCounted<ReadableStreamReader> {
 public:
-    static Ref<ReadableStreamReader> create(ScriptExecutionContext&, ReadableStream*);
+    static Ref<ReadableStreamReader> create(ReadableStream*);
     virtual ~ReadableStreamReader();
 
     ReadableStream* stream() { return m_stream; }
@@ -57,7 +57,7 @@ public:
     void changeStateToClosed();
 
 private:
-    ReadableStreamReader(ScriptExecutionContext&, ReadableStream*);
+    ReadableStreamReader(ReadableStream*);
 
     // ActiveDOMObject API.
     const char* activeDOMObjectName() const override;
