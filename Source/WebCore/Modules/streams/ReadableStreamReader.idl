@@ -27,17 +27,18 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-enum ReadableStreamStateType { "readable", "waiting", "closed", "errored" };
-
 [
     ActiveDOMObject,
     CustomConstructor(any properties),
     JSCustomMarkFunction,
     Conditional=STREAMS_API
-] interface ReadableStream {
-    // FIXME: Remove RaisesException once methods are actually implemented.
+] interface ReadableStreamReader {
+    // FIXME: Remove RaisesException once methods are implemented.
+    [Custom, RaisesException] Object read();
     [Custom, RaisesException] Promise cancel(DOMString reason);
-    ReadableStreamReader getReader();
     [Custom, RaisesException] Promise pipeTo(any streams, any options);
-    [Custom, RaisesException] Object pipeThrough(any dest, any options);
+    [Custom, RaisesException] Promise pipeThrough(any dest, any options);
+    [Custom, RaisesException] void releaseLock();
+
+    [CustomGetter] readonly attribute Promise closed;
 };

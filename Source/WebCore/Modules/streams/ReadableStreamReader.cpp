@@ -27,17 +27,68 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-enum ReadableStreamStateType { "readable", "waiting", "closed", "errored" };
+#include "config.h"
+#include "ReadableStreamReader.h"
 
-[
-    ActiveDOMObject,
-    CustomConstructor(any properties),
-    JSCustomMarkFunction,
-    Conditional=STREAMS_API
-] interface ReadableStream {
-    // FIXME: Remove RaisesException once methods are actually implemented.
-    [Custom, RaisesException] Promise cancel(DOMString reason);
-    ReadableStreamReader getReader();
-    [Custom, RaisesException] Promise pipeTo(any streams, any options);
-    [Custom, RaisesException] Object pipeThrough(any dest, any options);
-};
+#if ENABLE(STREAMS_API)
+
+#include "NotImplemented.h"
+#include <wtf/RefCountedLeakCounter.h>
+
+namespace WebCore {
+
+DEFINE_DEBUG_ONLY_GLOBAL(WTF::RefCountedLeakCounter, readableStreamReaderCounter, ("ReadableStreamReader"));
+
+Ref<ReadableStreamReader> ReadableStreamReader::create(ReadableStream* stream)
+{
+    auto readableStreamReader = adoptRef(*new ReadableStreamReader(stream));
+    readableStreamReader.get().suspendIfNeeded();
+
+    return readableStreamReader;
+}
+
+ReadableStreamReader::ReadableStreamReader(ReadableStream* stream)
+    : ActiveDOMObject(stream->scriptExecutionContext())
+    , m_stream(stream)
+    , m_state(stream->internalState())
+{
+    ASSERT(stream);
+#ifndef NDEBUG
+    readableStreamReaderCounter.increment();
+#endif
+    if (m_state == ReadableStream::State::Readable)
+        m_stream->setReader(this);
+    // FIXME: Implement ReleaseReadableStreamReader
+}
+
+ReadableStreamReader::~ReadableStreamReader()
+{
+#ifndef NDEBUG
+    readableStreamReaderCounter.decrement();
+#endif
+}
+
+void ReadableStreamReader::closed(ClosedSuccessCallback, ClosedErrorCallback)
+{
+    notImplemented();    
+}
+
+void ReadableStreamReader::changeStateToClosed()
+{
+    notImplemented();
+}
+
+const char* ReadableStreamReader::activeDOMObjectName() const
+{
+    return "ReadableStreamReader";
+}
+
+bool ReadableStreamReader::canSuspend() const
+{
+    // FIXME: We should try and do better here.
+    return false;
+}
+
+}
+
+#endif

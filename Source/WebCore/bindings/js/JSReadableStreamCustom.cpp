@@ -34,23 +34,25 @@
 
 #include "ExceptionCode.h"
 #include "JSDOMPromise.h"
+#include "JSReadableStreamReader.h"
 #include "ReadableStream.h"
 #include "ReadableStreamJSSource.h"
+#include "ReadableStreamReader.h"
 #include <wtf/NeverDestroyed.h>
 
 using namespace JSC;
 
 namespace WebCore {
 
+void JSReadableStream::visitAdditionalChildren(SlotVisitor& visitor)
+{
+    if (ReadableStreamReader* reader = impl().reader())
+        visitor.addOpaqueRoot(reader);
+}
+
 JSValue JSReadableStream::cancel(ExecState* exec)
 {
     JSValue error = createError(exec, ASCIILiteral("cancel is not implemented"));
-    return exec->vm().throwException(exec, error);
-}
-
-JSValue JSReadableStream::getReader(ExecState* exec)
-{
-    JSValue error = createError(exec, ASCIILiteral("getReader is not implemented"));
     return exec->vm().throwException(exec, error);
 }
 

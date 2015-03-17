@@ -33,6 +33,7 @@
 #if ENABLE(STREAMS_API)
 
 #include "NotImplemented.h"
+#include "ReadableStreamReader.h"
 #include <wtf/RefCountedLeakCounter.h>
 
 namespace WebCore {
@@ -73,6 +74,19 @@ bool ReadableStream::canSuspend() const
 {
     // FIXME: We should try and do better here.
     return false;
+}
+
+ReadableStreamReader* ReadableStream::getReader()
+{
+    if (!m_reader)
+        createReader();
+    ASSERT(m_reader);
+    return m_reader;
+}
+
+void ReadableStream::createReader()
+{
+    m_reader = WTF::getPtr(ReadableStreamReader::create(this));
 }
 
 }

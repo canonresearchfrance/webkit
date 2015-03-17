@@ -27,17 +27,48 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-enum ReadableStreamStateType { "readable", "waiting", "closed", "errored" };
+#ifndef ReadableStreamReader_h
+#define ReadableStreamReader_h
 
-[
-    ActiveDOMObject,
-    CustomConstructor(any properties),
-    JSCustomMarkFunction,
-    Conditional=STREAMS_API
-] interface ReadableStream {
-    // FIXME: Remove RaisesException once methods are actually implemented.
-    [Custom, RaisesException] Promise cancel(DOMString reason);
-    ReadableStreamReader getReader();
-    [Custom, RaisesException] Promise pipeTo(any streams, any options);
-    [Custom, RaisesException] Object pipeThrough(any dest, any options);
+#if ENABLE(STREAMS_API)
+
+#include "ActiveDOMObject.h"
+#include "ReadableStream.h"
+#include "ScriptWrappable.h"
+#include <functional>
+#include <wtf/Ref.h>
+
+namespace WebCore {
+
+class ReadableStream;
+class ScriptExecutionContext;
+
+class ReadableStreamReader : public ActiveDOMObject, public ScriptWrappable, public RefCounted<ReadableStreamReader> {
+public:
+    static Ref<ReadableStreamReader> create(ReadableStream*);
+    virtual ~ReadableStreamReader();
+
+    ReadableStream* stream() { return m_stream; }
+
+    typedef std::function<void()> ClosedSuccessCallback;
+    typedef std::function<void()> ClosedErrorCallback;
+    void closed(ClosedSuccessCallback, ClosedErrorCallback);
+
+    void changeStateToClosed();
+
+private:
+    ReadableStreamReader(ReadableStream*);
+
+    // ActiveDOMObject API.
+    const char* activeDOMObjectName() const override;
+    bool canSuspend() const override;
+
+    ReadableStream* m_stream;
+    ReadableStream::State m_state;
 };
+
+}
+
+#endif
+
+#endif // ReadableStream_h
