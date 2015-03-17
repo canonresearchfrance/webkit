@@ -40,12 +40,15 @@
 
 namespace WebCore {
 
+class ReadableStream;
 class ScriptExecutionContext;
 
 class ReadableStreamReader : public ActiveDOMObject, public ScriptWrappable, public RefCounted<ReadableStreamReader> {
 public:
-    static Ref<ReadableStreamReader> create(ScriptExecutionContext&, Ref<ReadableStream>&&);
+    static Ref<ReadableStreamReader> create(ScriptExecutionContext&, ReadableStream*);
     virtual ~ReadableStreamReader();
+
+    ReadableStream* stream() { return m_stream; }
 
     typedef std::function<void()> ClosedSuccessCallback;
     typedef std::function<void()> ClosedErrorCallback;
@@ -54,13 +57,14 @@ public:
     void changeStateToClosed();
 
 private:
-    ReadableStreamReader(ScriptExecutionContext&, Ref<ReadableStream>&&);
+    ReadableStreamReader(ScriptExecutionContext&, ReadableStream*);
 
     // ActiveDOMObject API.
     const char* activeDOMObjectName() const override;
     bool canSuspend() const override;
 
-    Ref<ReadableStream> m_stream;
+    ReadableStream* m_stream;
+    ReadableStream::State m_state;
 };
 
 }

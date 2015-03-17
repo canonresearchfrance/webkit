@@ -30,6 +30,7 @@
 [
     ActiveDOMObject,
     CustomConstructor(any properties),
+    JSCustomMarkFunction,
     Conditional=STREAMS_API
 ] interface ReadableStreamReader {
     // FIXME: Remove RaisesException once methods are implemented.

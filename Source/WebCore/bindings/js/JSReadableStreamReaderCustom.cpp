@@ -42,6 +42,12 @@ using namespace JSC;
 
 namespace WebCore {
 
+void JSReadableStreamReader::visitAdditionalChildren(SlotVisitor& visitor)
+{
+    if (ReadableStream* stream = impl().stream())
+        visitor.addOpaqueRoot(stream);
+}
+
 JSValue JSReadableStreamReader::read(ExecState* exec)
 {
     JSValue error = createError(exec, ASCIILiteral("read is not implemented"));
@@ -112,16 +118,7 @@ EncodedJSValue JSC_HOST_CALL constructJSReadableStreamReader(ExecState* exec)
     if (!stream)
         return throwVMError(exec, createError(exec, ASCIILiteral("constructor parameter is not a ReadableStream")));
 
-    DOMConstructorObject* jsConstructor = jsCast<DOMConstructorObject*>(exec->callee());
-    ASSERT(jsConstructor);
-
-    RefPtr<ReadableStreamReader> readableStreamReader = ReadableStreamReader::create(*jsConstructor->scriptExecutionContext(), Ref<ReadableStream>(stream->impl()));
-
-    VM& vm = exec->vm();
-    JSGlobalObject* globalObject = exec->callee()->globalObject();
-    JSReadableStreamReader* jsReadableStreamReader = JSReadableStreamReader::create(JSReadableStreamReader::createStructure(vm, globalObject, JSReadableStreamReader::createPrototype(vm, globalObject)), jsCast<JSDOMGlobalObject*>(globalObject), readableStreamReader.releaseNonNull());
-
-    return JSValue::encode(jsReadableStreamReader);
+    return JSValue::encode(toJS(exec, stream->globalObject(), stream->impl().getReader()));
 }
 
 } // namespace WebCore

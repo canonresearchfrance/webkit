@@ -30,12 +30,14 @@
 enum ReadableStreamStateType { "readable", "waiting", "closed", "errored" };
 
 [
+    ActiveDOMObject,
     CustomConstructor(any properties),
+    JSCustomMarkFunction,
     Conditional=STREAMS_API
 ] interface ReadableStream {
     // FIXME: Remove RaisesException once methods are actually implemented.
     [Custom, RaisesException] Promise cancel(DOMString reason);
-    [Custom, RaisesException] Object getReader();
+    ReadableStreamReader getReader();
     [Custom, RaisesException] Promise pipeTo(any streams, any options);
     [Custom, RaisesException] Object pipeThrough(any dest, any options);
 };
