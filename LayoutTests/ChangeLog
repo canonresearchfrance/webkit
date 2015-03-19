@@ -1,3 +1,15 @@
+2015-03-19  Youenn Fablet  <youenn.fablet@crf.canon.fr>
+
+        Adding reader
+
+        [Streams API] Implement a barebone ReadableStreamReader interface
+        https://bugs.webkit.org/show_bug.cgi?id=142866
+
+        Reviewed by NOBODY (OOPS!).
+
+        * streams/readablestreamreader-constructor-expected.txt: Added.
+        * streams/readablestreamreader-constructor.html: Added.
+
 2015-03-19  Xabier Rodriguez Calvar <calvaris@igalia.com> and Youenn Fablet  <youenn.fablet@crf.canon.fr>
 
         [Streams API] Update ReadableStream API according new version of the specification
