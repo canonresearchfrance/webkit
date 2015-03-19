@@ -1,6 +1,4 @@
-2015-03-19  Youenn Fablet  <youenn.fablet@crf.canon.fr>
-
-        Adding reader
+2015-03-19  Xabier Rodriguez Calvar <calvaris@igalia.com> and Youenn Fablet  <youenn.fablet@crf.canon.fr>
 
         [Streams API] Implement a barebone ReadableStreamReader interface
         https://bugs.webkit.org/show_bug.cgi?id=142866
@@ -18,7 +16,7 @@
         (WebCore::ReadableStream::reader):
         (WebCore::ReadableStream::setReader):
         * Modules/streams/ReadableStream.idl:
-        * Modules/streams/ReadableStreamReader.cpp: Copied from Source/WebCore/Modules/streams/ReadableStream.cpp.
+        * Modules/streams/ReadableStreamReader.cpp:
         (WebCore::ReadableStreamReader::create):
         (WebCore::ReadableStreamReader::ReadableStreamReader):
         (WebCore::ReadableStreamReader::~ReadableStreamReader):
@@ -26,9 +24,9 @@
         (WebCore::ReadableStreamReader::changeStateToClosed):
         (WebCore::ReadableStreamReader::activeDOMObjectName):
         (WebCore::ReadableStreamReader::canSuspend):
-        * Modules/streams/ReadableStreamReader.h: Copied from Source/WebCore/Modules/streams/ReadableStream.h.
+        * Modules/streams/ReadableStreamReader.h:
         (WebCore::ReadableStreamReader::stream):
-        * Modules/streams/ReadableStreamReader.idl: Copied from Source/WebCore/Modules/streams/ReadableStream.idl.
+        * Modules/streams/ReadableStreamReader.idl:
         * WebCore.vcxproj/WebCore.vcxproj:
         * WebCore.vcxproj/WebCore.vcxproj.filters:
         * WebCore.xcodeproj/project.pbxproj:

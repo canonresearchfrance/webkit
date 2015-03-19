@@ -37,7 +37,7 @@ enum ReadableStreamStateType { "readable", "waiting", "closed", "errored" };
 ] interface ReadableStream {
     // FIXME: Remove RaisesException once methods are actually implemented.
     [Custom, RaisesException] Promise cancel(DOMString reason);
-    ReadableStreamReader getReader();
+    [Custom] ReadableStreamReader getReader();
     [Custom, RaisesException] Promise pipeTo(any streams, any options);
     [Custom, RaisesException] Object pipeThrough(any dest, any options);
 };

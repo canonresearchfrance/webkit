@@ -33,13 +33,14 @@
 #if ENABLE(STREAMS_API)
 
 #include "NotImplemented.h"
+#include "ReadableStream.h"
 #include <wtf/RefCountedLeakCounter.h>
 
 namespace WebCore {
 
 DEFINE_DEBUG_ONLY_GLOBAL(WTF::RefCountedLeakCounter, readableStreamReaderCounter, ("ReadableStreamReader"));
 
-Ref<ReadableStreamReader> ReadableStreamReader::create(ReadableStream* stream)
+Ref<ReadableStreamReader> ReadableStreamReader::create(ReadableStream& stream)
 {
     auto readableStreamReader = adoptRef(*new ReadableStreamReader(stream));
     readableStreamReader.get().suspendIfNeeded();
@@ -47,17 +48,18 @@ Ref<ReadableStreamReader> ReadableStreamReader::create(ReadableStream* stream)
     return readableStreamReader;
 }
 
-ReadableStreamReader::ReadableStreamReader(ReadableStream* stream)
-    : ActiveDOMObject(stream->scriptExecutionContext())
-    , m_stream(stream)
-    , m_state(stream->internalState())
+ReadableStreamReader::ReadableStreamReader(ReadableStream& stream)
+    : ActiveDOMObject(stream.scriptExecutionContext())
+    , m_state(State::Readable)
 {
     ASSERT(stream);
 #ifndef NDEBUG
     readableStreamReaderCounter.increment();
 #endif
-    if (m_state == ReadableStream::State::Readable)
-        m_stream->setReader(this);
+    if (stream.internalState() == ReadableStream::State::Readable) {
+        stream.setReader(this);
+        m_stream = &stream;
+    }
     // FIXME: Implement ReleaseReadableStreamReader
 }
 
@@ -71,11 +73,6 @@ ReadableStreamReader::~ReadableStreamReader()
 void ReadableStreamReader::closed(ClosedSuccessCallback, ClosedErrorCallback)
 {
     notImplemented();    
-}
-
-void ReadableStreamReader::changeStateToClosed()
-{
-    notImplemented();
 }
 
 const char* ReadableStreamReader::activeDOMObjectName() const

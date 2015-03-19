@@ -16,14 +16,16 @@ test(function() {
 }, 'ReadableStreamReader constructor should get a ReadableStream object as argument');
 
 test(function() {
-    rs = new ReadableStream();
-    rsReader = new ReadableStreamReader(rs);
+    rsReader = new ReadableStreamReader(new ReadableStream());
 
-    assert_array_equals(Object.getOwnPropertyNames(rs), ['closed']);
-    assert_array_equals(Object.getOwnPropertyNames(Object.getPrototypeOf(rs)), ['constructor','cancel', 'read', 'releaseLock']);
+    console.log(Object.getOwnPropertyNames(rsReader));
+    console.log(Object.getOwnPropertyNames(Object.getPrototypeOf(rsReader)));
 
-    assert_true(Object.getOwnPropertyDescriptor(rs, 'closed').enumerable);
-    assert_false(Object.getOwnPropertyDescriptor(rs, 'closed').configurable);
+    assert_array_equals(Object.getOwnPropertyNames(rsReader), ['closed']);
+    assert_array_equals(Object.getOwnPropertyNames(Object.getPrototypeOf(rsReader)), ['constructor','cancel', 'read', 'releaseLock']);
+
+    assert_true(Object.getOwnPropertyDescriptor(rsReader, 'closed').enumerable);
+    assert_false(Object.getOwnPropertyDescriptor(rsReader, 'closed').configurable);
     
     assert_true(Object.getOwnPropertyDescriptor(Object.getPrototypeOf(rsReader), 'cancel').enumerable);
     assert_true(Object.getOwnPropertyDescriptor(Object.getPrototypeOf(rsReader), 'cancel').configurable);

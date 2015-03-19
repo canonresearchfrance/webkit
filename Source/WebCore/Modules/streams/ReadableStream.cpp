@@ -76,17 +76,9 @@ bool ReadableStream::canSuspend() const
     return false;
 }
 
-ReadableStreamReader* ReadableStream::getReader()
+Ref<ReadableStreamReader> ReadableStream::createReader()
 {
-    if (!m_reader)
-        createReader();
-    ASSERT(m_reader);
-    return m_reader;
-}
-
-void ReadableStream::createReader()
-{
-    m_reader = WTF::getPtr(ReadableStreamReader::create(this));
+    return ReadableStreamReader::create(*this);
 }
 
 }

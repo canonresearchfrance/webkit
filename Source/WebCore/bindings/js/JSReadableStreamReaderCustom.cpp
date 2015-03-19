@@ -36,6 +36,7 @@
 #include "JSDOMPromise.h"
 #include "JSReadableStream.h"
 #include "ReadableStreamJSSource.h"
+#include <runtime/Error.h>
 #include <wtf/NeverDestroyed.h>
 
 using namespace JSC;
@@ -77,9 +78,11 @@ JSValue JSReadableStreamReader::closed(ExecState* exec) const
     JSPromiseDeferred* promiseDeferred = getOrCreatePromiseDeferredFromObject(exec, this, globalObject(), closedPromiseSlotName());
     DeferredWrapper wrapper(exec, globalObject(), promiseDeferred);
     auto successCallback = [this, wrapper]() mutable {
+        //FIXME: return jsUndefined().
         wrapper.resolve(&impl());
     };
     auto failureCallback = [this, wrapper]() mutable {
+        //FIXME: return stored error.
         wrapper.reject(&impl());
     };
 
@@ -94,18 +97,6 @@ JSValue JSReadableStreamReader::cancel(ExecState* exec)
     return exec->vm().throwException(exec, error);
 }
 
-JSValue JSReadableStreamReader::pipeTo(ExecState* exec)
-{
-    JSValue error = createError(exec, ASCIILiteral("pipeTo is not implemented"));
-    return exec->vm().throwException(exec, error);
-}
-
-JSValue JSReadableStreamReader::pipeThrough(ExecState* exec)
-{
-    JSValue error = createError(exec, ASCIILiteral("pipeThrough is not implemented"));
-    return exec->vm().throwException(exec, error);
-}
-
 JSValue JSReadableStreamReader::releaseLock(ExecState* exec)
 {
     JSValue error = createError(exec, ASCIILiteral("releaseLock is not implemented"));
@@ -114,11 +105,23 @@ JSValue JSReadableStreamReader::releaseLock(ExecState* exec)
 
 EncodedJSValue JSC_HOST_CALL constructJSReadableStreamReader(ExecState* exec)
 {
+    if (!exec->argumentCount())
+        return throwVMError(exec, createTypeError(exec, ASCIILiteral("ReadableStreamReader constructor takes a ReadableStream as parameter")));
+
     JSReadableStream* stream = jsDynamicCast<JSReadableStream*>(exec->argument(0));
     if (!stream)
-        return throwVMError(exec, createError(exec, ASCIILiteral("constructor parameter is not a ReadableStream")));
+        return throwVMError(exec, createTypeError(exec, ASCIILiteral("ReadableStreamReader constructor parameter is not a ReadableStream")));
 
-    return JSValue::encode(toJS(exec, stream->globalObject(), stream->impl().getReader()));
+    if (stream->impl().reader())
+        return throwVMError(exec, createTypeError(exec, ASCIILiteral("ReadableStreamReader constructor parameter is a locked ReadableStream")));
+
+    RefPtr<ReadableStreamReader> readableStreamReader = ReadableStreamReader::create(stream->impl());
+
+    VM& vm = exec->vm();
+    JSGlobalObject* globalObject = exec->callee()->globalObject();
+    JSReadableStreamReader* jsReadableStreamReader = JSReadableStreamReader::create(JSReadableStreamReader::createStructure(vm, globalObject, JSReadableStreamReader::createPrototype(vm, globalObject)), jsCast<JSDOMGlobalObject*>(globalObject), readableStreamReader.releaseNonNull());
+
+    return JSValue::encode(jsReadableStreamReader);
 }
 
 } // namespace WebCore

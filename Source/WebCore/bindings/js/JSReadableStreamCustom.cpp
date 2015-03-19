@@ -56,6 +56,14 @@ JSValue JSReadableStream::cancel(ExecState* exec)
     return exec->vm().throwException(exec, error);
 }
 
+JSValue JSReadableStream::getReader(ExecState* exec)
+{
+    if (impl().reader())
+         return toJS(exec, globalObject(), impl().reader());
+    Ref<ReadableStreamReader> reader = ReadableStreamReader::create(impl());
+    return toJS(exec, globalObject(), WTF::getPtr(reader));
+}
+
 JSValue JSReadableStream::pipeTo(ExecState* exec)
 {
     JSValue error = createError(exec, ASCIILiteral("pipeTo is not implemented"));

@@ -33,19 +33,26 @@
 #if ENABLE(STREAMS_API)
 
 #include "ActiveDOMObject.h"
-#include "ReadableStream.h"
 #include "ScriptWrappable.h"
-#include <functional>
 #include <wtf/Ref.h>
+#include <wtf/RefCounted.h>
 
 namespace WebCore {
 
 class ReadableStream;
-class ScriptExecutionContext;
 
+// ReadableStreamReader implements the core of the streams API ReadableStreamReder functionality.
+// It handles in particular access to the chunks of the ReadableStream.
+// See https://streams.spec.whatwg.org/#reader-class
 class ReadableStreamReader : public ActiveDOMObject, public ScriptWrappable, public RefCounted<ReadableStreamReader> {
 public:
-    static Ref<ReadableStreamReader> create(ReadableStream*);
+    enum class State {
+        Readable,
+        Closed,
+        Errored
+    };
+
+    static Ref<ReadableStreamReader> create(ReadableStream&);
     virtual ~ReadableStreamReader();
 
     ReadableStream* stream() { return m_stream; }
@@ -54,17 +61,15 @@ public:
     typedef std::function<void()> ClosedErrorCallback;
     void closed(ClosedSuccessCallback, ClosedErrorCallback);
 
-    void changeStateToClosed();
-
 private:
-    ReadableStreamReader(ReadableStream*);
+    ReadableStreamReader(ReadableStream&);
 
     // ActiveDOMObject API.
     const char* activeDOMObjectName() const override;
     bool canSuspend() const override;
 
     ReadableStream* m_stream;
-    ReadableStream::State m_state;
+    State m_state;
 };
 
 }

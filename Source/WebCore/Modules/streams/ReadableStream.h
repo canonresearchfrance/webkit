@@ -33,6 +33,7 @@
 #if ENABLE(STREAMS_API)
 
 #include "ActiveDOMObject.h"
+#include "ReadableStreamReader.h"
 #include "ReadableStreamSource.h"
 #include "ScriptWrappable.h"
 #include <functional>
@@ -40,7 +41,6 @@
 
 namespace WebCore {
 
-class ReadableStreamReader;
 class ScriptExecutionContext;
 
 // ReadableStream implements the core of the streams API ReadableStream functionality.
@@ -58,11 +58,10 @@ public:
     static Ref<ReadableStream> create(ScriptExecutionContext&, Ref<ReadableStreamSource>&&);
     virtual ~ReadableStream();
 
-    ReadableStreamReader* reader() { return m_reader; }
+    ReadableStreamReader* reader() { return m_reader.get(); }
     void setReader(ReadableStreamReader* reader) { m_reader = reader; }
-    // FIXME: Make this method virtual pure so that specific readers can be created for specific streams.
-    virtual void createReader();
-    ReadableStreamReader* getReader();
+    // This method should be overriden by specific readers to create specific streams.
+    virtual Ref<ReadableStreamReader> createReader();
 
     State internalState() { return m_state; }
 
@@ -75,7 +74,7 @@ private:
 
     State m_state;
     Ref<ReadableStreamSource> m_source;
-    ReadableStreamReader* m_reader { nullptr };
+    RefPtr<ReadableStreamReader> m_reader;
 };
 
 }
