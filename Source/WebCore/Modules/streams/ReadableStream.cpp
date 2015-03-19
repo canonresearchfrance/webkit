@@ -86,7 +86,7 @@ ReadableStreamReader* ReadableStream::getReader()
 
 void ReadableStream::createReader()
 {
-    m_reader = WTF::getPtr(ReadableStreamReader::create(*scriptExecutionContext(), this));
+    m_reader = WTF::getPtr(ReadableStreamReader::create(this));
 }
 
 }
