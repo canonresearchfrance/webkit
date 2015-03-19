@@ -36,8 +36,8 @@
 #include "JSDOMPromise.h"
 #include "JSReadableStreamReader.h"
 #include "ReadableStream.h"
-#include "ReadableStreamReader.h"
 #include "ReadableStreamJSSource.h"
+#include "ReadableStreamReader.h"
 #include <wtf/NeverDestroyed.h>
 
 using namespace JSC;
