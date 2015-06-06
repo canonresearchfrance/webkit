@@ -303,7 +303,7 @@ void AudioContext::setState(State state)
     m_stateReactions[stateIndex].swap(reactions);
 
     for (auto& wrapper : reactions)
-        wrapper.resolve(nullptr);
+        wrapper.resolve();
 }
 
 const AtomicString& AudioContext::state() const
@@ -1102,20 +1102,20 @@ void AudioContext::decrementActiveSourceCount()
     --m_activeSourceCount;
 }
 
-void AudioContext::suspendContext(DeferredWrapper&& wrapper)
+void AudioContext::suspend(DeferredWrapper&& wrapper)
 {
     if (isOfflineContext()) {
-        wrapper.reject((ExceptionCode)INVALID_STATE_ERR);
+        wrapper.rejectWithException(INVALID_STATE_ERR);
         return;
     }
 
     if (m_state == State::Suspended) {
-        wrapper.resolve(nullptr);
+        wrapper.resolve();
         return;
     }
 
     if (m_state == State::Closed || m_state == State::Interrupted || !m_destinationNode) {
-        wrapper.reject(nullptr);
+        wrapper.reject();
         return;
     }
 
@@ -1132,20 +1132,20 @@ void AudioContext::suspendContext(DeferredWrapper&& wrapper)
     });
 }
 
-void AudioContext::resumeContext(DeferredWrapper&& wrapper)
+void AudioContext::resume(DeferredWrapper&& wrapper)
 {
     if (isOfflineContext()) {
-        wrapper.reject((ExceptionCode)INVALID_STATE_ERR);
+        wrapper.rejectWithException(INVALID_STATE_ERR);
         return;
     }
 
     if (m_state == State::Running) {
-        wrapper.resolve(nullptr);
+        wrapper.resolve();
         return;
     }
 
     if (m_state == State::Closed || !m_destinationNode) {
-        wrapper.reject(nullptr);
+        wrapper.reject();
         return;
     }
 
@@ -1162,15 +1162,15 @@ void AudioContext::resumeContext(DeferredWrapper&& wrapper)
     });
 }
 
-void AudioContext::closeContext(DeferredWrapper&& wrapper)
+void AudioContext::close(DeferredWrapper&& wrapper)
 {
     if (isOfflineContext()) {
-        wrapper.reject((ExceptionCode)INVALID_STATE_ERR);
+        wrapper.rejectWithException(INVALID_STATE_ERR);
         return;
     }
 
     if (m_state == State::Closed || !m_destinationNode) {
-        wrapper.resolve(nullptr);
+        wrapper.resolve();
         return;
     }
 

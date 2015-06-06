@@ -107,9 +107,13 @@ public:
 
     AudioListener* listener() { return m_listener.get(); }
 
-    void suspendContext(DeferredWrapper&&);
-    void resumeContext(DeferredWrapper&&);
-    void closeContext(DeferredWrapper&&);
+    using ActiveDOMObject::suspend;
+    using ActiveDOMObject::resume;
+
+    void suspend(DeferredWrapper&&);
+    void resume(DeferredWrapper&&);
+    void close(DeferredWrapper&&);
+
     const AtomicString& state() const;
 
     // The AudioNode create methods are called on the main thread (from JavaScript).

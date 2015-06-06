@@ -49,6 +49,10 @@ public:
 
     JSC::JSObject* promise() const;
 
+    void resolve();
+    void reject();
+    void rejectWithException(int ec);
+
 private:
     void resolve(JSC::ExecState*, JSC::JSValue);
     void reject(JSC::ExecState*, JSC::JSValue);

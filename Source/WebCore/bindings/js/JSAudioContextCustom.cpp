@@ -114,9 +114,8 @@ EncodedJSValue JSC_HOST_CALL constructJSAudioContext(ExecState* exec)
 JSValue JSAudioContext::suspend(ExecState* exec)
 {
     JSPromiseDeferred* promiseDeferred = JSPromiseDeferred::create(exec, globalObject());
-    DeferredWrapper wrapper(exec, globalObject(), promiseDeferred);
 
-    impl().suspendContext(WTF::move(wrapper));
+    impl().suspend(DeferredWrapper(exec, globalObject(), promiseDeferred));
 
     return promiseDeferred->promise();
 }
@@ -124,9 +123,8 @@ JSValue JSAudioContext::suspend(ExecState* exec)
 JSValue JSAudioContext::resume(ExecState* exec)
 {
     JSPromiseDeferred* promiseDeferred = JSPromiseDeferred::create(exec, globalObject());
-    DeferredWrapper wrapper(exec, globalObject(), promiseDeferred);
 
-    impl().resumeContext(WTF::move(wrapper));
+    impl().resume(DeferredWrapper(exec, globalObject(), promiseDeferred));
 
     return promiseDeferred->promise();
 }
@@ -134,9 +132,8 @@ JSValue JSAudioContext::resume(ExecState* exec)
 JSValue JSAudioContext::close(ExecState* exec)
 {
     JSPromiseDeferred* promiseDeferred = JSPromiseDeferred::create(exec, globalObject());
-    DeferredWrapper wrapper(exec, globalObject(), promiseDeferred);
 
-    impl().closeContext(WTF::move(wrapper));
+    impl().close(DeferredWrapper(exec, globalObject(), promiseDeferred));
 
     return promiseDeferred->promise();
 }

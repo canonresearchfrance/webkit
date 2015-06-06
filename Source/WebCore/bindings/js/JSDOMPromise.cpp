@@ -28,6 +28,8 @@
 
 #if ENABLE(PROMISES)
 
+#include "ExceptionCode.h"
+
 using namespace JSC;
 
 namespace WebCore {
@@ -75,6 +77,21 @@ void DeferredWrapper::reject(ExecState* exec, JSValue reason)
     arguments.append(reason);
 
     call(exec, deferredReject, rejectCallType, rejectCallData, jsUndefined(), arguments);
+}
+
+void DeferredWrapper::reject()
+{
+    reject(nullptr);
+}
+
+void DeferredWrapper::resolve()
+{
+    resolve(nullptr);
+}
+
+void DeferredWrapper::rejectWithException(int ec)
+{
+    reject<ExceptionCode>(ec);
 }
 
 }
