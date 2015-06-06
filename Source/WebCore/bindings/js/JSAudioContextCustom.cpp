@@ -111,15 +111,6 @@ EncodedJSValue JSC_HOST_CALL constructJSAudioContext(ExecState* exec)
     return JSValue::encode(CREATE_DOM_WRAPPER(jsConstructor->globalObject(), AudioContext, audioContext.get()));
 }
 
-JSValue JSAudioContext::suspend(ExecState* exec)
-{
-    JSPromiseDeferred* promiseDeferred = JSPromiseDeferred::create(exec, globalObject());
-
-    impl().suspend(DeferredWrapper(exec, globalObject(), promiseDeferred));
-
-    return promiseDeferred->promise();
-}
-
 JSValue JSAudioContext::resume(ExecState* exec)
 {
     JSPromiseDeferred* promiseDeferred = JSPromiseDeferred::create(exec, globalObject());

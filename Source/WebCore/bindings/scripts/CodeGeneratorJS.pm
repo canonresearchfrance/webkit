@@ -1047,7 +1047,7 @@ sub GenerateHeader
                 $needsVisitChildren = 1;
                 push(@headerContent, "#endif\n") if $conditionalString;
             }
-            elsif ($attribute->signature->type eq "Promise") {
+            elsif (IsReturningPromise($attribute)) {
                 $headerIncludes{"JSDOMPromise.h"} = 1;
 
                 my $conditionalString = $codeGenerator->GenerateConditionalString($attribute->signature);
@@ -3377,6 +3377,8 @@ sub GenerateParametersCheck
 
     push(@arguments, "ec") if $raisesException;
 
+    push(@arguments, "DeferredWrapper(exec, globalObject(), promiseDeferred)") if IsReturningPromise($function);
+
     return ("$functionName(" . join(", ", @arguments) . ")", scalar @arguments);
 }
 
@@ -3643,6 +3645,12 @@ sub GenerateImplementationFunctionCall()
             push(@implContent, "#else\n");
             push(@implContent, $indent . "result = " . NativeToJSValue($function->signature, 1, $interfaceName, $functionString, $thisObject) . ";\n");
             push(@implContent, "#endif\n");
+        } elsif (IsReturningPromise($function)) {
+            AddToImplIncludes("JSDOMPromise.h");
+            push(@implContent, $indent . "JSPromiseDeferred* promiseDeferred = JSPromiseDeferred::create(exec, globalObject());\n");
+            push(@implContent, $indent . "JSValue result = promiseDeferred->promise();\n");
+            push(@implContent, $indent . $functionString . ";\n");
+        
         } else {
             push(@implContent, $indent . "JSValue result = " . NativeToJSValue($function->signature, 1, $interfaceName, $functionString, $thisObject) . ";\n");
         }
@@ -4761,6 +4769,13 @@ sub NeedsConstructorProperty
     my $interface = shift;
 
     return !$interface->extendedAttributes->{"NoInterfaceObject"} || $interface->extendedAttributes->{"CustomConstructor"};
+}
+
+sub IsReturningPromise
+{
+    my $function = shift;
+
+    return $function->signature->type eq "Promise";
 }
 
 sub IsConstructable
