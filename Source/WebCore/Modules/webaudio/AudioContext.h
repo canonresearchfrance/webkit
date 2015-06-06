@@ -50,6 +50,7 @@ namespace WebCore {
 class AudioBuffer;
 class AudioBufferCallback;
 class AudioBufferSourceNode;
+class DeferredWrapper;
 class MediaElementAudioSourceNode;
 class MediaStreamAudioDestinationNode;
 class MediaStreamAudioSourceNode;
@@ -106,11 +107,9 @@ public:
 
     AudioListener* listener() { return m_listener.get(); }
 
-    typedef std::function<void(ExceptionCode)> FailureCallback;
-
-    void suspendContext(std::function<void()>, FailureCallback);
-    void resumeContext(std::function<void()>, FailureCallback);
-    void closeContext(std::function<void()>, FailureCallback);
+    void suspendContext(DeferredWrapper&&);
+    void resumeContext(DeferredWrapper&&);
+    void closeContext(DeferredWrapper&&);
     const AtomicString& state() const;
 
     // The AudioNode create methods are called on the main thread (from JavaScript).
@@ -324,7 +323,7 @@ private:
     void handleDirtyAudioSummingJunctions();
     void handleDirtyAudioNodeOutputs();
 
-    void addReaction(State, std::function<void()>);
+    void addReaction(State, DeferredWrapper&&);
     void updateAutomaticPullNodes();
 
     // Only accessed in the audio thread.
@@ -361,7 +360,7 @@ private:
     Vector<AudioNode*> m_renderingAutomaticPullNodes;
     // Only accessed in the audio thread.
     Vector<AudioNode*> m_deferredFinishDerefList;
-    Vector<Vector<std::function<void()>>> m_stateReactions;
+    Vector<Vector<DeferredWrapper>> m_stateReactions;
 
     std::unique_ptr<PlatformMediaSession> m_mediaSession;
     std::unique_ptr<GenericEventQueue> m_eventQueue;

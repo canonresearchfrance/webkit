@@ -51,6 +51,7 @@
 #include "GenericEventQueue.h"
 #include "HRTFDatabaseLoader.h"
 #include "HRTFPanner.h"
+#include "JSDOMPromise.h"
 #include "OfflineAudioCompletionEvent.h"
 #include "OfflineAudioDestinationNode.h"
 #include "OscillatorNode.h"
@@ -277,13 +278,13 @@ bool AudioContext::isInitialized() const
     return m_isInitialized;
 }
 
-void AudioContext::addReaction(State state, std::function<void()> reaction)
+void AudioContext::addReaction(State state, DeferredWrapper&& wrapper)
 {
     size_t stateIndex = static_cast<size_t>(state);
     if (stateIndex >= m_stateReactions.size())
         m_stateReactions.resize(stateIndex + 1);
 
-    m_stateReactions[stateIndex].append(reaction);
+    m_stateReactions[stateIndex].append(WTF::move(wrapper));
 }
 
 void AudioContext::setState(State state)
@@ -298,11 +299,11 @@ void AudioContext::setState(State state)
     if (stateIndex >= m_stateReactions.size())
         return;
 
-    Vector<std::function<void()>> reactions;
+    Vector<DeferredWrapper> reactions;
     m_stateReactions[stateIndex].swap(reactions);
 
-    for (auto& reaction : reactions)
-        reaction();
+    for (auto& wrapper : reactions)
+        wrapper.resolve(nullptr);
 }
 
 const AtomicString& AudioContext::state() const
@@ -1101,27 +1102,24 @@ void AudioContext::decrementActiveSourceCount()
     --m_activeSourceCount;
 }
 
-void AudioContext::suspendContext(std::function<void()> successCallback, FailureCallback failureCallback)
+void AudioContext::suspendContext(DeferredWrapper&& wrapper)
 {
-    ASSERT(successCallback);
-    ASSERT(failureCallback);
-
     if (isOfflineContext()) {
-        failureCallback(INVALID_STATE_ERR);
+        wrapper.reject((ExceptionCode)INVALID_STATE_ERR);
         return;
     }
 
     if (m_state == State::Suspended) {
-        successCallback();
+        wrapper.resolve(nullptr);
         return;
     }
 
     if (m_state == State::Closed || m_state == State::Interrupted || !m_destinationNode) {
-        failureCallback(0);
+        wrapper.reject(nullptr);
         return;
     }
 
-    addReaction(State::Suspended, successCallback);
+    addReaction(State::Suspended, WTF::move(wrapper));
 
     if (!willPausePlayback())
         return;
@@ -1134,27 +1132,24 @@ void AudioContext::suspendContext(std::function<void()> successCallback, Failure
     });
 }
 
-void AudioContext::resumeContext(std::function<void()> successCallback, FailureCallback failureCallback)
+void AudioContext::resumeContext(DeferredWrapper&& wrapper)
 {
-    ASSERT(successCallback);
-    ASSERT(failureCallback);
-
     if (isOfflineContext()) {
-        failureCallback(INVALID_STATE_ERR);
+        wrapper.reject((ExceptionCode)INVALID_STATE_ERR);
         return;
     }
 
     if (m_state == State::Running) {
-        successCallback();
+        wrapper.resolve(nullptr);
         return;
     }
 
     if (m_state == State::Closed || !m_destinationNode) {
-        failureCallback(0);
+        wrapper.reject(nullptr);
         return;
     }
 
-    addReaction(State::Running, successCallback);
+    addReaction(State::Running, WTF::move(wrapper));
 
     if (!willBeginPlayback())
         return;
@@ -1167,27 +1162,24 @@ void AudioContext::resumeContext(std::function<void()> successCallback, FailureC
     });
 }
 
-void AudioContext::closeContext(std::function<void()> successCallback, FailureCallback failureCallback)
+void AudioContext::closeContext(DeferredWrapper&& wrapper)
 {
-    ASSERT(successCallback);
-    ASSERT(failureCallback);
-
     if (isOfflineContext()) {
-        failureCallback(INVALID_STATE_ERR);
+        wrapper.reject((ExceptionCode)INVALID_STATE_ERR);
         return;
     }
 
     if (m_state == State::Closed || !m_destinationNode) {
-        successCallback();
+        wrapper.resolve(nullptr);
         return;
     }
 
-    addReaction(State::Closed, successCallback);
+    addReaction(State::Closed, WTF::move(wrapper));
 
     lazyInitialize();
 
     RefPtr<AudioContext> strongThis(this);
-    m_destinationNode->close([strongThis, successCallback] {
+    m_destinationNode->close([strongThis] {
         strongThis->setState(State::Closed);
         strongThis->uninitialize();
     });

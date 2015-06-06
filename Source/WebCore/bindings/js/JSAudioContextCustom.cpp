@@ -113,47 +113,32 @@ EncodedJSValue JSC_HOST_CALL constructJSAudioContext(ExecState* exec)
 
 JSValue JSAudioContext::suspend(ExecState* exec)
 {
-    DeferredWrapper wrapper(exec, globalObject());
-    auto successCallback = [wrapper]() mutable {
-        wrapper.resolve(nullptr);
-    };
-    auto failureCallback = [wrapper](ExceptionCode value) mutable {
-        wrapper.reject(value);
-    };
+    JSPromiseDeferred* promiseDeferred = JSPromiseDeferred::create(exec, globalObject());
+    DeferredWrapper wrapper(exec, globalObject(), promiseDeferred);
 
-    impl().suspendContext(WTF::move(successCallback), WTF::move(failureCallback));
+    impl().suspendContext(WTF::move(wrapper));
 
-    return wrapper.promise();
+    return promiseDeferred->promise();
 }
 
 JSValue JSAudioContext::resume(ExecState* exec)
 {
-    DeferredWrapper wrapper(exec, globalObject());
-    auto successCallback = [wrapper]() mutable {
-        wrapper.resolve(nullptr);
-    };
-    auto failureCallback = [wrapper](ExceptionCode value) mutable {
-        wrapper.reject(value);
-    };
+    JSPromiseDeferred* promiseDeferred = JSPromiseDeferred::create(exec, globalObject());
+    DeferredWrapper wrapper(exec, globalObject(), promiseDeferred);
 
-    impl().resumeContext(WTF::move(successCallback), WTF::move(failureCallback));
+    impl().resumeContext(WTF::move(wrapper));
 
-    return wrapper.promise();
+    return promiseDeferred->promise();
 }
 
 JSValue JSAudioContext::close(ExecState* exec)
 {
-    DeferredWrapper wrapper(exec, globalObject());
-    auto successCallback = [wrapper]() mutable {
-        wrapper.resolve(nullptr);
-    };
-    auto failureCallback = [wrapper](ExceptionCode value) mutable {
-        wrapper.reject(value);
-    };
+    JSPromiseDeferred* promiseDeferred = JSPromiseDeferred::create(exec, globalObject());
+    DeferredWrapper wrapper(exec, globalObject(), promiseDeferred);
 
-    impl().closeContext(WTF::move(successCallback), WTF::move(failureCallback));
+    impl().closeContext(WTF::move(wrapper));
 
-    return wrapper.promise();
+    return promiseDeferred->promise();
 }
 
 } // namespace WebCore
