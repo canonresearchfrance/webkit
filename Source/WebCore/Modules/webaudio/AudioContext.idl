@@ -51,8 +51,8 @@ enum AudioContextState {
     readonly attribute AudioListener listener;
 
     Promise suspend();
-    [Custom] Promise resume();
-    [Custom] Promise close();
+    Promise resume();
+    Promise close();
 
     readonly attribute AudioContextState state;
     attribute EventHandler onstatechange;
