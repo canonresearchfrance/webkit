@@ -47,6 +47,7 @@ public:
     template<class RejectResultType>
     void reject(const RejectResultType&);
 
+    // FIXME: Remove this accessor.
     JSC::JSObject* promise() const;
 
     void resolve();
@@ -54,8 +55,9 @@ public:
     void rejectWithException(int ec);
 
 private:
-    void resolve(JSC::ExecState*, JSC::JSValue);
-    void reject(JSC::ExecState*, JSC::JSValue);
+    void callFunction(JSC::ExecState*, JSC::JSValue function, JSC::JSValue resolution);
+    void resolve(JSC::ExecState*exec, JSC::JSValue resolution) { callFunction(exec, m_deferred->resolve(), resolution); }
+    void reject(JSC::ExecState* exec, JSC::JSValue resolution) { callFunction(exec, m_deferred->reject(), resolution); }
 
     JSC::Strong<JSDOMGlobalObject> m_globalObject;
     JSC::Strong<JSC::JSPromiseDeferred> m_deferred;
