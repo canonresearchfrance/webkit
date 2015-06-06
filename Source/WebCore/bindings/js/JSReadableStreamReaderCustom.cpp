@@ -49,12 +49,12 @@ JSValue JSReadableStreamReader::read(ExecState* exec)
     JSPromiseDeferred* promiseDeferred = JSPromiseDeferred::create(exec, globalObject());
     DeferredWrapper wrapper(exec, globalObject(), promiseDeferred);
 
-    auto successCallback = [wrapper](JSValue value) mutable {
-        JSValue result = createIteratorResultObject(wrapper.promise()->globalObject()->globalExec(), value, false);
+    auto successCallback = [wrapper, promiseDeferred](JSValue value) mutable {
+        JSValue result = createIteratorResultObject(promiseDeferred->promise()->globalObject()->globalExec(), value, false);
         wrapper.resolve(result);
     };
-    auto endCallback = [wrapper]() mutable {
-        JSValue result = createIteratorResultObject(wrapper.promise()->globalObject()->globalExec(), JSC::jsUndefined(), true);
+    auto endCallback = [wrapper, promiseDeferred]() mutable {
+        JSValue result = createIteratorResultObject(promiseDeferred->promise()->globalObject()->globalExec(), JSC::jsUndefined(), true);
         wrapper.resolve(result);
     };
     auto failureCallback = [wrapper](JSValue value) mutable {
@@ -83,7 +83,7 @@ JSValue JSReadableStreamReader::closed(ExecState* exec) const
 
     impl().closed(WTF::move(successCallback), WTF::move(failureCallback));
 
-    return wrapper.promise();
+    return m_closedPromiseDeferred->promise();
 }
 
 JSValue JSReadableStreamReader::cancel(ExecState* exec)
