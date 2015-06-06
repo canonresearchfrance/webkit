@@ -34,21 +34,10 @@ using namespace JSC;
 
 namespace WebCore {
 
-DeferredWrapper::DeferredWrapper(ExecState* exec, JSDOMGlobalObject* globalObject)
-    : m_globalObject(exec->vm(), globalObject)
-    , m_deferred(exec->vm(), JSPromiseDeferred::create(exec, globalObject))
-{
-}
-
 DeferredWrapper::DeferredWrapper(ExecState* exec, JSDOMGlobalObject* globalObject, JSPromiseDeferred* promiseDeferred)
     : m_globalObject(exec->vm(), globalObject)
     , m_deferred(exec->vm(), promiseDeferred)
 {
-}
-
-JSObject* DeferredWrapper::promise() const
-{
-    return m_deferred->promise();
 }
 
 void DeferredWrapper::callFunction(ExecState* exec, JSValue function, JSValue resolution)
@@ -61,7 +50,9 @@ void DeferredWrapper::callFunction(ExecState* exec, JSValue function, JSValue re
     arguments.append(resolution);
 
     call(exec, function, callType, callData, jsUndefined(), arguments);
-    // FIXME: call should never been called again. We should release m_promiseDeferred and m_globalObject.
+
+    m_globalObject.clear();
+    m_deferred.clear();
 }
 
 void DeferredWrapper::reject()
