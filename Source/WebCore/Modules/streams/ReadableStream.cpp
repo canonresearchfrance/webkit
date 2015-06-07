@@ -32,6 +32,7 @@
 
 #if ENABLE(STREAMS_API)
 
+#include "JSDOMPromise.h"
 #include "NotImplemented.h"
 #include "ReadableStreamReader.h"
 #include <runtime/JSCJSValueInlines.h>
@@ -59,8 +60,7 @@ ReadableStream::~ReadableStream()
 
 void ReadableStream::clearCallbacks()
 {
-    m_closedSuccessCallback = nullptr;
-    m_closedFailureCallback = nullptr;
+    m_closedPromise = nullptr;
 
     m_readRequests.clear();
 }
@@ -84,8 +84,8 @@ void ReadableStream::close()
     if (m_reader)
         m_releasedReaders.append(WTF::move(m_reader));
 
-    if (m_closedSuccessCallback)
-        m_closedSuccessCallback();
+    if (m_closedPromise)
+        m_closedPromise->resolve();
 
     for (auto& request : m_readRequests)
         request.endCallback();
@@ -103,8 +103,8 @@ void ReadableStream::changeStateToErrored()
         m_releasedReaders.append(WTF::move(m_reader));
 
     JSC::JSValue error = this->error();
-    if (m_closedFailureCallback)
-        m_closedFailureCallback(error);
+    if (m_closedPromise)
+        m_closedPromise->reject(error);
 
     for (auto& request : m_readRequests)
         request.failureCallback(error);
@@ -128,18 +128,17 @@ ReadableStreamReader& ReadableStream::getReader()
     return reader;
 }
 
-void ReadableStream::closed(ClosedSuccessCallback&& successCallback, FailureCallback&& failureCallback)
+void ReadableStream::closed(DeferredWrapper&& wrapper)
 {
     if (m_state == State::Closed) {
-        successCallback();
+        wrapper.resolve();
         return;
     }
     if (m_state == State::Errored) {
-        failureCallback(error());
+        wrapper.reject(error());
         return;
     }
-    m_closedSuccessCallback = WTF::move(successCallback);
-    m_closedFailureCallback = WTF::move(failureCallback);
+    m_closedPromise = std::make_unique<DeferredWrapper>(WTF::move(wrapper));
 }
 
 void ReadableStream::read(ReadSuccessCallback&& successCallback, ReadEndCallback&& endCallback, FailureCallback&& failureCallback)

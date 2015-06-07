@@ -41,6 +41,8 @@
 
 namespace WebCore {
 
+class DeferredWrapper;
+
 // ReadableStreamReader implements access to ReadableStream from JavaScript.
 // It basically allows access to the ReadableStream iff the ReadableStreamReader instance is the active reader
 // of the ReadableStream.
@@ -51,7 +53,7 @@ public:
     ReadableStreamReader(ReadableStream& stream)
         : m_stream(stream) { }
 
-    void closed(ReadableStream::ClosedSuccessCallback&&, ReadableStream::FailureCallback&&);
+    void closed(DeferredWrapper&&);
     void read(ReadableStream::ReadSuccessCallback&&, ReadableStream::ReadEndCallback&&, ReadableStream::FailureCallback&&);
 
     void ref() { m_stream.ref(); }

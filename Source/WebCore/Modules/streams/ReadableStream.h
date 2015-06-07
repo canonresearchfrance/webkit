@@ -45,6 +45,7 @@ class JSValue;
 
 namespace WebCore {
 
+class DeferredWrapper;
 class ReadableStreamReader;
 class ScriptExecutionContext;
 
@@ -78,8 +79,7 @@ public:
 
     typedef std::function<void(JSC::JSValue)> FailureCallback;
 
-    typedef std::function<void()> ClosedSuccessCallback;
-    void closed(ClosedSuccessCallback&&, FailureCallback&&);
+    void closed(DeferredWrapper&&);
 
     typedef std::function<void(JSC::JSValue)> ReadSuccessCallback;
     typedef std::function<void()> ReadEndCallback;
@@ -104,8 +104,7 @@ private:
     std::unique_ptr<ReadableStreamReader> m_reader;
     Vector<std::unique_ptr<ReadableStreamReader>> m_releasedReaders;
 
-    ClosedSuccessCallback m_closedSuccessCallback;
-    FailureCallback m_closedFailureCallback;
+    std::unique_ptr<DeferredWrapper> m_closedPromise;
 
     struct ReadCallbacks {
         ReadSuccessCallback successCallback;

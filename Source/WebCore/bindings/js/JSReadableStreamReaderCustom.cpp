@@ -81,7 +81,7 @@ JSValue JSReadableStreamReader::closed(ExecState* exec) const
         wrapper.reject(value);
     };
 
-    impl().closed(WTF::move(successCallback), WTF::move(failureCallback));
+    impl().closed(DeferredWrapper(exec, globalObject(), m_closedPromiseDeferred.get()));
 
     return m_closedPromiseDeferred->promise();
 }
