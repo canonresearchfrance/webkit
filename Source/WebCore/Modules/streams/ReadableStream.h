@@ -33,6 +33,7 @@
 #if ENABLE(STREAMS_API)
 
 #include "ActiveDOMObject.h"
+#include "JSDOMPromise.h"
 #include "ScriptWrappable.h"
 #include <functional>
 #include <wtf/Ref.h>
@@ -79,7 +80,7 @@ public:
 
     typedef std::function<void(JSC::JSValue)> FailureCallback;
 
-    void closed(DeferredWrapper&&);
+    void closed(DOMPromise<std::nullptr_t, JSC::JSValue>&&);
 
     typedef std::function<void(JSC::JSValue)> ReadSuccessCallback;
     typedef std::function<void()> ReadEndCallback;
@@ -104,7 +105,7 @@ private:
     std::unique_ptr<ReadableStreamReader> m_reader;
     Vector<std::unique_ptr<ReadableStreamReader>> m_releasedReaders;
 
-    std::unique_ptr<DeferredWrapper> m_closedPromise;
+    std::unique_ptr<DOMPromise<std::nullptr_t, JSC::JSValue>> m_closedPromise;
 
     struct ReadCallbacks {
         ReadSuccessCallback successCallback;

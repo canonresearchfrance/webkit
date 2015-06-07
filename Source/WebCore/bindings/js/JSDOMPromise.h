@@ -59,6 +59,28 @@ private:
     JSC::Strong<JSC::JSPromiseDeferred> m_deferred;
 };
 
+template <typename Value, typename Error>
+class DOMPromise {
+public:
+    DOMPromise(DeferredWrapper&& wrapper) : m_wrapper(WTF::move(wrapper)) { }
+
+    void resolve(const Value& value) { m_wrapper.resolve<Value>(value); }
+    void reject(const Error& error) { m_wrapper.reject<Error>(error); }
+private:
+    DeferredWrapper m_wrapper;
+};
+
+template <typename Error>
+class DOMPromise<std::nullptr_t, Error> {
+public:
+    DOMPromise(DeferredWrapper&& wrapper) : m_wrapper(WTF::move(wrapper)) { }
+
+    void resolve() { m_wrapper.resolve<std::nullptr_t>(nullptr); }
+    void reject(const Error& error) { m_wrapper.reject<Error>(error); }
+private:
+    DeferredWrapper m_wrapper;
+};
+
 template<class ResolveResultType>
 inline void DeferredWrapper::resolve(const ResolveResultType& result)
 {

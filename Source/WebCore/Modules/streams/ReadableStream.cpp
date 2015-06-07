@@ -128,17 +128,17 @@ ReadableStreamReader& ReadableStream::getReader()
     return reader;
 }
 
-void ReadableStream::closed(DeferredWrapper&& wrapper)
+void ReadableStream::closed(DOMPromise<std::nullptr_t, JSC::JSValue>&& promise)
 {
     if (m_state == State::Closed) {
-        wrapper.resolve();
+        promise.resolve();
         return;
     }
     if (m_state == State::Errored) {
-        wrapper.reject(error());
+        promise.reject(error());
         return;
     }
-    m_closedPromise = std::make_unique<DeferredWrapper>(WTF::move(wrapper));
+    m_closedPromise = std::make_unique<DOMPromise<std::nullptr_t, JSC::JSValue>>(WTF::move(promise));
 }
 
 void ReadableStream::read(ReadSuccessCallback&& successCallback, ReadEndCallback&& endCallback, FailureCallback&& failureCallback)
