@@ -78,13 +78,8 @@ public:
     void changeStateToClosed();
     void changeStateToErrored();
 
-    typedef std::function<void(JSC::JSValue)> FailureCallback;
-
     void closed(DOMPromise<std::nullptr_t, JSC::JSValue>&&);
-
-    typedef std::function<void(JSC::JSValue)> ReadSuccessCallback;
-    typedef std::function<void()> ReadEndCallback;
-    void read(ReadSuccessCallback&&, ReadEndCallback&&, FailureCallback&&);
+    void read(DOMIteratorPromise<JSC::JSValue, JSC::JSValue>&&);
 
 protected:
     explicit ReadableStream(ScriptExecutionContext&);
@@ -107,12 +102,7 @@ private:
 
     std::unique_ptr<DOMPromise<std::nullptr_t, JSC::JSValue>> m_closedPromise;
 
-    struct ReadCallbacks {
-        ReadSuccessCallback successCallback;
-        ReadEndCallback endCallback;
-        FailureCallback failureCallback;
-    };
-    Vector<ReadCallbacks> m_readRequests;
+    Vector<DOMIteratorPromise<JSC::JSValue, JSC::JSValue>> m_readRequests;
 
     bool m_closeRequested { false };
     State m_state { State::Readable };

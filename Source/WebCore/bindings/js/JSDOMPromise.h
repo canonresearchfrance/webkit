@@ -32,6 +32,7 @@
 #include "JSCryptoKeyPair.h"
 #include "JSDOMBinding.h"
 #include <heap/StrongInlines.h>
+#include <runtime/IteratorOperations.h>
 #include <runtime/JSPromiseDeferred.h>
 
 namespace WebCore {
@@ -49,6 +50,8 @@ public:
     void resolve();
     void reject();
     void rejectWithException(int ec);
+
+    JSDOMGlobalObject* globalObject() { return m_globalObject.get(); }
 
 private:
     void callFunction(JSC::ExecState*, JSC::JSValue function, JSC::JSValue resolution);
@@ -77,6 +80,23 @@ public:
 
     void resolve() { m_wrapper.resolve<std::nullptr_t>(nullptr); }
     void reject(const Error& error) { m_wrapper.reject<Error>(error); }
+private:
+    DeferredWrapper m_wrapper;
+};
+
+template <typename Value, typename Error>
+class DOMIteratorPromise {
+public:
+    DOMIteratorPromise(DeferredWrapper&& wrapper) : m_wrapper(WTF::move(wrapper)) { }
+    DOMIteratorPromise(DOMIteratorPromise&& other) : m_wrapper(WTF::move(other.m_wrapper)) { }
+
+    DOMIteratorPromise(const DOMIteratorPromise&) = delete;
+    DOMIteratorPromise& operator=(DOMIteratorPromise const&) = delete;
+
+    void resolve(const Value&);
+    void resolveEnd();
+    void reject(const Error& error) { m_wrapper.reject<Error>(error); }
+
 private:
     DeferredWrapper m_wrapper;
 };
@@ -178,6 +198,33 @@ inline void DeferredWrapper::reject<String>(const String& result)
     JSC::ExecState* exec = m_globalObject->globalExec();
     JSC::JSLockHolder locker(exec);
     reject(exec, jsString(exec, result));
+}
+
+template<typename Value, typename Error>
+inline void DOMIteratorPromise<Value, Error>::resolve(const Value& value)
+{
+    ASSERT(m_deferred);
+    JSC::ExecState* exec = m_wrapper.globalObject()->globalExec();
+    JSC::JSLockHolder locker(exec);
+    m_wrapper.resolve<JSC::JSValue>(createIteratorResultObject(exec, value, false));
+}
+/*
+template<typename Error>
+inline void DOMIteratorPromise<JSC::JSValue, Error>::resolve(const JSC::JSValue& value)
+{
+    ASSERT(m_deferred);
+    JSC::ExecState* exec = m_wrapper.globalObject()->globalExec();
+    JSC::JSLockHolder locker(exec);
+    m_wrapper.resolve(createIteratorResultObject(exec, value, false));
+}
+*/
+template<typename Value, typename Error>
+inline void DOMIteratorPromise<Value, Error>::resolveEnd()
+{
+    ASSERT(m_deferred);
+    JSC::ExecState* exec = m_wrapper.globalObject()->globalExec();
+    JSC::JSLockHolder locker(exec);
+    m_wrapper.resolve<JSC::JSValue>(createIteratorResultObject(exec, JSC::jsUndefined(), true));
 }
 
 }

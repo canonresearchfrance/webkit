@@ -37,7 +37,6 @@
 #include "JSReadableStream.h"
 #include "ReadableJSStream.h"
 #include <runtime/Error.h>
-#include <runtime/IteratorOperations.h>
 #include <wtf/NeverDestroyed.h>
 
 using namespace JSC;
@@ -47,21 +46,8 @@ namespace WebCore {
 JSValue JSReadableStreamReader::read(ExecState* exec)
 {
     JSPromiseDeferred* promiseDeferred = JSPromiseDeferred::create(exec, globalObject());
-    DeferredWrapper wrapper(exec, globalObject(), promiseDeferred);
 
-    auto successCallback = [wrapper, promiseDeferred](JSValue value) mutable {
-        JSValue result = createIteratorResultObject(promiseDeferred->promise()->globalObject()->globalExec(), value, false);
-        wrapper.resolve(result);
-    };
-    auto endCallback = [wrapper, promiseDeferred]() mutable {
-        JSValue result = createIteratorResultObject(promiseDeferred->promise()->globalObject()->globalExec(), JSC::jsUndefined(), true);
-        wrapper.resolve(result);
-    };
-    auto failureCallback = [wrapper](JSValue value) mutable {
-        wrapper.reject(value);
-    };
-
-    impl().read(WTF::move(successCallback), WTF::move(endCallback), WTF::move(failureCallback));
+    impl().read(DeferredWrapper(exec, globalObject(), promiseDeferred));
 
     return promiseDeferred->promise();
 }
@@ -72,15 +58,6 @@ JSValue JSReadableStreamReader::closed(ExecState* exec) const
         return m_closedPromiseDeferred->promise();
 
     const_cast<JSReadableStreamReader*>(this)->m_closedPromiseDeferred.set(exec->vm(), JSPromiseDeferred::create(exec, globalObject()));
-    DeferredWrapper wrapper(exec, globalObject(), m_closedPromiseDeferred.get());
-
-    auto successCallback = [wrapper]() mutable {
-        wrapper.resolve(jsUndefined());
-    };
-    auto failureCallback = [wrapper](JSValue value) mutable {
-        wrapper.reject(value);
-    };
-
     impl().closed(DeferredWrapper(exec, globalObject(), m_closedPromiseDeferred.get()));
 
     return m_closedPromiseDeferred->promise();

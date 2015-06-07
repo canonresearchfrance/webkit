@@ -33,6 +33,7 @@
 #if ENABLE(STREAMS_API)
 
 #include "ActiveDOMObject.h"
+#include "JSDOMPromise.h"
 #include "ReadableStream.h"
 #include "ScriptWrappable.h"
 #include <functional>
@@ -40,8 +41,6 @@
 #include <wtf/RefCounted.h>
 
 namespace WebCore {
-
-class DeferredWrapper;
 
 // ReadableStreamReader implements access to ReadableStream from JavaScript.
 // It basically allows access to the ReadableStream iff the ReadableStreamReader instance is the active reader
@@ -54,7 +53,7 @@ public:
         : m_stream(stream) { }
 
     void closed(DeferredWrapper&&);
-    void read(ReadableStream::ReadSuccessCallback&&, ReadableStream::ReadEndCallback&&, ReadableStream::FailureCallback&&);
+    void read(DOMIteratorPromise<JSC::JSValue, JSC::JSValue>&&);
 
     void ref() { m_stream.ref(); }
     void deref() { m_stream.deref(); }

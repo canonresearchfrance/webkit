@@ -46,13 +46,13 @@ void ReadableStreamReader::closed(DeferredWrapper&& wrapper)
     m_stream.closed(WTF::move(wrapper));
 }
 
-void ReadableStreamReader::read(ReadableStream::ReadSuccessCallback&& successCallback, ReadableStream::ReadEndCallback&& endCallback, ReadableStream::FailureCallback&& failureCallback)
+void ReadableStreamReader::read(DOMIteratorPromise<JSC::JSValue, JSC::JSValue>&& promise)
 {
     if (m_stream.isReadable() && m_stream.reader() != this) {
-        successCallback(JSC::JSValue());
+        promise.resolveEnd();
         return;
     }
-    m_stream.read(WTF::move(successCallback), WTF::move(endCallback), WTF::move(failureCallback));
+    m_stream.read(WTF::move(promise));
 }
 
 }

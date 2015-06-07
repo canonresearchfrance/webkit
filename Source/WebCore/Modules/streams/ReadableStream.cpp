@@ -88,7 +88,7 @@ void ReadableStream::close()
         m_closedPromise->resolve();
 
     for (auto& request : m_readRequests)
-        request.endCallback();
+        request.resolveEnd();
 
     clearCallbacks();
 }
@@ -107,7 +107,7 @@ void ReadableStream::changeStateToErrored()
         m_closedPromise->reject(error);
 
     for (auto& request : m_readRequests)
-        request.failureCallback(error);
+        request.reject(error);
 
     clearCallbacks();
 }
@@ -141,23 +141,23 @@ void ReadableStream::closed(DOMPromise<std::nullptr_t, JSC::JSValue>&& promise)
     m_closedPromise = std::make_unique<DOMPromise<std::nullptr_t, JSC::JSValue>>(WTF::move(promise));
 }
 
-void ReadableStream::read(ReadSuccessCallback&& successCallback, ReadEndCallback&& endCallback, FailureCallback&& failureCallback)
+void ReadableStream::read(DOMIteratorPromise<JSC::JSValue, JSC::JSValue>&& promise)
 {
     if (m_state == State::Closed) {
-        endCallback();
+        promise.resolveEnd();
         return;
     }
     if (m_state == State::Errored) {
-        failureCallback(error());
+        promise.reject(error());
         return;
     }
     if (hasValue()) {
-        successCallback(read());
+        promise.resolve(read());
         if (m_closeRequested && !hasValue())
             close();
         return;
     }
-    m_readRequests.append({ WTF::move(successCallback), WTF::move(endCallback), WTF::move(failureCallback) });
+    m_readRequests.append(WTF::move(promise));
     // FIXME: We should try to pull.
 }
 
@@ -166,7 +166,7 @@ bool ReadableStream::resolveReadCallback(JSC::JSValue value)
     if (m_readRequests.isEmpty())
         return false;
 
-    m_readRequests.first().successCallback(value);
+    m_readRequests.first().resolve(value);
     m_readRequests.remove(0);
     return true;
 }
