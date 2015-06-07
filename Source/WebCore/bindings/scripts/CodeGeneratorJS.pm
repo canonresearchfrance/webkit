@@ -2759,7 +2759,7 @@ sub GenerateImplementation
 
             next if $isCustom && $isOverloaded && $function->{overloadIndex} > 1;
 
-            AddIncludesForTypeInImpl($function->signature->type) unless $isCustom;
+            AddIncludesForTypeInImpl($function->signature->type) unless $isCustom or IsReturningPromise($function);
 
             my $functionName = GetFunctionName($className, $function);
 
@@ -3377,7 +3377,7 @@ sub GenerateParametersCheck
 
     push(@arguments, "ec") if $raisesException;
 
-    push(@arguments, "DeferredWrapper(exec, globalObject(), promiseDeferred)") if IsReturningPromise($function);
+    push(@arguments, "DeferredWrapper(exec, castedThis->globalObject(), promiseDeferred)") if IsReturningPromise($function);
 
     return ("$functionName(" . join(", ", @arguments) . ")", scalar @arguments);
 }
@@ -3647,7 +3647,8 @@ sub GenerateImplementationFunctionCall()
             push(@implContent, "#endif\n");
         } elsif (IsReturningPromise($function)) {
             AddToImplIncludes("JSDOMPromise.h");
-            push(@implContent, $indent . "JSPromiseDeferred* promiseDeferred = JSPromiseDeferred::create(exec, globalObject());\n");
+
+            push(@implContent, $indent . "JSPromiseDeferred* promiseDeferred = JSPromiseDeferred::create(exec, castedThis->globalObject());\n");
             push(@implContent, $indent . "JSValue result = promiseDeferred->promise();\n");
             push(@implContent, $indent . $functionString . ";\n");
         
