@@ -31,6 +31,7 @@
 #include "AudioDestinationNode.h"
 #include "EventListener.h"
 #include "EventTarget.h"
+#include "JSDOMPromise.h"
 #include "MediaCanStartListener.h"
 #include "MediaProducer.h"
 #include "PlatformMediaSession.h"
@@ -50,7 +51,6 @@ namespace WebCore {
 class AudioBuffer;
 class AudioBufferCallback;
 class AudioBufferSourceNode;
-class DeferredWrapper;
 class MediaElementAudioSourceNode;
 class MediaStreamAudioDestinationNode;
 class MediaStreamAudioSourceNode;
@@ -110,9 +110,9 @@ public:
     using ActiveDOMObject::suspend;
     using ActiveDOMObject::resume;
 
-    void suspend(DeferredWrapper&&);
-    void resume(DeferredWrapper&&);
-    void close(DeferredWrapper&&);
+    void suspend(DOMPromise<std::nullptr_t, ExceptionCode>&&);
+    void resume(DOMPromise<std::nullptr_t, ExceptionCode>&&);
+    void close(DOMPromise<std::nullptr_t, ExceptionCode>&&);
 
     const AtomicString& state() const;
 
@@ -327,7 +327,7 @@ private:
     void handleDirtyAudioSummingJunctions();
     void handleDirtyAudioNodeOutputs();
 
-    void addReaction(State, DeferredWrapper&&);
+    void addReaction(State, DOMPromise<std::nullptr_t, ExceptionCode>&&);
     void updateAutomaticPullNodes();
 
     // Only accessed in the audio thread.
@@ -364,7 +364,7 @@ private:
     Vector<AudioNode*> m_renderingAutomaticPullNodes;
     // Only accessed in the audio thread.
     Vector<AudioNode*> m_deferredFinishDerefList;
-    Vector<Vector<DeferredWrapper>> m_stateReactions;
+    Vector<Vector<DOMPromise<std::nullptr_t, ExceptionCode>>> m_stateReactions;
 
     std::unique_ptr<PlatformMediaSession> m_mediaSession;
     std::unique_ptr<GenericEventQueue> m_eventQueue;

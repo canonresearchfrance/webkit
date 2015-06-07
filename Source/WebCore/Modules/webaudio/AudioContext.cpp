@@ -278,7 +278,7 @@ bool AudioContext::isInitialized() const
     return m_isInitialized;
 }
 
-void AudioContext::addReaction(State state, DeferredWrapper&& wrapper)
+void AudioContext::addReaction(State state, DOMPromise<std::nullptr_t, ExceptionCode>&& wrapper)
 {
     size_t stateIndex = static_cast<size_t>(state);
     if (stateIndex >= m_stateReactions.size())
@@ -299,7 +299,7 @@ void AudioContext::setState(State state)
     if (stateIndex >= m_stateReactions.size())
         return;
 
-    Vector<DeferredWrapper> reactions;
+    Vector<DOMPromise<std::nullptr_t, ExceptionCode>> reactions;
     m_stateReactions[stateIndex].swap(reactions);
 
     for (auto& wrapper : reactions)
@@ -1102,10 +1102,10 @@ void AudioContext::decrementActiveSourceCount()
     --m_activeSourceCount;
 }
 
-void AudioContext::suspend(DeferredWrapper&& wrapper)
+void AudioContext::suspend(DOMPromise<std::nullptr_t, ExceptionCode>&& wrapper)
 {
     if (isOfflineContext()) {
-        wrapper.rejectWithException(INVALID_STATE_ERR);
+        wrapper.reject(INVALID_STATE_ERR);
         return;
     }
 
@@ -1115,7 +1115,7 @@ void AudioContext::suspend(DeferredWrapper&& wrapper)
     }
 
     if (m_state == State::Closed || m_state == State::Interrupted || !m_destinationNode) {
-        wrapper.reject();
+        wrapper.reject(0);
         return;
     }
 
@@ -1132,10 +1132,10 @@ void AudioContext::suspend(DeferredWrapper&& wrapper)
     });
 }
 
-void AudioContext::resume(DeferredWrapper&& wrapper)
+void AudioContext::resume(DOMPromise<std::nullptr_t, ExceptionCode>&& wrapper)
 {
     if (isOfflineContext()) {
-        wrapper.rejectWithException(INVALID_STATE_ERR);
+        wrapper.reject(INVALID_STATE_ERR);
         return;
     }
 
@@ -1145,7 +1145,7 @@ void AudioContext::resume(DeferredWrapper&& wrapper)
     }
 
     if (m_state == State::Closed || !m_destinationNode) {
-        wrapper.reject();
+        wrapper.reject(0);
         return;
     }
 
@@ -1162,10 +1162,10 @@ void AudioContext::resume(DeferredWrapper&& wrapper)
     });
 }
 
-void AudioContext::close(DeferredWrapper&& wrapper)
+void AudioContext::close(DOMPromise<std::nullptr_t, ExceptionCode>&& wrapper)
 {
     if (isOfflineContext()) {
-        wrapper.rejectWithException(INVALID_STATE_ERR);
+        wrapper.reject(INVALID_STATE_ERR);
         return;
     }
 
